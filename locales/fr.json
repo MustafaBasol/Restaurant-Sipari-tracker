@@ -70,7 +70,8 @@
     "order": "Commande",
     "table": "Table",
     "markAllReady": "Marquer Tout Prêt",
-    "noActiveOrders": "Aucune commande active."
+    "noActiveOrders": "Aucune commande active.",
+    "orderDetails": "Détails de la Commande"
   },
   "admin": {
     "title": "Panneau d'Administration",

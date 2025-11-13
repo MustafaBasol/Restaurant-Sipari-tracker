@@ -70,7 +70,8 @@
     "order": "Order",
     "table": "Table",
     "markAllReady": "Mark All Ready",
-    "noActiveOrders": "No active orders."
+    "noActiveOrders": "No active orders.",
+    "orderDetails": "Order Details"
   },
   "admin": {
     "title": "Admin Dashboard",

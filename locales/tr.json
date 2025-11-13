@@ -70,7 +70,8 @@
     "order": "Sipariş",
     "table": "Masa",
     "markAllReady": "Tümünü Hazır Olarak İşaretle",
-    "noActiveOrders": "Aktif sipariş bulunmamaktadır."
+    "noActiveOrders": "Aktif sipariş bulunmamaktadır.",
+    "orderDetails": "Sipariş Detayları"
   },
   "admin": {
     "title": "Yönetici Paneli",

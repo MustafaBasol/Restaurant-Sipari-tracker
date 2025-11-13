@@ -9,6 +9,7 @@ import { Card } from '../../../shared/components/ui/Card';
 
 interface OrderListProps {
     orders: Order[];
+    onSelectOrder: (order: Order) => void;
 }
 
 const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, orderId }) => {
@@ -44,7 +45,7 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
     );
 };
 
-const OrderList: React.FC<OrderListProps> = ({ orders }) => {
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
     const { tables } = useTables();
     const { t } = useLanguage();
     const { markOrderAsReady } = useOrders();
@@ -59,29 +60,31 @@ const OrderList: React.FC<OrderListProps> = ({ orders }) => {
                 if (activeItems.length === 0) return null;
 
                 return (
-                    <Card key={order.id} padding="none" className="flex flex-col">
-                        <div className="p-4 border-b border-border-color">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-bold text-lg">{t('kitchen.table')} {table?.name}</h3>
-                                    <p className="text-xs text-text-secondary">{new Date(order.createdAt).toLocaleTimeString()}</p>
+                    <button key={order.id} onClick={() => onSelectOrder(order)} className="text-left">
+                        <Card padding="none" className="flex flex-col h-full hover:shadow-medium transition-shadow">
+                            <div className="p-4 border-b border-border-color">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-bold text-lg">{t('kitchen.table')} {table?.name}</h3>
+                                        <p className="text-xs text-text-secondary">{new Date(order.createdAt).toLocaleTimeString()}</p>
+                                    </div>
+                                    {canMarkAllReady && (
+                                         <button 
+                                            onClick={(e) => { e.stopPropagation(); markOrderAsReady(order.id); }}
+                                            className="px-3 py-1 bg-accent text-white text-xs font-semibold rounded-full hover:bg-accent-hover transition-colors"
+                                        >
+                                            {t('kitchen.markAllReady')}
+                                        </button>
+                                    )}
                                 </div>
-                                {canMarkAllReady && (
-                                     <button 
-                                        onClick={() => markOrderAsReady(order.id)}
-                                        className="px-3 py-1 bg-accent text-white text-xs font-semibold rounded-full hover:bg-accent-hover transition-colors"
-                                    >
-                                        {t('kitchen.markAllReady')}
-                                    </button>
-                                )}
                             </div>
-                        </div>
-                        <div className="p-4 space-y-3 flex-1">
-                            {activeItems.map(item => (
-                                <OrderItemCard key={item.id} item={item} orderId={order.id} />
-                            ))}
-                        </div>
-                    </Card>
+                            <div className="p-4 space-y-3 flex-1">
+                                {activeItems.map(item => (
+                                    <OrderItemCard key={item.id} item={item} orderId={order.id} />
+                                ))}
+                            </div>
+                        </Card>
+                    </button>
                 );
             })}
         </div>
