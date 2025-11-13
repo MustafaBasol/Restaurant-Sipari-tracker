@@ -1,0 +1,5 @@
+{
+  "name": "Restaurant OS",
+  "description": "A multi-tenant, multilingual restaurant order management system designed for waiters, kitchen staff, and admins. Features real-time order tracking and an elegant, Apple-inspired interface optimized for tablets.",
+  "requestFramePermissions": []
+}
