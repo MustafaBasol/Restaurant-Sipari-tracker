@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTables } from '../hooks/useTables';
 import { Table, TableStatus } from '../types';
@@ -62,11 +63,11 @@ const TableGrid: React.FC<TableGridProps> = ({ onSelectTable }) => {
                              <div className="flex justify-center">
                                 {table.status === TableStatus.FREE ? (
                                     <Button variant="secondary" className="py-1 px-3 text-xs w-full" onClick={(e) => handleStatusChange(e, table, TableStatus.OCCUPIED)}>
-                                        {t('waiter.occupyTable', 'Occupy')}
+                                        {t('waiter.occupyTable')}
                                     </Button>
                                 ) : (
                                     <Button variant="secondary" className="py-1 px-3 text-xs w-full" onClick={(e) => handleStatusChange(e, table, TableStatus.FREE)}>
-                                        {t('waiter.freeUpTable', 'Free Up')}
+                                        {t('waiter.freeUpTable')}
                                     </Button>
                                 )}
                             </div>

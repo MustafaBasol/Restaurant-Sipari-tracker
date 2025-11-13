@@ -121,5 +121,10 @@
     "registeredOn": "Registered On",
     "viewUsers": "View Users",
     "tenantUsers": "Tenant Users"
+  },
+  "notifications": {
+    "title": "New Orders",
+    "dismiss": "Dismiss",
+    "noNewOrders": "No new orders to show."
   }
 }

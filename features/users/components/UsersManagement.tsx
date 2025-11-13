@@ -36,16 +36,30 @@ const UsersManagement: React.FC = () => {
             </div>
 
             {isAdding && (
-                <div className="bg-light-bg p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                    <Input value={newUser.fullName} onChange={(e) => setNewUser({...newUser, fullName: e.target.value})} placeholder={t('admin.users.fullName')} />
-                    <Input type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} placeholder={t('auth.email')} />
-                    <Input type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} placeholder={t('auth.password')} />
-                    <Select value={newUser.role} onChange={(e) => setNewUser({...newUser, role: e.target.value as UserRole})}>
-                        {Object.values(UserRole)
-                            .filter(role => role !== UserRole.SUPER_ADMIN)
-                            .map(role => <option key={role} value={role}>{t(`roles.${role}`)}</option>)}
-                    </Select>
-                    <Button onClick={handleAddUser} className="lg:col-span-4 py-2 bg-green-500 hover:bg-green-600">{t('general.save')}</Button>
+                <div className="bg-light-bg p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('admin.users.fullName')}</label>
+                        <Input value={newUser.fullName} onChange={(e) => setNewUser({...newUser, fullName: e.target.value})} placeholder={t('admin.users.fullName')} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('auth.email')}</label>
+                        <Input type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} placeholder={t('auth.email')} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('auth.password')}</label>
+                        <Input type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} placeholder={t('auth.password')} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('general.role')}</label>
+                        <Select value={newUser.role} onChange={(e) => setNewUser({...newUser, role: e.target.value as UserRole})}>
+                            {Object.values(UserRole)
+                                .filter(role => role !== UserRole.SUPER_ADMIN)
+                                .map(role => <option key={role} value={role}>{t(`roles.${role}`)}</option>)}
+                        </Select>
+                    </div>
+                    <div className="md:col-span-2">
+                        <Button onClick={handleAddUser} className="w-full py-2 bg-green-500 hover:bg-green-600">{t('general.save')}</Button>
+                    </div>
                 </div>
             )}
 

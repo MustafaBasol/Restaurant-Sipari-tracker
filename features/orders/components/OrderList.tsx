@@ -6,7 +6,6 @@ import { useOrders } from '../hooks/useOrders';
 import { Order, OrderItem } from '../types';
 import { OrderStatus } from '../../../shared/types';
 import { Card } from '../../../shared/components/ui/Card';
-import { Button } from '../../../shared/components/ui/Button';
 
 interface OrderListProps {
     orders: Order[];

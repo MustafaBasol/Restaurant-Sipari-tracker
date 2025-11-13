@@ -121,5 +121,10 @@
     "registeredOn": "Inscrit le",
     "viewUsers": "Voir les Utilisateurs",
     "tenantUsers": "Utilisateurs du Restaurant"
+  },
+   "notifications": {
+    "title": "Nouvelles Commandes",
+    "dismiss": "Fermer",
+    "noNewOrders": "Aucune nouvelle commande à afficher."
   }
 }

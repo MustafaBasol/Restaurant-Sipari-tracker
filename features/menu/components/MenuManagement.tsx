@@ -38,12 +38,15 @@ const MenuManagement: React.FC = () => {
             <div>
                 <h3 className="text-lg font-semibold mb-4">{t('general.category', 'Categories')}</h3>
                 <div className="space-y-4 bg-light-bg p-4 rounded-xl">
-                    <Input
-                        type="text"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        placeholder={t('admin.menu.categoryName')}
-                    />
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('admin.menu.categoryName')}</label>
+                        <Input
+                            type="text"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder={t('admin.menu.categoryName')}
+                        />
+                    </div>
                     <Button onClick={handleAddCategory} className="w-full py-2">{t('admin.menu.addCategory')}</Button>
                 </div>
                 <ul className="mt-4 space-y-2">
@@ -55,14 +58,26 @@ const MenuManagement: React.FC = () => {
             
             <div>
                 <h3 className="text-lg font-semibold mb-4">{t('admin.menu.itemName', 'Menu Items')}</h3>
-                <div className="space-y-4 bg-light-bg p-4 rounded-xl">
-                    <Input value={newMenuItem.name || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, name: e.target.value }))} placeholder={t('admin.menu.itemName')} />
-                    <Input value={newMenuItem.description || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, description: e.target.value }))} placeholder={t('general.description')} />
-                    <Input type="number" value={newMenuItem.price || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))} placeholder={t('general.price')} />
-                    <Select value={newMenuItem.categoryId || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, categoryId: e.target.value }))}>
-                        <option value="">{t('general.category')}</option>
-                        {menuCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                    </Select>
+                 <div className="space-y-4 bg-light-bg p-4 rounded-xl">
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('admin.menu.itemName')}</label>
+                        <Input value={newMenuItem.name || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, name: e.target.value }))} placeholder={t('admin.menu.itemName')} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('general.description')}</label>
+                        <Input value={newMenuItem.description || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, description: e.target.value }))} placeholder={t('general.description')} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('general.price')}</label>
+                        <Input type="number" value={newMenuItem.price || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))} placeholder={t('general.price')} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">{t('general.category')}</label>
+                        <Select value={newMenuItem.categoryId || ''} onChange={(e) => setNewMenuItem(p => ({ ...p, categoryId: e.target.value }))}>
+                            <option value="">{t('general.category')}</option>
+                            {menuCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                        </Select>
+                    </div>
                     <Button onClick={handleAddMenuItem} className="w-full py-2">{t('admin.menu.addItem')}</Button>
                 </div>
                 <ul className="mt-4 space-y-2">

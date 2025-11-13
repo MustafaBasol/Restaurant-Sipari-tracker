@@ -3,6 +3,7 @@ import { useAuth } from '../../../features/auth/hooks/useAuth';
 import { useLanguage } from '../../hooks/useLanguage';
 import LanguageSwitcher from '../LanguageSwitcher';
 import { UserRole } from '../../types';
+import { NotificationBell } from '../../../features/notifications/components/NotificationBell';
 
 const AppHeader: React.FC = () => {
     const { authState, logout } = useAuth();
@@ -11,6 +12,7 @@ const AppHeader: React.FC = () => {
     if (!authState) return null;
 
     const { user, tenant } = authState;
+    const isKitchenUser = user.role === UserRole.KITCHEN;
 
     const getRoleDisplayName = (role: UserRole) => {
         return t(`roles.${role}`);
@@ -28,6 +30,7 @@ const AppHeader: React.FC = () => {
                         </span>
                     </div>
                     <div className="flex items-center space-x-4">
+                        {isKitchenUser && <NotificationBell />}
                         <div className="text-right">
                             <p className="font-semibold text-sm text-text-primary">{user.fullName}</p>
                             <p className="text-xs text-text-secondary">{getRoleDisplayName(user.role)}</p>

@@ -35,15 +35,18 @@ const TablesManagement: React.FC = () => {
 
     return (
         <div>
-            <div className="mb-6 flex gap-2">
-                <Input
-                    type="text"
-                    value={newTableName}
-                    onChange={(e) => setNewTableName(e.target.value)}
-                    placeholder={t('admin.tables.name')}
-                    className="flex-grow"
-                />
-                <Button onClick={handleAddTable} className="px-4 py-2">{t('admin.tables.add')}</Button>
+            <div className="mb-6">
+                <label className="block text-sm font-medium text-text-secondary mb-1">{t('admin.tables.name')}</label>
+                <div className="flex gap-2">
+                    <Input
+                        type="text"
+                        value={newTableName}
+                        onChange={(e) => setNewTableName(e.target.value)}
+                        placeholder={t('admin.tables.name')}
+                        className="flex-grow"
+                    />
+                    <Button onClick={handleAddTable} className="px-4 py-2">{t('admin.tables.add')}</Button>
+                </div>
             </div>
 
             <UiTable>

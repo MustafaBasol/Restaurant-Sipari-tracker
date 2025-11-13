@@ -121,5 +121,10 @@
     "registeredOn": "Kayıt Tarihi",
     "viewUsers": "Kullanıcıları Görüntüle",
     "tenantUsers": "Restoran Kullanıcıları"
+  },
+  "notifications": {
+    "title": "Yeni Siparişler",
+    "dismiss": "Kapat",
+    "noNewOrders": "Gösterilecek yeni sipariş yok."
   }
 }
