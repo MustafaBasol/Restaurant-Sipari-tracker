@@ -19,12 +19,14 @@ const AdminOrderViewModal: React.FC<AdminOrderViewModalProps> = ({ order, onClos
 
     const table = tables.find(t => t.id === order.tableId);
     
+    // FIX: Add missing OrderStatus.CLOSED to satisfy the Record type
     const statusBadgeVariant: Record<OrderStatus, 'blue' | 'orange' | 'green' | 'gray'> = {
         [OrderStatus.NEW]: 'blue',
         [OrderStatus.IN_PREPARATION]: 'orange',
         [OrderStatus.READY]: 'green',
         [OrderStatus.SERVED]: 'gray',
         [OrderStatus.CANCELED]: 'gray',
+        [OrderStatus.CLOSED]: 'gray',
     };
 
     const total = order.items.reduce((acc, item) => {

@@ -19,6 +19,10 @@
     "available": "Available",
     "unavailable": "Unavailable"
   },
+  "actions": {
+    "markAsServed": "Mark as Served",
+    "closeTable": "Close Table"
+  },
   "auth": {
     "signIn": "Sign In",
     "email": "Email",
@@ -73,7 +77,9 @@
     "table": "Table",
     "markAllReady": "Mark All Ready",
     "noActiveOrders": "No active orders.",
-    "orderDetails": "Order Details"
+    "orderDetails": "Order Details",
+    "orderBy": "Order by",
+    "generalOrderNote": "General Order Note"
   },
   "admin": {
     "title": "Admin Dashboard",
@@ -81,7 +87,8 @@
         "tables": "Tables Management",
         "menu": "Menu Management",
         "users": "Users Management",
-        "orderHistory": "Order History"
+        "orderHistory": "Order History",
+        "reports": "Reports"
     },
     "tables": {
         "add": "Add Table",
@@ -118,7 +125,8 @@
         "table": "Table",
         "waiter": "Waiter",
         "total": "Total",
-        "status": "Status"
+        "status": "Status",
+        "closedAt": "Closed At"
       }
     }
   },
@@ -147,5 +155,19 @@
     "title": "New Orders",
     "dismiss": "Dismiss",
     "noNewOrders": "No new orders to show."
+  },
+  "reports": {
+    "title": "Daily Summary for {date}",
+    "selectDate": "Select Date",
+    "totalRevenue": "Total Revenue",
+    "totalOrders": "Total Orders",
+    "averageTicket": "Average Ticket",
+    "topItems": "Top Selling Items",
+    "noData": "No data available for this date.",
+    "headers": {
+      "item": "Item",
+      "quantity": "Quantity Sold",
+      "revenue": "Revenue"
+    }
   }
 }

@@ -19,6 +19,10 @@
     "available": "Disponible",
     "unavailable": "Indisponible"
   },
+  "actions": {
+    "markAsServed": "Marquer comme Servi",
+    "closeTable": "Fermer la Table"
+  },
   "auth": {
     "signIn": "Se connecter",
     "email": "E-mail",
@@ -73,7 +77,9 @@
     "table": "Table",
     "markAllReady": "Marquer Tout Prêt",
     "noActiveOrders": "Aucune commande active.",
-    "orderDetails": "Détails de la Commande"
+    "orderDetails": "Détails de la Commande",
+    "orderBy": "Commande par",
+    "generalOrderNote": "Note Générale de la Commande"
   },
   "admin": {
     "title": "Panneau d'Administration",
@@ -81,7 +87,8 @@
         "tables": "Gestion des Tables",
         "menu": "Gestion du Menu",
         "users": "Gestion des Utilisateurs",
-        "orderHistory": "Historique des Commandes"
+        "orderHistory": "Historique des Commandes",
+        "reports": "Rapports"
     },
     "tables": {
         "add": "Ajouter une Table",
@@ -118,14 +125,15 @@
         "table": "Table",
         "waiter": "Serveur",
         "total": "Total",
-        "status": "Statut"
+        "status": "Statut",
+        "closedAt": "Fermé à"
       }
     }
   },
   "statuses": {
     "FREE": "Libre",
     "OCCUPIED": "Occupée",
-    "CLOSED": "Fermée",
+    "CLOSED": "Fermé",
     "NEW": "Nouveau",
     "IN_PREPARATION": "En Préparation",
     "READY": "Prêt",
@@ -147,5 +155,19 @@
     "title": "Nouvelles Commandes",
     "dismiss": "Fermer",
     "noNewOrders": "Aucune nouvelle commande à afficher."
+  },
+  "reports": {
+    "title": "Résumé Quotidien du {date}",
+    "selectDate": "Sélectionner une date",
+    "totalRevenue": "Revenu Total",
+    "totalOrders": "Commandes Totales",
+    "averageTicket": "Ticket Moyen",
+    "topItems": "Meilleures Ventes",
+    "noData": "Aucune donnée disponible pour cette date.",
+    "headers": {
+      "item": "Article",
+      "quantity": "Quantité Vendue",
+      "revenue": "Revenu"
+    }
   }
 }

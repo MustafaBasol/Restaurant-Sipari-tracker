@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import TablesManagement from '../components/admin/TablesManagement';
 import MenuManagement from '../components/admin/MenuManagement';
 import UsersManagement from '../components/admin/UsersManagement';
-import { TableIcon, MenuIcon, UsersIcon } from '../components/icons/Icons';
+import { TableIcon, MenuIcon, UsersIcon, HistoryIcon } from '../components/icons/Icons';
+import OrderHistory from '../components/admin/OrderHistory';
 
-type AdminTab = 'tables' | 'menu' | 'users';
+type AdminTab = 'tables' | 'menu' | 'users' | 'history';
 
 const AdminDashboard: React.FC = () => {
     const { t } = useAppContext();
@@ -16,6 +16,7 @@ const AdminDashboard: React.FC = () => {
         { id: 'tables', label: t('tablesManagement'), icon: <TableIcon /> },
         { id: 'menu', label: t('menuManagement'), icon: <MenuIcon /> },
         { id: 'users', label: t('usersManagement'), icon: <UsersIcon /> },
+        { id: 'history', label: t('orderHistory'), icon: <HistoryIcon /> },
     ];
 
     const renderContent = () => {
@@ -26,6 +27,8 @@ const AdminDashboard: React.FC = () => {
                 return <MenuManagement />;
             case 'users':
                 return <UsersManagement />;
+            case 'history':
+                return <OrderHistory />;
             default:
                 return null;
         }

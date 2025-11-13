@@ -19,6 +19,10 @@
     "available": "Müsait",
     "unavailable": "Müsait Değil"
   },
+  "actions": {
+    "markAsServed": "Servis Edildi Olarak İşaretle",
+    "closeTable": "Masayı Kapat"
+  },
   "auth": {
     "signIn": "Giriş Yap",
     "email": "E-posta",
@@ -73,7 +77,9 @@
     "table": "Masa",
     "markAllReady": "Tümünü Hazır Olarak İşaretle",
     "noActiveOrders": "Aktif sipariş bulunmamaktadır.",
-    "orderDetails": "Sipariş Detayları"
+    "orderDetails": "Sipariş Detayları",
+    "orderBy": "Siparişi Alan",
+    "generalOrderNote": "Genel Sipariş Notu"
   },
   "admin": {
     "title": "Yönetici Paneli",
@@ -81,7 +87,8 @@
         "tables": "Masa Yönetimi",
         "menu": "Menü Yönetimi",
         "users": "Kullanıcı Yönetimi",
-        "orderHistory": "Sipariş Geçmişi"
+        "orderHistory": "Sipariş Geçmişi",
+        "reports": "Raporlar"
     },
     "tables": {
         "add": "Masa Ekle",
@@ -118,14 +125,15 @@
         "table": "Masa",
         "waiter": "Garson",
         "total": "Toplam",
-        "status": "Durum"
+        "status": "Durum",
+        "closedAt": "Kapanış Saati"
       }
     }
   },
   "statuses": {
     "FREE": "Boş",
     "OCCUPIED": "Dolu",
-    "CLOSED": "Kapalı",
+    "CLOSED": "Kapandı",
     "NEW": "Yeni",
     "IN_PREPARATION": "Hazırlanıyor",
     "READY": "Hazır",
@@ -147,5 +155,19 @@
     "title": "Yeni Siparişler",
     "dismiss": "Kapat",
     "noNewOrders": "Gösterilecek yeni sipariş yok."
+  },
+  "reports": {
+    "title": "{date} için Günlük Özet",
+    "selectDate": "Tarih Seç",
+    "totalRevenue": "Toplam Ciro",
+    "totalOrders": "Toplam Sipariş",
+    "averageTicket": "Ortalama Fiş",
+    "topItems": "En Çok Satan Ürünler",
+    "noData": "Bu tarih için veri bulunamadı.",
+    "headers": {
+      "item": "Ürün",
+      "quantity": "Satılan Adet",
+      "revenue": "Ciro"
+    }
   }
 }

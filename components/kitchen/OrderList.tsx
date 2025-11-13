@@ -6,12 +6,14 @@ interface OrderListProps {
     orders: Order[];
 }
 
+// FIX: Add missing OrderStatus.CLOSED to the statusColors map.
 const statusColors: Record<OrderStatus, string> = {
     [OrderStatus.NEW]: 'bg-status-new',
     [OrderStatus.IN_PREPARATION]: 'bg-status-prep',
     [OrderStatus.READY]: 'bg-status-ready',
     [OrderStatus.SERVED]: 'bg-status-served',
     [OrderStatus.CANCELED]: 'bg-red-500',
+    [OrderStatus.CLOSED]: 'bg-status-closed',
 };
 
 const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, orderId }) => {

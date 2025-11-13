@@ -17,6 +17,7 @@ export enum OrderStatus {
     READY = 'READY',
     SERVED = 'SERVED',
     CANCELED = 'CANCELED',
+    CLOSED = 'CLOSED',
 }
 
 export enum SubscriptionStatus {

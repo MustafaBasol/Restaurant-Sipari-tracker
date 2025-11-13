@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useCallback, ReactNode } fro
 import { User, Tenant, Table, MenuCategory, MenuItem, Order, OrderItem, OrderStatus, TableStatus, UserRole, SubscriptionStatus } from '../types';
 import * as api from '../services/api';
 import { translations, Language, TranslationKey } from '../locales/translations';
+import { useRealtimeRefetch } from '../hooks/useRealtimeRefetch';
 
 interface AuthState {
     user: User;
@@ -37,12 +38,13 @@ interface AppContextData {
     updateMenuItem: (item: MenuItem) => Promise<void>;
     addUser: (user: Omit<User, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string }) => Promise<void>;
     updateUser: (user: User) => Promise<void>;
-    createOrder: (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[]) => Promise<void>;
+    createOrder: (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string) => Promise<void>;
     updateOrderItemStatus: (orderId: string, itemId: string, status: OrderStatus) => Promise<void>;
     markOrderAsReady: (orderId: string) => Promise<void>;
     updateTableStatus: (tableId: string, status: TableStatus) => Promise<void>;
-    serveOrder: (orderId: string) => Promise<void>;
-    closeTable: (tableId: string) => Promise<void>;
+    serveOrderItem: (orderId: string, itemId: string) => Promise<void>;
+    closeOrder: (orderId: string) => Promise<void>;
+    updateOrderNote: (orderId: string, note: string) => Promise<void>;
 
     // Super Admin mutations
     updateTenantSubscription: (tenantId: string, status: SubscriptionStatus) => Promise<void>;
@@ -105,6 +107,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setIsLoading(false);
         }
     }, [authState, fetchTenantData, fetchSuperAdminData]);
+
+    // Use the realtime refetch hook to listen for changes from other tabs
+    useRealtimeRefetch(fetchData);
 
     useEffect(() => {
         if (authState) {
@@ -195,12 +200,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updateMenuItem = async (item: MenuItem) => handleMutation(() => api.updateMenuItem(item));
     const addUser = async (user: Omit<User, 'id' | 'tenantId'| 'passwordHash' | 'isActive'> & { password?: string }) => handleMutation(() => api.addUser(authState!.tenant!.id, user));
     const updateUser = async (user: User) => handleMutation(() => api.updateUser(user));
-    const createOrder = async (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[]) => handleMutation(() => api.createOrder(authState!.tenant!.id, tableId, items));
+    const createOrder = async (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string) => handleMutation(() => api.createOrder(authState!.tenant!.id, tableId, items, waiterId));
     const updateOrderItemStatus = async (orderId: string, itemId: string, status: OrderStatus) => handleMutation(() => api.updateOrderItemStatus(orderId, itemId, status));
     const markOrderAsReady = async (orderId: string) => handleMutation(() => api.markOrderAsReady(orderId));
     const updateTableStatus = async (tableId: string, status: TableStatus) => handleMutation(() => api.updateTableStatus(tableId, status));
-    const serveOrder = async (orderId: string) => handleMutation(() => api.serveOrder(orderId));
-    const closeTable = async (tableId: string) => handleMutation(() => api.closeTable(tableId));
+    const serveOrderItem = async (orderId: string, itemId: string) => handleMutation(() => api.serveOrderItem(orderId, itemId));
+    const closeOrder = async (orderId: string) => handleMutation(() => api.closeOrder(orderId));
+    const updateOrderNote = async (orderId: string, note: string) => handleMutation(() => api.updateOrderNote(orderId, note));
     
     // Super Admin mutation
     const updateTenantSubscription = async (tenantId: string, status: SubscriptionStatus) => handleMutation(() => api.updateTenantSubscription(tenantId, status));
@@ -234,8 +240,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             updateOrderItemStatus,
             markOrderAsReady,
             updateTableStatus,
-            serveOrder,
-            closeTable,
+            serveOrderItem,
+            closeOrder,
+            updateOrderNote,
             updateTenantSubscription,
         }}>
             {children}

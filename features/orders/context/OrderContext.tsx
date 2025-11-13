@@ -3,14 +3,16 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import * as api from '../api';
 import { Order, OrderItem } from '../types';
 import { OrderStatus } from '../../../shared/types';
+import { useTableContext } from '../../tables/context/TableContext';
 
 interface OrderContextData {
     orders: Order[] | null;
     isLoading: boolean;
-    createOrder: (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string) => Promise<void>;
+    createOrder: (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string, note?: string) => Promise<void>;
     updateOrderItemStatus: (orderId: string, itemId: string, status: OrderStatus) => Promise<void>;
     markOrderAsReady: (orderId: string) => Promise<void>;
-    serveOrder: (orderId: string) => Promise<void>;
+    serveOrderItem: (orderId: string, itemId: string) => Promise<void>;
+    closeOrder: (orderId: string) => Promise<void>;
     updateOrderNote: (orderId: string, note: string) => Promise<void>;
     refetch: () => void;
 }
@@ -19,6 +21,7 @@ export const OrderContext = createContext<OrderContextData | undefined>(undefine
 
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { authState } = useAuth();
+    const { refetch: refetchTables } = useTableContext();
     const [orders, setOrders] = useState<Order[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -43,13 +46,16 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         fetchOrders();
     }, [fetchOrders]);
     
-    const handleMutation = async (mutationFn: () => Promise<any>) => {
+    const handleMutation = async (mutationFn: () => Promise<any>, options: { refetchTables?: boolean } = {}) => {
         await mutationFn();
         await fetchOrders();
+        if (options.refetchTables) {
+            await refetchTables();
+        }
     };
 
-    const createOrder = (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string) => 
-        handleMutation(() => api.createOrder(authState!.tenant!.id, tableId, items, waiterId));
+    const createOrder = (tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string, note?: string) => 
+        handleMutation(() => api.createOrder(authState!.tenant!.id, tableId, items, waiterId, note), { refetchTables: true });
 
     const updateOrderItemStatus = (orderId: string, itemId: string, status: OrderStatus) => 
         handleMutation(() => api.updateOrderItemStatus(orderId, itemId, status));
@@ -57,14 +63,17 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const markOrderAsReady = (orderId: string) => 
         handleMutation(() => api.markOrderAsReady(orderId));
 
-    const serveOrder = (orderId: string) => 
-        handleMutation(() => api.serveOrder(orderId));
+    const serveOrderItem = (orderId: string, itemId: string) => 
+        handleMutation(() => api.serveOrderItem(orderId, itemId));
+
+    const closeOrder = (orderId: string) =>
+        handleMutation(() => api.closeOrder(orderId), { refetchTables: true });
 
     const updateOrderNote = (orderId: string, note: string) =>
         handleMutation(() => api.updateOrderNote(orderId, note));
 
     return (
-        <OrderContext.Provider value={{ orders, isLoading, createOrder, updateOrderItemStatus, markOrderAsReady, serveOrder, updateOrderNote, refetch: fetchOrders }}>
+        <OrderContext.Provider value={{ orders, isLoading, createOrder, updateOrderItemStatus, markOrderAsReady, serveOrderItem, closeOrder, updateOrderNote, refetch: fetchOrders }}>
             {children}
         </OrderContext.Provider>
     )

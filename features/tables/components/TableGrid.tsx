@@ -5,7 +5,7 @@ import { Table, TableStatus } from '../types';
 import { useOrders } from '../../orders/hooks/useOrders';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { OrderStatus } from '../../../shared/types';
-import { OrderIcon } from '../../../shared/components/icons/Icons';
+import { OrderIcon, NoteIcon } from '../../../shared/components/icons/Icons';
 import { Button } from '../../../shared/components/ui/Button';
 
 interface TableGridProps {
@@ -27,7 +27,7 @@ const TableGrid: React.FC<TableGridProps> = ({ onSelectTable }) => {
     };
     
     const hasActiveOrder = (tableId: string) => {
-        return orders?.some(order => order.tableId === tableId && order.items.some(item => item.status !== OrderStatus.SERVED && item.status !== OrderStatus.CANCELED));
+        return orders?.some(order => order.tableId === tableId && order.status !== OrderStatus.CLOSED && order.status !== OrderStatus.CANCELED);
     };
 
     const handleStatusChange = (e: React.MouseEvent, table: Table, newStatus: TableStatus) => {
@@ -58,15 +58,20 @@ const TableGrid: React.FC<TableGridProps> = ({ onSelectTable }) => {
                                    <OrderIcon />
                                 </div>
                             )}
+                            {(table.note || table.customerName) && (
+                                 <div className="absolute top-3 left-3 text-gray-400">
+                                   <NoteIcon />
+                                </div>
+                            )}
                         </button>
                         {canChangeStatus && table.status !== TableStatus.CLOSED && (
                              <div className="flex justify-center">
                                 {table.status === TableStatus.FREE ? (
-                                    <Button variant="secondary" className="py-1 px-3 text-xs w-full" onClick={(e) => handleStatusChange(e, table, TableStatus.OCCUPIED)}>
+                                    <Button variant="secondary" className="py-2 px-4 text-sm w-full" onClick={(e) => handleStatusChange(e, table, TableStatus.OCCUPIED)}>
                                         {t('waiter.occupyTable')}
                                     </Button>
                                 ) : (
-                                    <Button variant="secondary" className="py-1 px-3 text-xs w-full" onClick={(e) => handleStatusChange(e, table, TableStatus.FREE)}>
+                                    <Button variant="secondary" className="py-2 px-4 text-sm w-full" onClick={(e) => handleStatusChange(e, table, TableStatus.FREE)}>
                                         {t('waiter.freeUpTable')}
                                     </Button>
                                 )}

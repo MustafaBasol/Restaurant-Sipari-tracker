@@ -12,12 +12,14 @@ interface CurrentOrderProps {
     onRemoveItem: (menuItemId: string) => void;
 }
 
+// FIX: Add missing OrderStatus.CLOSED to the statusColors map.
 const statusColors: Record<OrderStatus, string> = {
     [OrderStatus.NEW]: 'text-status-new',
     [OrderStatus.IN_PREPARATION]: 'text-status-prep',
     [OrderStatus.READY]: 'text-status-ready',
     [OrderStatus.SERVED]: 'text-status-served',
     [OrderStatus.CANCELED]: 'text-red-500',
+    [OrderStatus.CLOSED]: 'text-status-closed',
 };
 
 const OrderItemRow: React.FC<{

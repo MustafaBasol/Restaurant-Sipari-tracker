@@ -6,6 +6,7 @@ import { useOrders } from '../hooks/useOrders';
 import { Order, OrderItem } from '../types';
 import { OrderStatus } from '../../../shared/types';
 import { Card } from '../../../shared/components/ui/Card';
+import { NoteIcon } from '../../../shared/components/icons/Icons';
 
 interface OrderListProps {
     orders: Order[];
@@ -67,6 +68,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                                     <div>
                                         <h3 className="font-bold text-lg">{t('kitchen.table')} {table?.name}</h3>
                                         <p className="text-xs text-text-secondary">{new Date(order.createdAt).toLocaleTimeString()}</p>
+                                        {order.waiterName && <p className="text-xs text-text-secondary">{t('kitchen.orderBy')}: {order.waiterName}</p>}
                                     </div>
                                     {canMarkAllReady && (
                                          <button 
@@ -77,6 +79,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                                         </button>
                                     )}
                                 </div>
+                                {order.note && (
+                                    <div className="flex items-start gap-2 text-sm text-amber-900 bg-amber-100 border border-amber-200 p-2 rounded-md mt-2">
+                                        <NoteIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                        <p className="font-medium">{order.note}</p>
+                                    </div>
+                                )}
                             </div>
                             <div className="p-4 space-y-3 flex-1">
                                 {activeItems.map(item => (

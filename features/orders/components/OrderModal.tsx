@@ -24,8 +24,8 @@ type TempOrderItem = Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>;
 
 const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose }) => {
     const { authState } = useAuth();
-    const { orders, createOrder, serveOrder, updateOrderNote } = useOrders();
-    const { tables, updateTable, closeTable, refetch: refetchTables } = useTables();
+    const { orders, createOrder, closeOrder, updateOrderNote } = useOrders();
+    const { tables, updateTable } = useTables();
     const { t } = useLanguage();
     
     const table = useMemo(() => tables.find(t => t.id === initialTable.id) || initialTable, [tables, initialTable]);
@@ -41,7 +41,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     }, [table]);
 
     const activeOrder = useMemo(
-        () => orders?.find(o => o.tableId === table.id && o.status !== OrderStatus.SERVED && o.status !== OrderStatus.CANCELED),
+        () => orders?.find(o => o.tableId === table.id && o.status !== OrderStatus.CLOSED),
         [orders, table.id]
     );
 
@@ -87,84 +87,88 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
     const handleSendToKitchen = async () => {
         if (currentOrderItems.length > 0 && authState?.user.id) {
-            await createOrder(table.id, currentOrderItems, authState.user.id);
-            await refetchTables();
+            await createOrder(table.id, currentOrderItems, authState.user.id, orderNote);
             setCurrentOrderItems([]);
-            onClose();
         }
     };
     
-    const handleServeOrder = async () => {
-        if(activeOrder) {
-            await serveOrder(activeOrder.id);
+    const handleCloseTable = async () => {
+        if(activeOrder){
+            await closeOrder(activeOrder.id);
             onClose();
         }
     }
     
-    const handleCloseTable = async () => {
-        await closeTable(table.id);
-        onClose();
-    }
+    const canCloseTable = activeOrder && activeOrder.items.length > 0 && activeOrder.items.every(i => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED);
+    const canAddItems = !activeOrder || (activeOrder.status !== OrderStatus.SERVED && activeOrder.status !== OrderStatus.CLOSED);
 
     return (
          <Modal isOpen={true} onClose={onClose} title={t('waiter.orderModalTitle', `Table ${table.name}`).replace('{tableName}', table.name)}>
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 overflow-hidden h-full">
                 <div className="lg:col-span-3 overflow-y-auto">
-                    <div className="p-4 border-b border-border-color grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-medium text-text-secondary">{t('waiter.customerName')}</label>
-                            <Input 
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                                onBlur={handleTableInfoSave}
-                                placeholder={t('waiter.customerName')}
-                                className="py-2"
-                            />
-                        </div>
-                         <div>
-                            <label className="text-xs font-medium text-text-secondary">{t('waiter.tableNote')}</label>
-                            <Textarea
-                                value={tableNote}
-                                onChange={(e) => setTableNote(e.target.value)}
-                                onBlur={handleTableInfoSave}
-                                placeholder={t('waiter.tableNote')}
-                                className="py-2 h-10 resize-none"
-                                rows={1}
-                            />
-                        </div>
-                    </div>
-                    <MenuDisplay onAddItem={handleAddItem} />
+                    {canAddItems && (
+                        <>
+                            <div className="p-4 border-b border-border-color grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-medium text-text-secondary">{t('waiter.customerName')}</label>
+                                    <Input 
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                        onBlur={handleTableInfoSave}
+                                        placeholder={t('waiter.customerName')}
+                                        className="py-2"
+                                    />
+                                </div>
+                                 <div>
+                                    <label className="text-xs font-medium text-text-secondary">{t('waiter.tableNote')}</label>
+                                    <Textarea
+                                        value={tableNote}
+                                        onChange={(e) => setTableNote(e.target.value)}
+                                        onBlur={handleTableInfoSave}
+                                        placeholder={t('waiter.tableNote')}
+                                        className="py-2 h-10 resize-none"
+                                        rows={1}
+                                    />
+                                </div>
+                            </div>
+                            <MenuDisplay onAddItem={handleAddItem} />
+                        </>
+                    )}
+                    {!canAddItems && (
+                         <div className="p-8 text-center text-text-secondary">
+                             This order is being served. New items cannot be added.
+                         </div>
+                    )}
                 </div>
                 
-                <div className="lg:col-span-2 bg-card-bg flex flex-col border-l border-border-color overflow-y-auto">
-                   <CurrentOrder 
-                      order={activeOrder}
-                      tempItems={currentOrderItems}
-                      onUpdateItem={handleUpdateItem}
-                      onRemoveItem={handleRemoveItem}
-                   />
-                   {activeOrder && (
-                       <div className="p-4">
-                           <label className="text-xs font-medium text-text-secondary">{t('waiter.notes')}</label>
-                           <Textarea
-                               value={orderNote}
-                               onChange={(e) => setOrderNote(e.target.value)}
-                               onBlur={handleOrderNoteSave}
-                               placeholder={t('waiter.addNote')}
-                               className="py-2"
-                               rows={2}
-                           />
-                       </div>
-                   )}
-                   <div className="p-4 mt-auto border-t border-border-color space-y-2">
-                       { currentOrderItems.length > 0 && (
+                <div className="lg:col-span-2 bg-card-bg flex flex-col border-l border-border-color overflow-hidden">
+                   <div className="flex-1 overflow-y-auto">
+                        <CurrentOrder 
+                          order={activeOrder}
+                          tempItems={currentOrderItems}
+                          onUpdateItem={handleUpdateItem}
+                          onRemoveItem={handleRemoveItem}
+                        />
+                        {canAddItems && (
+                           <div className="p-4">
+                               <label className="text-xs font-medium text-text-secondary">{t('waiter.notes')}</label>
+                               <Textarea
+                                   value={orderNote}
+                                   onChange={(e) => setOrderNote(e.target.value)}
+                                   onBlur={handleOrderNoteSave}
+                                   placeholder={t('waiter.addNote')}
+                                   className="py-2"
+                                   rows={2}
+                               />
+                           </div>
+                        )}
+                   </div>
+                   <div className="p-4 border-t border-border-color space-y-2">
+                       { currentOrderItems.length > 0 && canAddItems && (
                            <Button onClick={handleSendToKitchen} className="w-full">{t('waiter.sendToKitchen')}</Button>
                        )}
-                       { activeOrder && activeOrder.items.every(i => i.status === OrderStatus.READY) && (
-                            <Button onClick={handleServeOrder} className="w-full bg-status-ready hover:opacity-90">{t('waiter.serve')}</Button>
-                       )}
-                       { activeOrder && activeOrder.items.every(i => i.status === OrderStatus.SERVED) && (
-                           <Button onClick={handleCloseTable} className="w-full bg-status-closed hover:opacity-90">{t('general.close')}</Button>
+                       { canCloseTable && (
+                           <Button onClick={handleCloseTable} className="w-full bg-status-closed hover:opacity-90">{t('actions.closeTable')}</Button>
                        )}
                    </div>
                 </div>

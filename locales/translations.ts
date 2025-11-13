@@ -21,7 +21,6 @@ export const translations = {
     'availability': 'Availability',
     'available': 'Available',
     'unavailable': 'Unavailable',
-    // FIX: Add missing 'users' translation key
     'users': 'Users',
     
     // Login
@@ -30,6 +29,8 @@ export const translations = {
     'password': 'Password',
     'loginFailed': 'Login failed. Please check your credentials.',
     'welcomeToOrdo': 'Welcome to Ordo',
+    'customerName': 'Customer Name',
+    'tableNote': 'Table Note',
     
     // Roles
     'SUPER_ADMIN': 'Super Admin',
@@ -53,7 +54,7 @@ export const translations = {
     'orderSent': 'Order sent to kitchen!',
     'serve': 'Serve',
     'served': 'Served',
-    // FIX: Add missing 'serveOrder' and 'closeTable' translation keys
+    'markAsServed': 'Mark as Served',
     'serveOrder': 'Serve All Items',
     'closeTable': 'Close Table',
     
@@ -63,12 +64,14 @@ export const translations = {
     'order': 'Order',
     'table': 'Table',
     'markAllReady': 'Mark All Ready',
+    'orderDetails': 'Order Details',
     
     // Admin Dashboard
     'adminDashboard': 'Admin Dashboard',
     'tablesManagement': 'Tables Management',
     'menuManagement': 'Menu Management',
     'usersManagement': 'Users Management',
+    'orderHistory': 'Order History',
     'addTable': 'Add Table',
     'editTable': 'Edit Table',
     'tableName': 'Table Name',
@@ -82,6 +85,12 @@ export const translations = {
     'editUser': 'Edit User',
     'fullName': 'Full Name',
     'passwordOptional': 'Password (leave blank to not change)',
+    'startDate': 'Start Date',
+    'endDate': 'End Date',
+    'waiter': 'Waiter',
+    'allWaiters': 'All Waiters',
+    'allTables': 'All Tables',
+    'date': 'Date',
 
     // Statuses
     'FREE': 'Free',
@@ -124,7 +133,6 @@ export const translations = {
     'availability': 'Müsaitlik',
     'available': 'Müsait',
     'unavailable': 'Müsait Değil',
-    // FIX: Add missing 'users' translation key
     'users': 'Kullanıcılar',
 
     // Login
@@ -133,6 +141,8 @@ export const translations = {
     'password': 'Şifre',
     'loginFailed': 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.',
     'welcomeToOrdo': 'Ordo\'ya Hoş Geldiniz',
+    'customerName': 'Müşteri Adı',
+    'tableNote': 'Masa Notu',
 
     // Roles
     'SUPER_ADMIN': 'Süper Yönetici',
@@ -156,7 +166,7 @@ export const translations = {
     'orderSent': 'Sipariş mutfağa gönderildi!',
     'serve': 'Servis Et',
     'served': 'Servis Edildi',
-    // FIX: Add missing 'serveOrder' and 'closeTable' translation keys
+    'markAsServed': 'Servis Edildi Olarak İşaretle',
     'serveOrder': 'Tümünü Servis Et',
     'closeTable': 'Masayı Kapat',
 
@@ -166,12 +176,14 @@ export const translations = {
     'order': 'Sipariş',
     'table': 'Masa',
     'markAllReady': 'Tümünü Hazır Olarak İşaretle',
+    'orderDetails': 'Sipariş Detayları',
 
     // Admin Dashboard
     'adminDashboard': 'Yönetici Paneli',
     'tablesManagement': 'Masa Yönetimi',
     'menuManagement': 'Menü Yönetimi',
     'usersManagement': 'Kullanıcı Yönetimi',
+    'orderHistory': 'Sipariş Geçmişi',
     'addTable': 'Masa Ekle',
     'editTable': 'Masayı Düzenle',
     'tableName': 'Masa Adı',
@@ -185,6 +197,12 @@ export const translations = {
     'editUser': 'Kullanıcıyı Düzenle',
     'fullName': 'Tam Ad',
     'passwordOptional': 'Şifre (değiştirmek istemiyorsanız boş bırakın)',
+    'startDate': 'Başlangıç Tarihi',
+    'endDate': 'Bitiş Tarihi',
+    'waiter': 'Garson',
+    'allWaiters': 'Tüm Garsonlar',
+    'allTables': 'Tüm Masalar',
+    'date': 'Tarih',
 
     // Statuses
     'FREE': 'Boş',
@@ -227,7 +245,6 @@ export const translations = {
     'availability': 'Disponibilité',
     'available': 'Disponible',
     'unavailable': 'Indisponible',
-    // FIX: Add missing 'users' translation key
     'users': 'Utilisateurs',
     
     // Login
@@ -236,6 +253,8 @@ export const translations = {
     'password': 'Mot de passe',
     'loginFailed': 'Échec de la connexion. Veuillez vérifier vos identifiants.',
     'welcomeToOrdo': 'Bienvenue chez Ordo',
+    'customerName': 'Nom du Client',
+    'tableNote': 'Note de Table',
 
     // Roles
     'SUPER_ADMIN': 'Super Admin',
@@ -259,7 +278,7 @@ export const translations = {
     'orderSent': 'Commande envoyée en cuisine !',
     'serve': 'Servir',
     'served': 'Servi',
-    // FIX: Add missing 'serveOrder' and 'closeTable' translation keys
+    'markAsServed': 'Marquer comme Servi',
     'serveOrder': 'Tout Servir',
     'closeTable': 'Fermer la Table',
     
@@ -269,12 +288,14 @@ export const translations = {
     'order': 'Commande',
     'table': 'Table',
     'markAllReady': 'Marquer Tout Prêt',
+    'orderDetails': 'Détails de la Commande',
     
     // Admin Dashboard
     'adminDashboard': 'Panneau d\'Administration',
     'tablesManagement': 'Gestion des Tables',
     'menuManagement': 'Gestion du Menu',
     'usersManagement': 'Gestion des Utilisateurs',
+    'orderHistory': 'Historique des Commandes',
     'addTable': 'Ajouter une Table',
     'editTable': 'Modifier la Table',
     'tableName': 'Nom de la Table',
@@ -288,6 +309,12 @@ export const translations = {
     'editUser': 'Modifier l\'Utilisateur',
     'fullName': 'Nom Complet',
     'passwordOptional': 'Mot de passe (laisser vide pour ne pas changer)',
+    'startDate': 'Date de Début',
+    'endDate': 'Date de Fin',
+    'waiter': 'Serveur',
+    'allWaiters': 'Tous les Serveurs',
+    'allTables': 'Toutes les Tables',
+    'date': 'Date',
 
     // Statuses
     'FREE': 'Libre',

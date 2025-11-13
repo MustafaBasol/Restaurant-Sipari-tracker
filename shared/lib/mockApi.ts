@@ -2,6 +2,7 @@ import { Tenant, User, SubscriptionStatus, UserRole, TableStatus, OrderStatus } 
 import { Table } from '../../features/tables/types';
 import { MenuCategory, MenuItem } from '../../features/menu/types';
 import { Order, OrderItem } from '../../features/orders/types';
+import { DailySummaryReport, TopItem } from '../../features/reports/types';
 
 
 // --- MOCK DATABASE ---
@@ -52,7 +53,12 @@ const initializeDB = () => {
     if (savedDb) {
         try {
             const parsed = JSON.parse(savedDb);
-            parsed.orders = parsed.orders.map((o: any) => ({ ...o, createdAt: new Date(o.createdAt), updatedAt: new Date(o.updatedAt) }));
+            parsed.orders = parsed.orders.map((o: any) => ({ 
+                ...o, 
+                createdAt: new Date(o.createdAt), 
+                updatedAt: new Date(o.updatedAt),
+                orderClosedAt: o.orderClosedAt ? new Date(o.orderClosedAt) : undefined,
+            }));
             parsed.tenants = parsed.tenants.map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
             db = parsed;
         } catch (e) {
@@ -70,7 +76,7 @@ const saveDb = () => {
 
 initializeDB();
 
-const simulateDelay = (ms = 300) => new Promise(res => setTimeout(res, ms));
+const simulateDelay = (ms = 200) => new Promise(res => setTimeout(res, ms));
 
 // --- INTERNAL API FUNCTIONS ---
 
@@ -111,7 +117,6 @@ export const login = async (email: string, passwordOrSlug: string): Promise<{ us
 
 export const getDataByTenant = async <T extends { tenantId?: string }>(dataType: keyof MockDB, tenantId: string): Promise<T[]> => {
     await simulateDelay();
-    // FIX: Cast to 'unknown' first to handle potentially mismatched subtypes of the generic constraint.
     return (db[dataType] as unknown as T[]).filter(item => item.tenantId === tenantId);
 };
 
@@ -129,7 +134,6 @@ export const addData = async <T>(dataType: keyof MockDB, item: T): Promise<T> =>
 
 export const updateData = async <T extends {id: string}>(dataType: keyof MockDB, updatedItem: T): Promise<T> => {
     await simulateDelay();
-    // FIX: Cast to 'unknown' first to handle potentially mismatched subtypes of the generic constraint.
     const table = db[dataType] as unknown as T[];
     const index = table.findIndex(i => i.id === updatedItem.id);
     if (index > -1) {
@@ -141,15 +145,19 @@ export const updateData = async <T extends {id: string}>(dataType: keyof MockDB,
 }
 
 // Complex mutations
-export const internalCreateOrder = async (tenantId: string, tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string): Promise<Order> => {
+export const internalCreateOrder = async (tenantId: string, tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string, note?: string): Promise<Order> => {
     await simulateDelay();
     const waiter = db.users.find(u => u.id === waiterId);
-    let order = db.orders.find(o => o.tableId === tableId && o.status !== OrderStatus.SERVED && o.status !== OrderStatus.CANCELED);
+    let order = db.orders.find(o => o.tableId === tableId && o.status !== OrderStatus.CLOSED);
     
     if (order) {
+         if (order.status === OrderStatus.CLOSED) throw new Error("Cannot add items to a closed order.");
         const newItems: OrderItem[] = items.map((item, index) => ({ ...item, id: `orditem${Date.now()}-${index}`, orderId: order!.id, status: OrderStatus.NEW }));
         order.items.push(...newItems);
         order.updatedAt = new Date();
+        if (note) {
+            order.note = note;
+        }
     } else {
         const orderId = `ord${Date.now()}`;
         const newOrder: Order = {
@@ -158,6 +166,7 @@ export const internalCreateOrder = async (tenantId: string, tableId: string, ite
             createdAt: new Date(), updatedAt: new Date(),
             waiterId: waiter?.id,
             waiterName: waiter?.fullName,
+            note: note,
         };
         db.orders.push(newOrder);
         order = newOrder;
@@ -175,11 +184,14 @@ export const internalUpdateOrderItemStatus = async (orderId: string, itemId: str
     const order = db.orders.find(o => o.id === orderId);
     if (order) {
         const item = order.items.find(i => i.id === itemId);
-        if (item) {
+        if (item && item.status !== OrderStatus.SERVED && item.status !== OrderStatus.CLOSED) {
             item.status = status;
             order.updatedAt = new Date();
             if (order.items.every(i => i.status === OrderStatus.READY || i.status === OrderStatus.SERVED)) {
                 order.status = OrderStatus.READY;
+            }
+             if (order.items.every(i => i.status === OrderStatus.SERVED)) {
+                order.status = OrderStatus.SERVED;
             }
             saveDb();
         }
@@ -197,38 +209,45 @@ export const internalMarkOrderAsReady = async (orderId: string): Promise<void> =
     }
 };
 
-export const internalServeOrder = async (orderId: string): Promise<void> => {
+export const internalServeOrderItem = async (orderId: string, itemId: string): Promise<void> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
-    if (order) {
-        order.items.forEach(i => { if (i.status === OrderStatus.READY) i.status = OrderStatus.SERVED; });
-        if (order.items.every(i => i.status === OrderStatus.SERVED)) order.status = OrderStatus.SERVED;
+    if(order) {
+        const item = order.items.find(i => i.id === itemId);
+        if (item && item.status === OrderStatus.READY) {
+            item.status = OrderStatus.SERVED;
+            order.updatedAt = new Date();
+            // Check if the whole order is now served
+            if(order.items.every(i => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED)) {
+                order.status = OrderStatus.SERVED;
+            }
+            saveDb();
+        }
+    }
+};
+
+export const internalCloseOrder = async (orderId: string): Promise<void> => {
+    await simulateDelay();
+    const order = db.orders.find(o => o.id === orderId);
+    if(order && order.status === OrderStatus.SERVED) {
+        order.status = OrderStatus.CLOSED;
+        order.orderClosedAt = new Date();
         order.updatedAt = new Date();
+        
+        const table = db.tables.find(t => t.id === order.tableId);
+        if(table) {
+            table.status = TableStatus.FREE;
+        }
         saveDb();
     }
 };
+
 
 export const internalUpdateTableStatus = async (tableId: string, status: TableStatus): Promise<void> => {
     await simulateDelay();
     const table = db.tables.find(t => t.id === tableId);
     if (table) {
         table.status = status;
-        saveDb();
-    }
-};
-
-export const internalCloseTable = async (tableId: string): Promise<void> => {
-    await simulateDelay();
-    const table = db.tables.find(t => t.id === tableId);
-    if (table) {
-        table.status = TableStatus.CLOSED;
-        setTimeout(() => {
-            const currentTable = db.tables.find(t => t.id === tableId);
-            if (currentTable && currentTable.status === TableStatus.CLOSED) {
-                currentTable.status = TableStatus.FREE;
-                saveDb();
-            }
-        }, 5000);
         saveDb();
     }
 };
@@ -241,4 +260,62 @@ export const internalUpdateOrderNote = async (orderId: string, note: string): Pr
         order.updatedAt = new Date();
         saveDb();
     }
+};
+
+export const internalGetDailySummary = async (tenantId: string, date: string): Promise<DailySummaryReport> => {
+    await simulateDelay(500);
+    
+    const targetDate = new Date(date);
+
+    const closedOrders = db.orders.filter(order => {
+        if (order.tenantId !== tenantId || order.status !== OrderStatus.CLOSED || !order.orderClosedAt) {
+            return false;
+        }
+        const closedDate = new Date(order.orderClosedAt);
+        return closedDate.getUTCFullYear() === targetDate.getUTCFullYear() &&
+               closedDate.getUTCMonth() === targetDate.getUTCMonth() &&
+               closedDate.getUTCDate() === targetDate.getUTCDate();
+    });
+
+    let totalRevenue = 0;
+    const itemAggregation: { [key: string]: { quantity: number; revenue: number } } = {};
+
+    closedOrders.forEach(order => {
+        order.items.forEach(item => {
+            const menuItem = db.menuItems.find(mi => mi.id === item.menuItemId);
+            if (menuItem) {
+                const itemRevenue = item.quantity * menuItem.price;
+                totalRevenue += itemRevenue;
+
+                if (!itemAggregation[menuItem.id]) {
+                    itemAggregation[menuItem.id] = { quantity: 0, revenue: 0 };
+                }
+                itemAggregation[menuItem.id].quantity += item.quantity;
+                itemAggregation[menuItem.id].revenue += itemRevenue;
+            }
+        });
+    });
+
+    const topItems: TopItem[] = Object.keys(itemAggregation)
+        .map(menuItemId => {
+            const menuItem = db.menuItems.find(mi => mi.id === menuItemId);
+            return {
+                name: menuItem?.name || 'Unknown Item',
+                quantity: itemAggregation[menuItemId].quantity,
+                revenue: itemAggregation[menuItemId].revenue,
+            };
+        })
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+    const totalOrders = closedOrders.length;
+    const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    return {
+        date,
+        totalOrders,
+        totalRevenue,
+        averageTicket,
+        topItems,
+    };
 };

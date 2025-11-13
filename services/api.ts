@@ -60,6 +60,7 @@ const initializeDB = () => {
                 ...o,
                 createdAt: new Date(o.createdAt),
                 updatedAt: new Date(o.updatedAt),
+                orderClosedAt: o.orderClosedAt ? new Date(o.orderClosedAt) : undefined,
             }));
             parsed.tenants = parsed.tenants.map((t: Tenant) => ({
                 ...t,
@@ -77,6 +78,8 @@ const initializeDB = () => {
 
 const saveDb = () => {
     localStorage.setItem('ordo-db', JSON.stringify(db));
+    // Broadcast that a change has been made for real-time refetching.
+    localStorage.setItem('db_last_updated', Date.now().toString());
 };
 
 initializeDB();
@@ -283,13 +286,16 @@ export const updateUser = async (updatedUser: User): Promise<User> => {
     throw new Error('User not found');
 };
 
-export const createOrder = async (tenantId: string, tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[]): Promise<Order> => {
+export const createOrder = async (tenantId: string, tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string): Promise<Order> => {
     await simulateDelay();
     
     // Check if there is an existing active order for the table
-    let order = db.orders.find(o => o.tableId === tableId && o.status !== OrderStatus.SERVED && o.status !== OrderStatus.CANCELED);
+    let order = db.orders.find(o => o.tableId === tableId && o.status !== OrderStatus.CLOSED);
+
+    const waiter = db.users.find(u => u.id === waiterId);
 
     if (order) {
+        if (order.status === OrderStatus.CLOSED) throw new Error("Cannot add items to a closed order.");
         // Add items to existing order
         const newItems: OrderItem[] = items.map((item, index) => ({
             ...item,
@@ -301,19 +307,22 @@ export const createOrder = async (tenantId: string, tableId: string, items: Pick
         order.updatedAt = new Date();
     } else {
         // Create a new order
+        const orderId = `ord${Date.now()}`;
         const newOrder: Order = {
-            id: `ord${Date.now()}`,
+            id: orderId,
             tenantId,
             tableId,
             status: OrderStatus.NEW,
             items: items.map((item, index) => ({
                 ...item,
                 id: `orditem${Date.now()}-${index}`,
-                orderId: `ord${Date.now()}`,
+                orderId: orderId,
                 status: OrderStatus.NEW,
             })),
             createdAt: new Date(),
             updatedAt: new Date(),
+            waiterId: waiter?.id,
+            waiterName: waiter?.fullName,
         };
         db.orders.push(newOrder);
         order = newOrder;
@@ -338,6 +347,10 @@ export const updateOrderItemStatus = async (orderId: string, itemId: string, sta
             order.updatedAt = new Date();
             const allReady = order.items.every(i => i.status === OrderStatus.READY || i.status === OrderStatus.SERVED);
             if (allReady) order.status = OrderStatus.READY;
+
+            const allServed = order.items.every(i => i.status === OrderStatus.SERVED);
+            if (allServed) order.status = OrderStatus.SERVED;
+            
             saveDb();
         }
     }
@@ -367,38 +380,44 @@ export const updateTableStatus = async (tableId: string, status: TableStatus): P
     }
 };
 
-export const serveOrder = async (orderId: string): Promise<void> => {
+export const serveOrderItem = async (orderId: string, itemId: string): Promise<void> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
-    if(order){
-        order.items.forEach(i => {
-            if (i.status === OrderStatus.READY) {
-                i.status = OrderStatus.SERVED;
+    if(order) {
+        const item = order.items.find(i => i.id === itemId);
+        if (item && item.status === OrderStatus.READY) {
+            item.status = OrderStatus.SERVED;
+            order.updatedAt = new Date();
+            
+            if (order.items.every(i => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED)) {
+                order.status = OrderStatus.SERVED;
             }
-        });
-        
-        if (order.items.every(i => i.status === OrderStatus.SERVED)) {
-            order.status = OrderStatus.SERVED;
+            saveDb();
         }
+    }
+};
+
+export const closeOrder = async (orderId: string): Promise<void> => {
+    await simulateDelay();
+    const order = db.orders.find(o => o.id === orderId);
+    if(order && order.status === OrderStatus.SERVED) {
+        order.status = OrderStatus.CLOSED;
+        order.orderClosedAt = new Date();
         order.updatedAt = new Date();
+        
+        const table = db.tables.find(t => t.id === order.tableId);
+        if(table) {
+            table.status = TableStatus.FREE;
+        }
         saveDb();
     }
 };
 
+
 export const closeTable = async (tableId: string): Promise<void> => {
-    await simulateDelay();
-    const table = db.tables.find(t => t.id === tableId);
-    if(table){
-        table.status = TableStatus.CLOSED; 
-        setTimeout(() => {
-            const currentTable = db.tables.find(t => t.id === tableId);
-            if (currentTable && currentTable.status === TableStatus.CLOSED) {
-                currentTable.status = TableStatus.FREE;
-                saveDb();
-            }
-        }, 5000);
-        saveDb();
-    }
+    console.warn("closeTable is deprecated. Use closeOrder instead.");
+    // This function is kept for backward compatibility but should not be used.
+    // The logic is now handled in closeOrder.
 };
 
 // Super Admin Mutations
@@ -411,4 +430,14 @@ export const updateTenantSubscription = async (tenantId: string, status: Subscri
         return tenant;
     }
     throw new Error('Tenant not found');
+};
+
+export const updateOrderNote = async (orderId: string, note: string): Promise<void> => {
+    await simulateDelay();
+    const order = db.orders.find(o => o.id === orderId);
+    if (order) {
+        order.note = note;
+        order.updatedAt = new Date();
+        saveDb();
+    }
 };

@@ -63,6 +63,7 @@ const OrderHistory: React.FC = () => {
         [OrderStatus.READY]: 'green',
         [OrderStatus.SERVED]: 'gray',
         [OrderStatus.CANCELED]: 'red',
+        [OrderStatus.CLOSED]: 'gray',
     };
 
     if (isLoadingOrders || isLoadingUsers || isLoadingTables) {
@@ -99,6 +100,7 @@ const OrderHistory: React.FC = () => {
             <Table>
                 <TableHeader>
                     <TableHeaderCell>{t('admin.history.header.date')}</TableHeaderCell>
+                    <TableHeaderCell>{t('admin.history.header.closedAt')}</TableHeaderCell>
                     <TableHeaderCell>{t('admin.history.header.table')}</TableHeaderCell>
                     <TableHeaderCell>{t('admin.history.header.waiter')}</TableHeaderCell>
                     <TableHeaderCell>{t('admin.history.header.total')}</TableHeaderCell>
@@ -110,6 +112,7 @@ const OrderHistory: React.FC = () => {
                         return (
                              <TableRow key={order.id}>
                                 <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
+                                <TableCell>{order.orderClosedAt ? new Date(order.orderClosedAt).toLocaleTimeString() : '-'}</TableCell>
                                 <TableCell>{table?.name || 'N/A'}</TableCell>
                                 <TableCell>{order.waiterName || 'N/A'}</TableCell>
                                 <TableCell>${getOrderTotal(order.id).toFixed(2)}</TableCell>

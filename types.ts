@@ -17,6 +17,7 @@ export enum OrderStatus {
     READY = 'READY',
     SERVED = 'SERVED',
     CANCELED = 'CANCELED',
+    CLOSED = 'CLOSED',
 }
 
 export enum SubscriptionStatus {
@@ -49,6 +50,8 @@ export interface Table {
     tenantId: string;
     name: string;
     status: TableStatus;
+    customerName?: string;
+    note?: string;
 }
 
 export interface MenuCategory {
@@ -84,4 +87,8 @@ export interface Order {
     items: OrderItem[];
     createdAt: Date;
     updatedAt: Date;
+    note?: string;
+    waiterId?: string;
+    waiterName?: string;
+    orderClosedAt?: Date;
 }

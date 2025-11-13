@@ -1,4 +1,5 @@
-import { getDataByTenant, addData, updateData, internalCloseTable, internalUpdateTableStatus } from '../../shared/lib/mockApi';
+// FIX: Removed import for non-existent 'internalCloseTable'
+import { getDataByTenant, addData, updateData, internalUpdateTableStatus } from '../../shared/lib/mockApi';
 import { Table, TableStatus } from './types';
 
 export const getTables = (tenantId: string) => getDataByTenant<Table>('tables', tenantId);
@@ -19,4 +20,4 @@ export const updateTableStatus = (tableId: string, status: TableStatus) => {
     return internalUpdateTableStatus(tableId, status);
 };
 
-export const closeTable = (tableId: string) => internalCloseTable(tableId);
+// FIX: Removed unused `closeTable` function.

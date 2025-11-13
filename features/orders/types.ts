@@ -20,4 +20,5 @@ export interface Order {
     note?: string;
     waiterId?: string;
     waiterName?: string;
+    orderClosedAt?: Date;
 }
