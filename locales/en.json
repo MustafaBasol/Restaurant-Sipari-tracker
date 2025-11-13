@@ -1,0 +1,125 @@
+{
+  "general": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "name": "Name",
+    "status": "Status",
+    "role": "Role",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "price": "Price",
+    "description": "Description",
+    "category": "Category",
+    "availability": "Availability",
+    "available": "Available",
+    "unavailable": "Unavailable"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "loginFailed": "Login failed. Please check your credentials.",
+    "welcome": "Welcome to Ordo",
+    "newHere": "New here?",
+    "createAccountLink": "Create a Restaurant Account",
+    "register": {
+      "title": "Create your restaurant account",
+      "restaurantName": "Restaurant Name",
+      "restaurantUrl": "Restaurant URL Slug",
+      "yourName": "Your Full Name",
+      "createAccountBtn": "Create Account",
+      "haveAccount": "Already have an account?",
+      "allFieldsRequired": "All fields are required.",
+      "failed": "Registration failed. The restaurant URL or email might already be taken."
+    }
+  },
+  "roles": {
+    "SUPER_ADMIN": "Super Admin",
+    "ADMIN": "Admin",
+    "WAITER": "Waiter",
+    "KITCHEN": "Kitchen"
+  },
+  "header": {
+    "logout": "Logout"
+  },
+  "waiter": {
+    "tablesTitle": "Tables",
+    "startNewOrder": "Start New Order",
+    "viewOrder": "View Order",
+    "currentOrder": "Current Order",
+    "sendToKitchen": "Send to Kitchen",
+    "total": "Total",
+    "notes": "Notes",
+    "addNote": "Add a note...",
+    "quantity": "Qty",
+    "orderSent": "Order sent to kitchen!",
+    "serve": "Serve",
+    "served": "Served",
+    "orderModalTitle": "Table {tableName}",
+    "occupyTable": "Occupy",
+    "freeUpTable": "Free Up"
+  },
+  "kitchen": {
+    "title": "Kitchen Dashboard",
+    "activeOrders": "Active Orders",
+    "order": "Order",
+    "table": "Table",
+    "markAllReady": "Mark All Ready",
+    "noActiveOrders": "No active orders."
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "tabs": {
+        "tables": "Tables Management",
+        "menu": "Menu Management",
+        "users": "Users Management"
+    },
+    "tables": {
+        "add": "Add Table",
+        "edit": "Edit Table",
+        "name": "Table Name"
+    },
+    "menu": {
+        "addCategory": "Add Category",
+        "editCategory": "Edit Category",
+        "categoryName": "Category Name",
+        "addItem": "Add Menu Item",
+        "editItem": "Edit Menu Item",
+        "itemName": "Menu Item Name"
+    },
+    "users": {
+        "add": "Add User",
+        "edit": "Edit User",
+        "fullName": "Full Name",
+        "passwordOptional": "Password (leave blank to not change)",
+        "deactivate": "Deactivate",
+        "activate": "Activate"
+    }
+  },
+  "statuses": {
+    "FREE": "Free",
+    "OCCUPIED": "Occupied",
+    "CLOSED": "Closed",
+    "NEW": "New",
+    "IN_PREPARATION": "In Preparation",
+    "READY": "Ready",
+    "SERVED": "Served",
+    "CANCELED": "Canceled",
+    "TRIAL": "Trial",
+    "ACTIVE": "Active",
+    "CANCELED_SUB": "Canceled"
+  },
+  "superAdmin": {
+    "title": "Super Admin Dashboard",
+    "tenants": "Tenants",
+    "subscription": "Subscription",
+    "registeredOn": "Registered On",
+    "viewUsers": "View Users",
+    "tenantUsers": "Tenant Users"
+  }
+}

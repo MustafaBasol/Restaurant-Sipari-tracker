@@ -12,13 +12,15 @@ const TenantList: React.FC = () => {
     const [sortAsc, setSortAsc] = useState(false);
 
     const sortedTenants = useMemo(() => {
+        // FIX: Refactored sorting logic to handle date comparison correctly and avoid type errors.
         return [...allTenants].sort((a, b) => {
-            let compareA = a[sortKey];
-            let compareB = b[sortKey];
             if (sortKey === 'createdAt') {
-                compareA = new Date(a.createdAt).getTime();
-                compareB = new Date(b.createdAt).getTime();
+                const timeA = new Date(a.createdAt).getTime();
+                const timeB = new Date(b.createdAt).getTime();
+                return sortAsc ? timeA - timeB : timeB - timeA;
             }
+            const compareA = a[sortKey];
+            const compareB = b[sortKey];
             if (compareA < compareB) return sortAsc ? -1 : 1;
             if (compareA > compareB) return sortAsc ? 1 : -1;
             return 0;

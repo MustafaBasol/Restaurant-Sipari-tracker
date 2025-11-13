@@ -1,0 +1,125 @@
+{
+  "general": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "name": "Nom",
+    "status": "Statut",
+    "role": "Rôle",
+    "actions": "Actions",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "price": "Prix",
+    "description": "Description",
+    "category": "Catégorie",
+    "availability": "Disponibilité",
+    "available": "Disponible",
+    "unavailable": "Indisponible"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "loginFailed": "Échec de la connexion. Veuillez vérifier vos identifiants.",
+    "welcome": "Bienvenue chez Ordo",
+    "newHere": "Nouveau ici?",
+    "createAccountLink": "Créer un compte de restaurant",
+    "register": {
+      "title": "Créez votre compte de restaurant",
+      "restaurantName": "Nom du restaurant",
+      "restaurantUrl": "URL du restaurant",
+      "yourName": "Votre Nom Complet",
+      "createAccountBtn": "Créer un compte",
+      "haveAccount": "Vous avez déjà un compte?",
+      "allFieldsRequired": "Tous les champs sont requis.",
+      "failed": "Échec de l'enregistrement. L'URL du restaurant ou l'e-mail est peut-être déjà pris."
+    }
+  },
+  "roles": {
+    "SUPER_ADMIN": "Super Admin",
+    "ADMIN": "Admin",
+    "WAITER": "Serveur",
+    "KITCHEN": "Cuisine"
+  },
+  "header": {
+    "logout": "Déconnexion"
+  },
+  "waiter": {
+    "tablesTitle": "Tables",
+    "startNewOrder": "Nouvelle Commande",
+    "viewOrder": "Voir la Commande",
+    "currentOrder": "Commande Actuelle",
+    "sendToKitchen": "Envoyer en Cuisine",
+    "total": "Total",
+    "notes": "Notes",
+    "addNote": "Ajouter une note...",
+    "quantity": "Qté",
+    "orderSent": "Commande envoyée en cuisine !",
+    "serve": "Servir",
+    "served": "Servi",
+    "orderModalTitle": "Table {tableName}",
+    "occupyTable": "Occuper",
+    "freeUpTable": "Libérer"
+  },
+  "kitchen": {
+    "title": "Tableau de Bord Cuisine",
+    "activeOrders": "Commandes Actives",
+    "order": "Commande",
+    "table": "Table",
+    "markAllReady": "Marquer Tout Prêt",
+    "noActiveOrders": "Aucune commande active."
+  },
+  "admin": {
+    "title": "Panneau d'Administration",
+    "tabs": {
+        "tables": "Gestion des Tables",
+        "menu": "Gestion du Menu",
+        "users": "Gestion des Utilisateurs"
+    },
+    "tables": {
+        "add": "Ajouter une Table",
+        "edit": "Modifier la Table",
+        "name": "Nom de la Table"
+    },
+    "menu": {
+        "addCategory": "Ajouter une Catégorie",
+        "editCategory": "Modifier la Catégorie",
+        "categoryName": "Nom de la Catégorie",
+        "addItem": "Ajouter un Plat",
+        "editItem": "Modifier le Plat",
+        "itemName": "Nom du Plat"
+    },
+    "users": {
+        "add": "Ajouter un Utilisateur",
+        "edit": "Modifier l'Utilisateur",
+        "fullName": "Nom Complet",
+        "passwordOptional": "Mot de passe (laisser vide pour ne pas changer)",
+        "deactivate": "Désactiver",
+        "activate": "Activer"
+    }
+  },
+  "statuses": {
+    "FREE": "Libre",
+    "OCCUPIED": "Occupée",
+    "CLOSED": "Fermée",
+    "NEW": "Nouveau",
+    "IN_PREPARATION": "En Préparation",
+    "READY": "Prêt",
+    "SERVED": "Servi",
+    "CANCELED": "Annulé",
+    "TRIAL": "Essai",
+    "ACTIVE": "Actif",
+    "CANCELED_SUB": "Annulé"
+  },
+  "superAdmin": {
+    "title": "Tableau de Bord Super Admin",
+    "tenants": "Restaurants",
+    "subscription": "Abonnement",
+    "registeredOn": "Inscrit le",
+    "viewUsers": "Voir les Utilisateurs",
+    "tenantUsers": "Utilisateurs du Restaurant"
+  }
+}

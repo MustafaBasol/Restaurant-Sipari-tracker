@@ -21,6 +21,8 @@ export const translations = {
     'availability': 'Availability',
     'available': 'Available',
     'unavailable': 'Unavailable',
+    // FIX: Add missing 'users' translation key
+    'users': 'Users',
     
     // Login
     'signIn': 'Sign In',
@@ -51,6 +53,9 @@ export const translations = {
     'orderSent': 'Order sent to kitchen!',
     'serve': 'Serve',
     'served': 'Served',
+    // FIX: Add missing 'serveOrder' and 'closeTable' translation keys
+    'serveOrder': 'Serve All Items',
+    'closeTable': 'Close Table',
     
     // Kitchen Dashboard
     'kitchenDashboard': 'Kitchen Dashboard',
@@ -119,6 +124,8 @@ export const translations = {
     'availability': 'Müsaitlik',
     'available': 'Müsait',
     'unavailable': 'Müsait Değil',
+    // FIX: Add missing 'users' translation key
+    'users': 'Kullanıcılar',
 
     // Login
     'signIn': 'Giriş Yap',
@@ -149,6 +156,9 @@ export const translations = {
     'orderSent': 'Sipariş mutfağa gönderildi!',
     'serve': 'Servis Et',
     'served': 'Servis Edildi',
+    // FIX: Add missing 'serveOrder' and 'closeTable' translation keys
+    'serveOrder': 'Tümünü Servis Et',
+    'closeTable': 'Masayı Kapat',
 
     // Kitchen Dashboard
     'kitchenDashboard': 'Mutfak Ekranı',
@@ -217,6 +227,8 @@ export const translations = {
     'availability': 'Disponibilité',
     'available': 'Disponible',
     'unavailable': 'Indisponible',
+    // FIX: Add missing 'users' translation key
+    'users': 'Utilisateurs',
     
     // Login
     'signIn': 'Se connecter',
@@ -247,6 +259,9 @@ export const translations = {
     'orderSent': 'Commande envoyée en cuisine !',
     'serve': 'Servir',
     'served': 'Servi',
+    // FIX: Add missing 'serveOrder' and 'closeTable' translation keys
+    'serveOrder': 'Tout Servir',
+    'closeTable': 'Fermer la Table',
     
     // Kitchen Dashboard
     'kitchenDashboard': 'Tableau de Bord Cuisine',

@@ -1,0 +1,125 @@
+{
+  "general": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "add": "Ekle",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "close": "Kapat",
+    "name": "İsim",
+    "status": "Durum",
+    "role": "Rol",
+    "actions": "İşlemler",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "price": "Fiyat",
+    "description": "Açıklama",
+    "category": "Kategori",
+    "availability": "Müsaitlik",
+    "available": "Müsait",
+    "unavailable": "Müsait Değil"
+  },
+  "auth": {
+    "signIn": "Giriş Yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "loginFailed": "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.",
+    "welcome": "Ordo'ya Hoş Geldiniz",
+    "newHere": "Yeni misiniz?",
+    "createAccountLink": "Restoran Hesabı Oluştur",
+    "register": {
+      "title": "Restoran hesabınızı oluşturun",
+      "restaurantName": "Restoran Adı",
+      "restaurantUrl": "Restoran URL Adresi",
+      "yourName": "Tam Adınız",
+      "createAccountBtn": "Hesap Oluştur",
+      "haveAccount": "Zaten bir hesabınız var mı?",
+      "allFieldsRequired": "Tüm alanlar zorunludur.",
+      "failed": "Kayıt başarısız. Restoran URL'si veya e-posta zaten alınmış olabilir."
+    }
+  },
+  "roles": {
+    "SUPER_ADMIN": "Süper Yönetici",
+    "ADMIN": "Yönetici",
+    "WAITER": "Garson",
+    "KITCHEN": "Mutfak"
+  },
+  "header": {
+    "logout": "Çıkış Yap"
+  },
+  "waiter": {
+    "tablesTitle": "Masalar",
+    "startNewOrder": "Yeni Sipariş Başlat",
+    "viewOrder": "Siparişi Görüntüle",
+    "currentOrder": "Mevcut Sipariş",
+    "sendToKitchen": "Mutfağa Gönder",
+    "total": "Toplam",
+    "notes": "Notlar",
+    "addNote": "Not ekle...",
+    "quantity": "Adet",
+    "orderSent": "Sipariş mutfağa gönderildi!",
+    "serve": "Servis Et",
+    "served": "Servis Edildi",
+    "orderModalTitle": "Masa {tableName}",
+    "occupyTable": "Doldur",
+    "freeUpTable": "Boşalt"
+  },
+  "kitchen": {
+    "title": "Mutfak Ekranı",
+    "activeOrders": "Aktif Siparişler",
+    "order": "Sipariş",
+    "table": "Masa",
+    "markAllReady": "Tümünü Hazır Olarak İşaretle",
+    "noActiveOrders": "Aktif sipariş bulunmamaktadır."
+  },
+  "admin": {
+    "title": "Yönetici Paneli",
+    "tabs": {
+        "tables": "Masa Yönetimi",
+        "menu": "Menü Yönetimi",
+        "users": "Kullanıcı Yönetimi"
+    },
+    "tables": {
+        "add": "Masa Ekle",
+        "edit": "Masayı Düzenle",
+        "name": "Masa Adı"
+    },
+    "menu": {
+        "addCategory": "Kategori Ekle",
+        "editCategory": "Kategoriyi Düzenle",
+        "categoryName": "Kategori Adı",
+        "addItem": "Menü Öğesi Ekle",
+        "editItem": "Menü Öğesini Düzenle",
+        "itemName": "Menü Öğesi Adı"
+    },
+    "users": {
+        "add": "Kullanıcı Ekle",
+        "edit": "Kullanıcıyı Düzenle",
+        "fullName": "Tam Ad",
+        "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
+        "deactivate": "Pasif Yap",
+        "activate": "Aktif Yap"
+    }
+  },
+  "statuses": {
+    "FREE": "Boş",
+    "OCCUPIED": "Dolu",
+    "CLOSED": "Kapalı",
+    "NEW": "Yeni",
+    "IN_PREPARATION": "Hazırlanıyor",
+    "READY": "Hazır",
+    "SERVED": "Servis Edildi",
+    "CANCELED": "İptal Edildi",
+    "TRIAL": "Deneme",
+    "ACTIVE": "Aktif",
+    "CANCELED_SUB": "İptal Edilmiş"
+  },
+  "superAdmin": {
+    "title": "Süper Yönetici Paneli",
+    "tenants": "Restoranlar",
+    "subscription": "Abonelik",
+    "registeredOn": "Kayıt Tarihi",
+    "viewUsers": "Kullanıcıları Görüntüle",
+    "tenantUsers": "Restoran Kullanıcıları"
+  }
+}

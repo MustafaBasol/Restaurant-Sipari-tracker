@@ -1,18 +1,19 @@
-
 import React from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
-import LanguageSwitcher from './LanguageSwitcher';
+import { useAuth } from '../../../features/auth/hooks/useAuth';
+import { useLanguage } from '../../hooks/useLanguage';
+import LanguageSwitcher from '../LanguageSwitcher';
 import { UserRole } from '../../types';
 
 const AppHeader: React.FC = () => {
-    const { authState, logout, t } = useAppContext();
+    const { authState, logout } = useAuth();
+    const { t } = useLanguage();
 
     if (!authState) return null;
 
     const { user, tenant } = authState;
 
     const getRoleDisplayName = (role: UserRole) => {
-        return t(role);
+        return t(`roles.${role}`);
     };
 
     return (
@@ -23,7 +24,7 @@ const AppHeader: React.FC = () => {
                         <span className="text-xl font-bold text-text-primary">Ordo</span>
                         <span className="hidden sm:block text-text-secondary">|</span>
                         <span className="hidden sm:block text-lg font-medium text-text-secondary">
-                            {tenant ? tenant.name : t('superAdminDashboard')}
+                            {tenant ? tenant.name : t('superAdmin.title')}
                         </span>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -36,7 +37,7 @@ const AppHeader: React.FC = () => {
                             onClick={logout}
                             className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
                         >
-                            {t('logout')}
+                            {t('header.logout')}
                         </button>
                     </div>
                 </div>
