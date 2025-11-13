@@ -36,9 +36,11 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
     return (
         <Modal isOpen={!!order} onClose={onClose} title={t('kitchen.orderDetails')}>
             <div className="p-6">
-                <div className="mb-4">
+                <div className="mb-4 bg-white p-4 rounded-xl shadow-subtle">
                     <h3 className="text-2xl font-bold">{t('kitchen.table')} {table?.name}</h3>
-                    <p className="text-sm text-text-secondary">{new Date(order.createdAt).toLocaleString()}</p>
+                    <p className="text-sm text-text-secondary mb-2">{new Date(order.createdAt).toLocaleString()}</p>
+                    {table?.customerName && <p className="text-sm font-semibold">Customer: {table.customerName}</p>}
+                    {table?.note && <p className="text-sm text-text-secondary italic">Note: "{table.note}"</p>}
                 </div>
 
                 <div className="space-y-3">

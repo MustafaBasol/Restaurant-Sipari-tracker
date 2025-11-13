@@ -62,7 +62,9 @@
     "served": "Servis Edildi",
     "orderModalTitle": "Masa {tableName}",
     "occupyTable": "Doldur",
-    "freeUpTable": "Boşalt"
+    "freeUpTable": "Boşalt",
+    "customerName": "Müşteri Adı",
+    "tableNote": "Masa Notu"
   },
   "kitchen": {
     "title": "Mutfak Ekranı",
@@ -78,12 +80,15 @@
     "tabs": {
         "tables": "Masa Yönetimi",
         "menu": "Menü Yönetimi",
-        "users": "Kullanıcı Yönetimi"
+        "users": "Kullanıcı Yönetimi",
+        "orderHistory": "Sipariş Geçmişi"
     },
     "tables": {
         "add": "Masa Ekle",
         "edit": "Masayı Düzenle",
-        "name": "Masa Adı"
+        "name": "Masa Adı",
+        "viewOrder": "Siparişi Görüntüle",
+        "orderModalTitle": "{tableName} Masası Siparişi"
     },
     "menu": {
         "addCategory": "Kategori Ekle",
@@ -100,6 +105,21 @@
         "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
         "deactivate": "Pasif Yap",
         "activate": "Aktif Yap"
+    },
+    "history": {
+      "startDate": "Başlangıç Tarihi",
+      "endDate": "Bitiş Tarihi",
+      "waiter": "Garson",
+      "allWaiters": "Tüm Garsonlar",
+      "table": "Masa",
+      "allTables": "Tüm Masalar",
+      "header": {
+        "date": "Tarih",
+        "table": "Masa",
+        "waiter": "Garson",
+        "total": "Toplam",
+        "status": "Durum"
+      }
     }
   },
   "statuses": {

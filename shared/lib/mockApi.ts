@@ -141,9 +141,11 @@ export const updateData = async <T extends {id: string}>(dataType: keyof MockDB,
 }
 
 // Complex mutations
-export const internalCreateOrder = async (tenantId: string, tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[]): Promise<Order> => {
+export const internalCreateOrder = async (tenantId: string, tableId: string, items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[], waiterId: string): Promise<Order> => {
     await simulateDelay();
+    const waiter = db.users.find(u => u.id === waiterId);
     let order = db.orders.find(o => o.tableId === tableId && o.status !== OrderStatus.SERVED && o.status !== OrderStatus.CANCELED);
+    
     if (order) {
         const newItems: OrderItem[] = items.map((item, index) => ({ ...item, id: `orditem${Date.now()}-${index}`, orderId: order!.id, status: OrderStatus.NEW }));
         order.items.push(...newItems);
@@ -154,6 +156,8 @@ export const internalCreateOrder = async (tenantId: string, tableId: string, ite
             id: orderId, tenantId, tableId, status: OrderStatus.NEW,
             items: items.map((item, index) => ({ ...item, id: `orditem${Date.now()}-${index}`, orderId, status: OrderStatus.NEW })),
             createdAt: new Date(), updatedAt: new Date(),
+            waiterId: waiter?.id,
+            waiterName: waiter?.fullName,
         };
         db.orders.push(newOrder);
         order = newOrder;
@@ -225,6 +229,16 @@ export const internalCloseTable = async (tableId: string): Promise<void> => {
                 saveDb();
             }
         }, 5000);
+        saveDb();
+    }
+};
+
+export const internalUpdateOrderNote = async (orderId: string, note: string): Promise<void> => {
+    await simulateDelay();
+    const order = db.orders.find(o => o.id === orderId);
+    if (order) {
+        order.note = note;
+        order.updatedAt = new Date();
         saveDb();
     }
 };

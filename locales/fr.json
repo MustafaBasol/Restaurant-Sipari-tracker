@@ -62,7 +62,9 @@
     "served": "Servi",
     "orderModalTitle": "Table {tableName}",
     "occupyTable": "Occuper",
-    "freeUpTable": "Libérer"
+    "freeUpTable": "Libérer",
+    "customerName": "Nom du Client",
+    "tableNote": "Note de Table"
   },
   "kitchen": {
     "title": "Tableau de Bord Cuisine",
@@ -78,12 +80,15 @@
     "tabs": {
         "tables": "Gestion des Tables",
         "menu": "Gestion du Menu",
-        "users": "Gestion des Utilisateurs"
+        "users": "Gestion des Utilisateurs",
+        "orderHistory": "Historique des Commandes"
     },
     "tables": {
         "add": "Ajouter une Table",
         "edit": "Modifier la Table",
-        "name": "Nom de la Table"
+        "name": "Nom de la Table",
+        "viewOrder": "Voir la Commande",
+        "orderModalTitle": "Commande pour {tableName}"
     },
     "menu": {
         "addCategory": "Ajouter une Catégorie",
@@ -100,6 +105,21 @@
         "passwordOptional": "Mot de passe (laisser vide pour ne pas changer)",
         "deactivate": "Désactiver",
         "activate": "Activer"
+    },
+    "history": {
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "waiter": "Serveur",
+      "allWaiters": "Tous les serveurs",
+      "table": "Table",
+      "allTables": "Toutes les tables",
+      "header": {
+        "date": "Date",
+        "table": "Table",
+        "waiter": "Serveur",
+        "total": "Total",
+        "status": "Statut"
+      }
     }
   },
   "statuses": {

@@ -17,4 +17,7 @@ export interface Order {
     items: OrderItem[];
     createdAt: Date;
     updatedAt: Date;
+    note?: string;
+    waiterId?: string;
+    waiterName?: string;
 }

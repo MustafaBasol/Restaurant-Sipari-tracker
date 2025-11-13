@@ -3,10 +3,11 @@ import { useLanguage } from '../../../shared/hooks/useLanguage';
 import TablesManagement from '../../tables/components/TablesManagement';
 import MenuManagement from '../../menu/components/MenuManagement';
 import UsersManagement from '../../users/components/UsersManagement';
-import { TableIcon, MenuIcon, UsersIcon } from '../../../shared/components/icons/Icons';
+import { TableIcon, MenuIcon, UsersIcon, HistoryIcon } from '../../../shared/components/icons/Icons';
 import { Card } from '../../../shared/components/ui/Card';
+import OrderHistory from '../../orders/components/OrderHistory';
 
-type AdminTab = 'tables' | 'menu' | 'users';
+type AdminTab = 'tables' | 'menu' | 'users' | 'history';
 
 const AdminDashboard: React.FC = () => {
     const { t } = useLanguage();
@@ -16,6 +17,7 @@ const AdminDashboard: React.FC = () => {
         { id: 'tables', labelKey: 'admin.tabs.tables', icon: <TableIcon /> },
         { id: 'menu', labelKey: 'admin.tabs.menu', icon: <MenuIcon /> },
         { id: 'users', labelKey: 'admin.tabs.users', icon: <UsersIcon /> },
+        { id: 'history', labelKey: 'admin.tabs.orderHistory', icon: <HistoryIcon /> },
     ];
 
     const renderContent = () => {
@@ -26,6 +28,8 @@ const AdminDashboard: React.FC = () => {
                 return <MenuManagement />;
             case 'users':
                 return <UsersManagement />;
+            case 'history':
+                return <OrderHistory />;
             default:
                 return null;
         }

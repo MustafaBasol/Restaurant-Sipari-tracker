@@ -62,7 +62,9 @@
     "served": "Served",
     "orderModalTitle": "Table {tableName}",
     "occupyTable": "Occupy",
-    "freeUpTable": "Free Up"
+    "freeUpTable": "Free Up",
+    "customerName": "Customer Name",
+    "tableNote": "Table Note"
   },
   "kitchen": {
     "title": "Kitchen Dashboard",
@@ -78,12 +80,15 @@
     "tabs": {
         "tables": "Tables Management",
         "menu": "Menu Management",
-        "users": "Users Management"
+        "users": "Users Management",
+        "orderHistory": "Order History"
     },
     "tables": {
         "add": "Add Table",
         "edit": "Edit Table",
-        "name": "Table Name"
+        "name": "Table Name",
+        "viewOrder": "View Order",
+        "orderModalTitle": "Order for {tableName}"
     },
     "menu": {
         "addCategory": "Add Category",
@@ -100,6 +105,21 @@
         "passwordOptional": "Password (leave blank to not change)",
         "deactivate": "Deactivate",
         "activate": "Activate"
+    },
+    "history": {
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "waiter": "Waiter",
+      "allWaiters": "All Waiters",
+      "table": "Table",
+      "allTables": "All Tables",
+      "header": {
+        "date": "Date",
+        "table": "Table",
+        "waiter": "Waiter",
+        "total": "Total",
+        "status": "Status"
+      }
     }
   },
   "statuses": {
