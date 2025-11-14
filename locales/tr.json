@@ -21,7 +21,8 @@
   },
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",
-    "closeTable": "Masayı Kapat"
+    "closeTable": "Masayı Kapat",
+    "cancelItem": "Ürünü İptal Et"
   },
   "auth": {
     "signIn": "Giriş Yap",
@@ -88,7 +89,8 @@
         "menu": "Menü Yönetimi",
         "users": "Kullanıcı Yönetimi",
         "orderHistory": "Sipariş Geçmişi",
-        "reports": "Raporlar"
+        "reports": "Raporlar",
+        "settings": "Ayarlar"
     },
     "tables": {
         "add": "Masa Ekle",
@@ -111,7 +113,14 @@
         "fullName": "Tam Ad",
         "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
         "deactivate": "Pasif Yap",
-        "activate": "Aktif Yap"
+        "activate": "Aktif Yap",
+        "changePassword": "Şifre Değiştir",
+        "newPassword": "Yeni Şifre",
+        "confirmPassword": "Şifreyi Onayla",
+        "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",
+        "passwordMismatch": "Şifreler eşleşmiyor.",
+        "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
+        "changePasswordTitle": "{userName} için Şifre Değiştir"
     },
     "history": {
       "startDate": "Başlangıç Tarihi",
@@ -128,6 +137,13 @@
         "status": "Durum",
         "closedAt": "Kapanış Saati"
       }
+    },
+    "settings": {
+      "title": "Restoran Ayarları",
+      "currency": "Para Birimi",
+      "timezone": "Saat Dilimi",
+      "defaultLanguage": "Varsayılan Dil",
+      "saveSuccess": "Ayarlar başarıyla güncellendi!"
     }
   },
   "statuses": {
@@ -158,16 +174,105 @@
   },
   "reports": {
     "title": "{date} için Günlük Özet",
+    "titleDateRange": "{startDate} - {endDate} Arası Özet",
     "selectDate": "Tarih Seç",
+    "startDate": "Başlangıç Tarihi",
+    "endDate": "Bitiş Tarihi",
     "totalRevenue": "Toplam Ciro",
     "totalOrders": "Toplam Sipariş",
     "averageTicket": "Ortalama Fiş",
     "topItems": "En Çok Satan Ürünler",
-    "noData": "Bu tarih için veri bulunamadı.",
+    "noData": "Bu tarih aralığı için veri bulunamadı.",
     "headers": {
       "item": "Ürün",
       "quantity": "Satılan Adet",
       "revenue": "Ciro"
+    },
+    "presets": {
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "last7days": "Son 7 Gün",
+      "last30days": "Son 30 Gün",
+      "thisMonth": "Bu Ay",
+      "thisYear": "Bu Yıl",
+      "lastYear": "Geçen Yıl"
+    }
+  },
+  "marketing": {
+    "nav": {
+      "features": "Özellikler",
+      "pricing": "Fiyatlandırma",
+      "login": "Giriş Yap",
+      "signUp": "Kayıt Ol",
+      "goToDashboard": "Panele Git",
+      "startNow": "Hemen Başla"
+    },
+    "hero": {
+      "title": "Küçük restoranlar için basit sipariş ve mutfak sistemi.",
+      "subtitle": "Garsonlar için tabletle sipariş, canlı mutfak ekranı ve basit günlük raporlar. Karmaşık donanımlara gerek yok.",
+      "seeDemo": "Nasıl Çalışır?"
+    },
+    "benefits": {
+      "title": "Sadece ihtiyacınız olanlar, fazlası değil.",
+      "card1": {
+        "title": "Tabletten Hızlı Sipariş",
+        "description": "Garsonlar, sezgisel bir arayüzle siparişleri doğrudan masadan alabilir."
+      },
+      "card2": {
+        "title": "Canlı Mutfak Ekranı",
+        "description": "Siparişler gerçek zamanlı olarak mutfak ekranında görünür. Artık kayıp fiş yok."
+      },
+      "card3": {
+        "title": "Günlük Özet",
+        "description": "Günlük cironuzu ve en çok satan ürünlerinizi basit raporlarla takip edin."
+      },
+      "card4": {
+        "title": "Çoklu Dil Desteği",
+        "description": "Ekibinizin ihtiyaçlarına uyacak şekilde İngilizce, Türkçe ve Fransızca çalışır."
+      }
+    },
+    "howItWorks": {
+      "title": "Dakikalar içinde kullanmaya başlayın.",
+      "step1": {
+        "title": "Menünüzü oluşturun",
+        "description": "Yönetici panelinden kategorilerinizi ve menü öğelerinizi kolayca ekleyin."
+      },
+      "step2": {
+        "title": "Garsonlar sipariş alır",
+        "description": "Herhangi bir tablet veya telefon kullanarak garsonlar masa seçer ve siparişe ürün ekler."
+      },
+      "step3": {
+        "title": "Mutfak hazırlamaya başlar",
+        "description": "Sipariş anında hazırlık için mutfak ekranında belirir."
+      }
+    },
+    "forWho": {
+      "title": "Basitlik için tasarlandı.",
+      "description": "Ordo; kafeler, bistrolar ve geleneksel POS donanımlarının yüksek maliyeti ve karmaşıklığı olmadan güvenilir ve kullanımı kolay bir sisteme ihtiyaç duyan küçük restoranlar için mükemmeldir."
+    },
+    "cta": {
+      "title": "Restoranınızı dijitalleştirmeye hazır mısınız?",
+      "button": "Ücretsiz Başlayın"
+    },
+    "pricing": {
+      "title": "Basit, şeffaf fiyatlandırma.",
+      "subtitle": "İhtiyacınız olan her şeyi içeren tek bir plan. İstediğiniz zaman iptal edin.",
+      "planName": "Hepsi Bir Arada Plan",
+      "price": "9.90 €",
+      "pricePer": "/ ay",
+      "feature1": "Sınırsız kullanıcı (garson, mutfak, yönetici)",
+      "feature2": "Sınırsız masa ve sipariş",
+      "feature3": "Gerçek zamanlı garson ve mutfak ekranları",
+      "feature4": "Günlük özet raporları",
+      "feature5": "Arayüz: TR, EN, ve FR",
+      "ctaButton": "Hemen Başla",
+      "note": "Tüm mevcut özellikler dahildir. Gelecekte isteğe bağlı premium eklentiler sunabiliriz."
+    },
+    "footer": {
+      "description": "Küçük restoranlar için modern bir işletim sistemi.",
+      "privacy": "Gizlilik",
+      "terms": "Koşullar",
+      "copyright": "© 2024 Ordo. Tüm hakları saklıdır."
     }
   }
 }

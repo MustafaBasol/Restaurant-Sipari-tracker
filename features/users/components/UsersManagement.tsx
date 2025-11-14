@@ -8,13 +8,16 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from '../../../shared/components/ui/Table';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const UsersManagement: React.FC = () => {
-    const { users, addUser, updateUser } = useUsers();
+    const { users, addUser, updateUser, changeUserPassword } = useUsers();
     const { t } = useLanguage();
     const [isAdding, setIsAdding] = useState(false);
     const [newUser, setNewUser] = useState({ fullName: '', email: '', password: '', role: UserRole.WAITER });
-    
+    const [editingPasswordForUser, setEditingPasswordForUser] = useState<User | null>(null);
+    const [successMessage, setSuccessMessage] = useState('');
+
     const handleAddUser = async () => {
         if (newUser.fullName && newUser.email && newUser.password) {
             await addUser(newUser);
@@ -26,6 +29,13 @@ const UsersManagement: React.FC = () => {
     const handleToggleActive = async (user: User) => {
         await updateUser({ ...user, isActive: !user.isActive });
     };
+    
+    const handlePasswordSave = async (userId: string, newPassword: string) => {
+        await changeUserPassword(userId, newPassword);
+        setEditingPasswordForUser(null);
+        setSuccessMessage(t('admin.users.passwordUpdateSuccess'));
+        setTimeout(() => setSuccessMessage(''), 3000); // Clear message after 3 seconds
+    };
 
     return (
         <div>
@@ -34,6 +44,12 @@ const UsersManagement: React.FC = () => {
                     {isAdding ? t('general.cancel') : t('admin.users.add')}
                 </Button>
             </div>
+
+            {successMessage && (
+                <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm">
+                    {successMessage}
+                </div>
+            )}
 
             {isAdding && (
                 <div className="bg-light-bg p-4 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -84,14 +100,26 @@ const UsersManagement: React.FC = () => {
                                 </Badge>
                             </TableCell>
                             <TableCell align="right">
-                                <button onClick={() => handleToggleActive(user)} className="text-accent hover:text-accent-hover text-sm font-medium">
-                                    {user.isActive ? t('admin.users.deactivate') : t('admin.users.activate')}
-                                </button>
+                                <div className="flex gap-4 justify-end">
+                                     <button onClick={() => setEditingPasswordForUser(user)} className="text-accent hover:text-accent-hover text-sm font-medium">
+                                        {t('admin.users.changePassword')}
+                                    </button>
+                                    <button onClick={() => handleToggleActive(user)} className="text-accent hover:text-accent-hover text-sm font-medium">
+                                        {user.isActive ? t('admin.users.deactivate') : t('admin.users.activate')}
+                                    </button>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
+             {editingPasswordForUser && (
+                <ChangePasswordModal 
+                    user={editingPasswordForUser}
+                    onClose={() => setEditingPasswordForUser(null)}
+                    onSave={handlePasswordSave}
+                />
+            )}
         </div>
     );
 };

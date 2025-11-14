@@ -8,6 +8,8 @@ import { OrderStatus } from '../../../shared/types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Badge } from '../../../shared/components/ui/Badge';
 import KitchenItemStatusToggle from './KitchenItemStatusToggle';
+import { formatDateTime } from '../../../shared/lib/utils';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 interface KitchenOrderModalProps {
     order: Order;
@@ -16,11 +18,13 @@ interface KitchenOrderModalProps {
 
 const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose }) => {
     const { t } = useLanguage();
+    const { authState } = useAuth();
     const { tables } = useTables();
     const { menuItems } = useMenu();
     const { updateOrderItemStatus } = useOrders();
     const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
-
+    
+    const timezone = authState?.tenant?.timezone || 'UTC';
     const table = tables.find(t => t.id === order.tableId);
     
     const handleStatusChange = async (item: OrderItem, newStatus: OrderStatus) => {
@@ -36,12 +40,12 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
         }
     };
     
-    const statusBadgeVariant: Record<OrderStatus, 'blue' | 'orange' | 'green' | 'gray'> = {
+    const statusBadgeVariant: Record<OrderStatus, 'blue' | 'orange' | 'green' | 'gray' | 'red'> = {
         [OrderStatus.NEW]: 'blue',
         [OrderStatus.IN_PREPARATION]: 'orange',
         [OrderStatus.READY]: 'green',
         [OrderStatus.SERVED]: 'gray',
-        [OrderStatus.CANCELED]: 'gray',
+        [OrderStatus.CANCELED]: 'red',
         [OrderStatus.CLOSED]: 'gray',
     }
 
@@ -50,7 +54,9 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
             <div className="p-6">
                 <div className="mb-4 bg-white p-4 rounded-xl shadow-subtle space-y-2">
                     <h3 className="text-2xl font-bold">{t('kitchen.table')} {table?.name}</h3>
-                    <p className="text-sm text-text-secondary">{new Date(order.createdAt).toLocaleString()}</p>
+                    <p className="text-sm text-text-secondary">
+                        {formatDateTime(order.createdAt, timezone, { dateStyle: 'medium', timeStyle: 'short' })}
+                    </p>
                     {order.waiterName && <p className="text-base font-semibold">{t('kitchen.orderBy')}: {order.waiterName}</p>}
                     {table?.customerName && <p className="text-lg font-bold">Customer: {table.customerName}</p>}
                     {table?.note && <p className="text-base font-medium text-text-primary">Masa Notu: "{table.note}"</p>}
@@ -72,28 +78,41 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
                         const isToggleable = [OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status);
 
                         return (
-                            <div key={item.id} className="bg-white p-4 rounded-xl shadow-subtle flex items-center justify-between">
+                            <div key={item.id} className={`bg-white p-4 rounded-xl shadow-subtle flex items-center justify-between ${item.status === OrderStatus.CANCELED ? 'opacity-60' : ''}`}>
                                 <div>
-                                    <p className="font-bold text-lg">{item.quantity}x {menuItem.name}</p>
+                                    <p className={`font-bold text-lg ${item.status === OrderStatus.CANCELED ? 'line-through' : ''}`}>{item.quantity}x {menuItem.name}</p>
                                     {item.note && <p className="text-sm text-text-secondary italic">"{item.note}"</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {isFinalState ? (
-                                        <Badge variant={statusBadgeVariant[item.status]}>{t(`statuses.${item.status}`)}</Badge>
-                                    ) : isToggleable ? (
-                                        <KitchenItemStatusToggle
-                                            status={item.status}
-                                            onChange={(newStatus) => handleStatusChange(item, newStatus)}
-                                            disabled={isLoading}
-                                        />
-                                    ) : ( // Handles NEW status
-                                        <button 
-                                            onClick={() => handleStatusChange(item, OrderStatus.IN_PREPARATION)} 
-                                            disabled={isLoading}
-                                            className="px-4 py-2 bg-status-prep text-white text-sm font-semibold rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
-                                        >
-                                            {t('statuses.IN_PREPARATION')}
-                                        </button>
+                                        <Badge variant={item.status === OrderStatus.CANCELED ? 'red' : 'gray'}>{t(`statuses.${item.status}`)}</Badge>
+                                    ) : (
+                                        <>
+                                            {(item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION) && (
+                                                 <button
+                                                    onClick={() => handleStatusChange(item, OrderStatus.CANCELED)}
+                                                    disabled={isLoading}
+                                                    className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full hover:bg-red-200 transition-colors disabled:opacity-50"
+                                                >
+                                                    {t('actions.cancelItem')}
+                                                </button>
+                                            )}
+                                            {item.status === OrderStatus.NEW ? (
+                                                <button 
+                                                    onClick={() => handleStatusChange(item, OrderStatus.IN_PREPARATION)} 
+                                                    disabled={isLoading}
+                                                    className="px-4 py-2 bg-status-prep text-white text-sm font-semibold rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+                                                >
+                                                    {t('statuses.IN_PREPARATION')}
+                                                </button>
+                                            ) : isToggleable ? (
+                                                <KitchenItemStatusToggle
+                                                    status={item.status}
+                                                    onChange={(newStatus) => handleStatusChange(item, newStatus)}
+                                                    disabled={isLoading}
+                                                />
+                                            ) : null}
+                                        </>
                                     )}
                                 </div>
                             </div>

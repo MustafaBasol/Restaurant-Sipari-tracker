@@ -6,10 +6,14 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Select } from '../../../shared/components/ui/Select';
 import { Badge } from '../../../shared/components/ui/Badge';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { formatCurrency } from '../../../shared/lib/utils';
 
 const MenuManagement: React.FC = () => {
     const { menuCategories, menuItems, addCategory, addMenuItem, updateMenuItem } = useMenu();
     const { t } = useLanguage();
+    const { authState } = useAuth();
+    const currency = authState?.tenant?.currency || 'USD';
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newMenuItem, setNewMenuItem] = useState<Partial<MenuItem>>({
         name: '', description: '', price: 0, categoryId: '', isAvailable: true,
@@ -85,7 +89,7 @@ const MenuManagement: React.FC = () => {
                         <li key={item.id} className="bg-gray-100 p-3 rounded-lg flex justify-between items-center text-sm">
                             <div>
                                 <p className="font-semibold">{item.name}</p>
-                                <p className="text-text-secondary text-xs">{item.description} - ${item.price.toFixed(2)}</p>
+                                <p className="text-text-secondary text-xs">{item.description} - {formatCurrency(item.price, currency)}</p>
                             </div>
                             <button onClick={() => handleAvailabilityToggle(item)}>
                                 <Badge variant={item.isAvailable ? 'green' : 'red'}>

@@ -33,6 +33,8 @@ export interface Tenant {
     defaultLanguage: 'tr' | 'en' | 'fr';
     subscriptionStatus: SubscriptionStatus;
     createdAt: Date;
+    currency: string; // e.g. 'USD', 'EUR', 'TRY'
+    timezone: string; // e.g. 'America/New_York'
 }
 
 export interface User {

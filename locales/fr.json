@@ -21,7 +21,8 @@
   },
   "actions": {
     "markAsServed": "Marquer comme Servi",
-    "closeTable": "Fermer la Table"
+    "closeTable": "Fermer la Table",
+    "cancelItem": "Annuler l'article"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -88,7 +89,8 @@
         "menu": "Gestion du Menu",
         "users": "Gestion des Utilisateurs",
         "orderHistory": "Historique des Commandes",
-        "reports": "Rapports"
+        "reports": "Rapports",
+        "settings": "Paramètres"
     },
     "tables": {
         "add": "Ajouter une Table",
@@ -111,7 +113,14 @@
         "fullName": "Nom Complet",
         "passwordOptional": "Mot de passe (laisser vide pour ne pas changer)",
         "deactivate": "Désactiver",
-        "activate": "Activer"
+        "activate": "Activer",
+        "changePassword": "Changer le mot de passe",
+        "newPassword": "Nouveau mot de passe",
+        "confirmPassword": "Confirmer le mot de passe",
+        "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",
+        "passwordMismatch": "Les mots de passe ne correspondent pas.",
+        "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
+        "changePasswordTitle": "Changer le mot de passe pour {userName}"
     },
     "history": {
       "startDate": "Date de début",
@@ -128,6 +137,13 @@
         "status": "Statut",
         "closedAt": "Fermé à"
       }
+    },
+    "settings": {
+      "title": "Paramètres du restaurant",
+      "currency": "Devise",
+      "timezone": "Fuseau horaire",
+      "defaultLanguage": "Langue par défaut",
+      "saveSuccess": "Paramètres mis à jour avec succès !"
     }
   },
   "statuses": {
@@ -158,16 +174,105 @@
   },
   "reports": {
     "title": "Résumé Quotidien du {date}",
+    "titleDateRange": "Résumé du {startDate} au {endDate}",
     "selectDate": "Sélectionner une date",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
     "totalRevenue": "Revenu Total",
     "totalOrders": "Commandes Totales",
     "averageTicket": "Ticket Moyen",
     "topItems": "Meilleures Ventes",
-    "noData": "Aucune donnée disponible pour cette date.",
+    "noData": "Aucune donnée disponible pour cette plage de dates.",
     "headers": {
       "item": "Article",
       "quantity": "Quantité Vendue",
       "revenue": "Revenu"
+    },
+    "presets": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "last7days": "7 derniers jours",
+      "last30days": "30 derniers jours",
+      "thisMonth": "Ce mois-ci",
+      "thisYear": "Cette année",
+      "lastYear": "L'année dernière"
+    }
+  },
+  "marketing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "login": "Connexion",
+      "signUp": "S'inscrire",
+      "goToDashboard": "Aller au Panel",
+      "startNow": "Commencer"
+    },
+    "hero": {
+      "title": "Système simple de commande et de cuisine pour petits restaurants.",
+      "subtitle": "Prise de commande sur tablette, tableau de bord de cuisine en direct et rapports quotidiens simples. Aucun matériel complexe requis.",
+      "seeDemo": "Voir la Démo"
+    },
+    "benefits": {
+      "title": "Tout ce dont vous avez besoin, rien de superflu.",
+      "card1": {
+        "title": "Commande Rapide sur Tablette",
+        "description": "Les serveurs prennent les commandes directement à table avec une interface intuitive."
+      },
+      "card2": {
+        "title": "Écran de Cuisine en Direct",
+        "description": "Les commandes apparaissent sur l'écran de la cuisine en temps réel. Fini les bons perdus."
+      },
+      "card3": {
+        "title": "Résumé Quotidien",
+        "description": "Suivez vos revenus quotidiens et vos articles les plus vendus avec des rapports simples."
+      },
+      "card4": {
+        "title": "Multilingue",
+        "description": "Fonctionne en anglais, turc et français pour s'adapter aux besoins de votre équipe."
+      }
+    },
+    "howItWorks": {
+      "title": "Opérationnel en quelques minutes.",
+      "step1": {
+        "title": "Configurez votre menu",
+        "description": "Ajoutez facilement vos catégories et plats dans le panneau d'administration."
+      },
+      "step2": {
+        "title": "Les serveurs prennent les commandes",
+        "description": "Avec n'importe quelle tablette ou téléphone, les serveurs choisissent une table et ajoutent des articles."
+      },
+      "step3": {
+        "title": "La cuisine se met au travail",
+        "description": "La commande apparaît instantanément sur l'écran de la cuisine pour la préparation."
+      }
+    },
+    "forWho": {
+      "title": "Conçu pour la simplicité.",
+      "description": "Ordo est parfait pour les cafés, les bistros et les petits restaurants qui ont besoin d'un système fiable et facile à utiliser sans le coût et la complexité du matériel de point de vente traditionnel."
+    },
+    "cta": {
+      "title": "Prêt à optimiser votre restaurant ?",
+      "button": "Commencez Gratuitement"
+    },
+    "pricing": {
+      "title": "Tarification simple et transparente.",
+      "subtitle": "Un seul forfait qui inclut tout ce dont vous avez besoin. Annulez à tout moment.",
+      "planName": "Plan Tout-en-un",
+      "price": "9.90 €",
+      "pricePer": "/ mois",
+      "feature1": "Utilisateurs illimités (serveur, cuisine, admin)",
+      "feature2": "Tables et commandes illimitées",
+      "feature3": "Écrans en temps réel pour serveur et cuisine",
+      "feature4": "Rapports de synthèse quotidiens",
+      "feature5": "Interface en FR, EN, et TR",
+      "ctaButton": "Commencer maintenant",
+      "note": "Toutes les fonctionnalités actuelles sont incluses. À l'avenir, nous pourrions proposer des modules complémentaires premium en option."
+    },
+    "footer": {
+      "description": "Un OS moderne pour les petits restaurants.",
+      "privacy": "Confidentialité",
+      "terms": "Conditions",
+      "copyright": "© 2024 Ordo. Tous droits réservés."
     }
   }
 }

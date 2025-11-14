@@ -5,11 +5,7 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
 
-interface RegisterScreenProps {
-    onSwitchToLogin: () => void;
-}
-
-const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin }) => {
+const RegisterScreen: React.FC = () => {
     const { register, isLoading } = useAuth();
     const { t } = useLanguage();
     const [tenantName, setTenantName] = useState('');
@@ -44,7 +40,9 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin }) => {
             adminPassword: password,
         });
 
-        if (!success) {
+        if (success) {
+            window.location.hash = '#/app';
+        } else {
             setError(t('auth.register.failed'));
         }
     };
@@ -90,9 +88,9 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin }) => {
                 <div className="mt-8 text-center">
                     <p className="text-sm text-text-secondary">
                         {t('auth.register.haveAccount')}{' '}
-                        <button onClick={onSwitchToLogin} className="font-medium text-accent hover:underline">
+                        <a href="#/login" className="font-medium text-accent hover:underline">
                             {t('auth.signIn')}
-                        </button>
+                        </a>
                     </p>
                 </div>
             </div>

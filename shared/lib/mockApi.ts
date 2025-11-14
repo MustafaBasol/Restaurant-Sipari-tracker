@@ -2,7 +2,7 @@ import { Tenant, User, SubscriptionStatus, UserRole, TableStatus, OrderStatus } 
 import { Table } from '../../features/tables/types';
 import { MenuCategory, MenuItem } from '../../features/menu/types';
 import { Order, OrderItem } from '../../features/orders/types';
-import { DailySummaryReport, TopItem } from '../../features/reports/types';
+import { SummaryReport, TopItem } from '../../features/reports/types';
 
 
 // --- MOCK DATABASE ---
@@ -18,7 +18,7 @@ interface MockDB {
 
 const seedData: MockDB = {
     tenants: [
-        { id: 't1', name: 'Sunset Bistro', slug: 'sunset-bistro', defaultLanguage: 'en', subscriptionStatus: SubscriptionStatus.ACTIVE, createdAt: new Date('2023-10-26T10:00:00Z') }
+        { id: 't1', name: 'Sunset Bistro', slug: 'sunset-bistro', defaultLanguage: 'en', subscriptionStatus: SubscriptionStatus.ACTIVE, createdAt: new Date('2023-10-26T10:00:00Z'), currency: 'USD', timezone: 'America/New_York' }
     ],
     users: [
         { id: 'su1', fullName: 'Super Admin', email: 'superadmin@ordo.com', passwordHash: 'superadmin', role: UserRole.SUPER_ADMIN, isActive: true },
@@ -93,7 +93,7 @@ export const registerTenant = async (payload: RegisterPayload): Promise<{ user: 
     if (db.tenants.some(t => t.slug === payload.tenantSlug) || db.users.some(u => u.email.toLowerCase() === payload.adminEmail.toLowerCase())) {
         return null;
     }
-    const newTenant: Tenant = { id: `t${Date.now()}`, name: payload.tenantName, slug: payload.tenantSlug, defaultLanguage: 'en', subscriptionStatus: SubscriptionStatus.TRIAL, createdAt: new Date() };
+    const newTenant: Tenant = { id: `t${Date.now()}`, name: payload.tenantName, slug: payload.tenantSlug, defaultLanguage: 'en', subscriptionStatus: SubscriptionStatus.TRIAL, createdAt: new Date(), currency: 'USD', timezone: 'America/New_York' };
     db.tenants.push(newTenant);
     const newAdminUser: User = { id: `u${Date.now()}`, tenantId: newTenant.id, fullName: payload.adminFullName, email: payload.adminEmail, passwordHash: payload.adminPassword, role: UserRole.ADMIN, isActive: true };
     db.users.push(newAdminUser);
@@ -262,19 +262,20 @@ export const internalUpdateOrderNote = async (orderId: string, note: string): Pr
     }
 };
 
-export const internalGetDailySummary = async (tenantId: string, date: string): Promise<DailySummaryReport> => {
+export const internalGetSummaryReport = async (tenantId: string, startDate: string, endDate: string): Promise<SummaryReport> => {
     await simulateDelay(500);
     
-    const targetDate = new Date(date);
+    const start = new Date(startDate);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setUTCHours(23, 59, 59, 999);
 
     const closedOrders = db.orders.filter(order => {
         if (order.tenantId !== tenantId || order.status !== OrderStatus.CLOSED || !order.orderClosedAt) {
             return false;
         }
         const closedDate = new Date(order.orderClosedAt);
-        return closedDate.getUTCFullYear() === targetDate.getUTCFullYear() &&
-               closedDate.getUTCMonth() === targetDate.getUTCMonth() &&
-               closedDate.getUTCDate() === targetDate.getUTCDate();
+        return closedDate >= start && closedDate <= end;
     });
 
     let totalRevenue = 0;
@@ -282,6 +283,7 @@ export const internalGetDailySummary = async (tenantId: string, date: string): P
 
     closedOrders.forEach(order => {
         order.items.forEach(item => {
+            if (item.status === OrderStatus.CANCELED) return;
             const menuItem = db.menuItems.find(mi => mi.id === item.menuItemId);
             if (menuItem) {
                 const itemRevenue = item.quantity * menuItem.price;
@@ -301,8 +303,8 @@ export const internalGetDailySummary = async (tenantId: string, date: string): P
             const menuItem = db.menuItems.find(mi => mi.id === menuItemId);
             return {
                 name: menuItem?.name || 'Unknown Item',
-                quantity: itemAggregation[menuItemId].quantity,
-                revenue: itemAggregation[menuItemId].revenue,
+                quantity: itemAggregation[menuItem.id].quantity,
+                revenue: itemAggregation[menuItem.id].revenue,
             };
         })
         .sort((a, b) => b.revenue - a.revenue)
@@ -312,10 +314,23 @@ export const internalGetDailySummary = async (tenantId: string, date: string): P
     const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
     return {
-        date,
+        startDate,
+        endDate,
         totalOrders,
         totalRevenue,
         averageTicket,
         topItems,
     };
+};
+
+export const internalChangeUserPassword = async (userId: string, newPassword: string): Promise<void> => {
+    await simulateDelay();
+    const user = db.users.find(u => u.id === userId);
+    if (user) {
+        // In a real app, you would hash this password
+        user.passwordHash = newPassword;
+        saveDb();
+    } else {
+        throw new Error('User not found');
+    }
 };

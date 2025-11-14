@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import * as api from '../api';
 import { AuthState } from '../types';
+import { Tenant } from '../../../shared/types';
 
 interface AuthContextData {
     authState: AuthState | null;
@@ -8,6 +9,7 @@ interface AuthContextData {
     login: (email: string, passwordOrSlug: string) => Promise<boolean>;
     logout: () => void;
     register: (payload: api.RegisterPayload) => Promise<boolean>;
+    updateTenantInState: (tenant: Tenant) => void;
 }
 
 export const AuthContext = createContext<AuthContextData | undefined>(undefined);
@@ -66,12 +68,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const logout = () => {
-        setAuthState(null);
-        localStorage.removeItem('authState');
+        // Navigate to the marketing homepage first.
+        window.location.hash = '#/';
+        
+        // Use a timeout to ensure the hash change is processed by the router's
+        // event listener before the auth state changes. This reliably prevents
+        // the race condition that was redirecting to /login.
+        setTimeout(() => {
+            setAuthState(null);
+            localStorage.removeItem('authState');
+        }, 0);
+    };
+
+    const updateTenantInState = (tenant: Tenant) => {
+        setAuthState(prevState => {
+            if (!prevState) return null;
+            const newState = { ...prevState, tenant };
+            localStorage.setItem('authState', JSON.stringify(newState));
+            return newState;
+        });
     };
 
     return (
-        <AuthContext.Provider value={{ authState, isLoading, login, logout, register }}>
+        <AuthContext.Provider value={{ authState, isLoading, login, logout, register, updateTenantInState }}>
             {children}
         </AuthContext.Provider>
     );

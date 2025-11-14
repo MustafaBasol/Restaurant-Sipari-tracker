@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { useMenu } from '../../menu/hooks/useMenu';
@@ -7,6 +6,8 @@ import { OrderStatus } from '../../../shared/types';
 import { TrashIcon } from '../../../shared/components/icons/Icons';
 import { Input } from '../../../shared/components/ui/Input';
 import { useOrders } from '../hooks/useOrders';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { formatCurrency } from '../../../shared/lib/utils';
 
 type TempOrderItem = Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>;
 
@@ -34,7 +35,9 @@ const OrderItemRow: React.FC<{
 }> = ({ item, isTemp, onUpdate, onRemove }) => {
     const { menuItems } = useMenu();
     const { t } = useLanguage();
-    const { serveOrderItem } = useOrders();
+    const { serveOrderItem, updateOrderItemStatus } = useOrders();
+    const { authState } = useAuth();
+    const currency = authState?.tenant?.currency || 'USD';
     const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
 
     if (!menuItem) return null;
@@ -47,17 +50,24 @@ const OrderItemRow: React.FC<{
         }
     }
 
+    const handleCancelItem = () => {
+        if ('orderId' in item && item.orderId && item.id) {
+            updateOrderItemStatus(item.orderId, item.id, OrderStatus.CANCELED);
+        }
+    }
+    const isCancelable = !isTemp && (status === OrderStatus.NEW || status === OrderStatus.IN_PREPARATION);
+
     return (
-        <div className="py-3">
+        <div className={`py-3 ${status === OrderStatus.CANCELED ? 'opacity-60' : ''}`}>
             <div className="flex justify-between items-start">
                 <div>
-                    <p className="font-semibold">{menuItem.name}</p>
+                    <p className={`font-semibold ${status === OrderStatus.CANCELED ? 'line-through' : ''}`}>{menuItem.name}</p>
                     <div className="flex items-center gap-2 mt-1">
                         <p className={`text-xs font-medium ${statusColors[status]}`}>{t(`statuses.${status}`)}</p>
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                     <p className="font-semibold">${(menuItem.price * item.quantity).toFixed(2)}</p>
+                     <p className={`font-semibold ${status === OrderStatus.CANCELED ? 'line-through' : ''}`}>{formatCurrency(menuItem.price * item.quantity, currency)}</p>
                     {status === OrderStatus.READY && (
                         <button 
                             onClick={handleServeItem}
@@ -87,7 +97,17 @@ const OrderItemRow: React.FC<{
                     <button onClick={onRemove} className="text-red-500 hover:text-red-700 p-1"><TrashIcon/></button>
                 </div>
             ) : (
-                 item.note && <p className="text-xs text-text-secondary mt-1 italic">"{item.note}"</p>
+                <div className="flex items-center justify-between mt-1">
+                    {item.note ? <p className="text-xs text-text-secondary italic">"{item.note}"</p> : <div />}
+                    {isCancelable && (
+                        <button 
+                            onClick={handleCancelItem}
+                            className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full hover:bg-red-200 transition-colors"
+                        >
+                            {t('actions.cancelItem')}
+                        </button>
+                    )}
+                </div>
             )}
         </div>
     );
@@ -97,13 +117,17 @@ const OrderItemRow: React.FC<{
 const CurrentOrder: React.FC<CurrentOrderProps> = ({ order, tempItems, onUpdateItem, onRemoveItem }) => {
     const { t } = useLanguage();
     const { menuItems } = useMenu();
+    const { authState } = useAuth();
+    const currency = authState?.tenant?.currency || 'USD';
     
     const allItems = [ ...(order?.items || []), ...tempItems ];
     
-    const totalPrice = allItems.reduce((acc, item) => {
-        const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
-        return acc + (menuItem ? menuItem.price * item.quantity : 0);
-    }, 0);
+    const totalPrice = allItems
+        .filter(item => !('status' in item) || item.status !== OrderStatus.CANCELED)
+        .reduce((acc, item) => {
+            const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+            return acc + (menuItem ? menuItem.price * item.quantity : 0);
+        }, 0);
 
     return (
         <div className="flex-1 p-4 flex flex-col">
@@ -125,7 +149,7 @@ const CurrentOrder: React.FC<CurrentOrderProps> = ({ order, tempItems, onUpdateI
             </div>
             <div className="mt-auto pt-4 flex justify-between items-center font-bold text-lg border-t border-border-color">
                 <span>{t('waiter.total')}</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>{formatCurrency(totalPrice, currency)}</span>
             </div>
         </div>
     );

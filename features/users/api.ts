@@ -1,4 +1,4 @@
-import { getDataByTenant, addData, updateData } from '../../shared/lib/mockApi';
+import { getDataByTenant, addData, updateData, internalChangeUserPassword } from '../../shared/lib/mockApi';
 import { User } from './types';
 import { User as SharedUser } from '../../shared/types';
 
@@ -18,3 +18,7 @@ export const addUser = (tenantId: string, user: Omit<SharedUser, 'id' | 'tenantI
 };
 
 export const updateUser = (user: User) => updateData('users', user);
+
+export const changeUserPassword = (userId: string, newPassword: string) => {
+    return internalChangeUserPassword(userId, newPassword);
+};

@@ -1,5 +1,6 @@
-import React, { ReactNode } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../features/auth/hooks/useAuth';
+import { useLanguage } from '../shared/hooks/useLanguage';
 import { UserRole } from '../shared/types';
 
 // Lazy load components for better performance
@@ -7,69 +8,84 @@ const LoginScreen = React.lazy(() => import('../features/auth/components/LoginSc
 const RegisterScreen = React.lazy(() => import('../features/auth/components/RegisterScreen'));
 const MainDashboard = React.lazy(() => import('../features/dashboard/components/MainDashboard'));
 const SuperAdminDashboard = React.lazy(() => import('../features/super-admin/components/SuperAdminDashboard'));
+const HomePage = React.lazy(() => import('../features/marketing/pages/HomePage'));
 
-interface ProtectedRouteProps {
-    children: ReactNode;
-    roles?: UserRole[];
-}
+const LoadingSpinner: React.FC = () => (
+    <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent"></div>
+    </div>
+);
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles }) => {
+const AppRoutes: React.FC = () => {
     const { authState, isLoading } = useAuth();
+    const { lang, setLang } = useLanguage();
+    
+    // Simple hash-based routing
+    const [hash, setHash] = useState(window.location.hash || '#/');
+    
+    useEffect(() => {
+        const handleHashChange = () => {
+            setHash(window.location.hash || '#/');
+        };
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
+    useEffect(() => {
+        if (authState?.tenant && authState.tenant.defaultLanguage !== lang) {
+            setLang(authState.tenant.defaultLanguage);
+        }
+    }, [authState, lang, setLang]);
 
     if (isLoading) {
-         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent"></div>
-            </div>
-        );
+        return <LoadingSpinner />;
     }
 
-    if (!authState) {
-        // In a real app, you'd use a router library to redirect.
-        // For this simple case, we just won't render the component.
-        return null; 
+    // If user is authenticated
+    if (authState) {
+        // App routes
+        // The main application dashboard is served under the `#/app` route.
+        if (hash.startsWith('#/app')) {
+            if (authState.user.role === UserRole.SUPER_ADMIN) {
+                return <SuperAdminDashboard />;
+            }
+            return <MainDashboard />;
+        }
+        
+        // Marketing routes for logged-in users.
+        // If a logged-in user visits the marketing homepage (`#/`), we show it,
+        // but the MarketingHeader component will show a "Go to Dashboard" button.
+        // Redirect logged-in users trying to access login/register to the app dashboard.
+        if (hash === '#/login' || hash === '#/register') {
+            window.location.hash = '#/app';
+            return <LoadingSpinner />;
+        }
+        return <HomePage />;
     }
-
-    if (roles && !roles.includes(authState.user.role)) {
-        return <p>You do not have permission to view this page.</p>;
+    
+    // Public routes for logged-out users
+    switch (hash) {
+        case '#/login':
+            return <LoginScreen />;
+        case '#/register':
+            return <RegisterScreen />;
+        case '#/':
+        default:
+            // Redirect logged-out users trying to access the app to the login page
+            if (hash.startsWith('#/app')) {
+                window.location.hash = '#/login';
+                return <LoadingSpinner />;
+            }
+            return <HomePage />;
     }
-
-    return <>{children}</>;
 };
 
 
 const Router: React.FC = () => {
-    const { authState } = useAuth();
-    const [isRegistering, setIsRegistering] = React.useState(false);
-
-    if (!authState) {
-        return (
-            <React.Suspense fallback={<div>Loading...</div>}>
-                {isRegistering ? (
-                    <RegisterScreen onSwitchToLogin={() => setIsRegistering(false)} />
-                ) : (
-                    <LoginScreen onSwitchToRegister={() => setIsRegistering(true)} />
-                )}
-            </React.Suspense>
-        );
-    }
-
     return (
-        <React.Suspense fallback={
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent"></div>
-            </div>
-        }>
-            {authState.user.role === UserRole.SUPER_ADMIN ? (
-                 <ProtectedRoute roles={[UserRole.SUPER_ADMIN]}>
-                    <SuperAdminDashboard />
-                </ProtectedRoute>
-            ) : (
-                 <ProtectedRoute roles={[UserRole.ADMIN, UserRole.WAITER, UserRole.KITCHEN]}>
-                    <MainDashboard />
-                </ProtectedRoute>
-            )}
-        </React.Suspense>
+        <Suspense fallback={<LoadingSpinner />}>
+            <AppRoutes />
+        </Suspense>
     );
 };
 

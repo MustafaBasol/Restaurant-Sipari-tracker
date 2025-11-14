@@ -10,13 +10,19 @@ import { Select } from '../../../shared/components/ui/Select';
 import { Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from '../../../shared/components/ui/Table';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { OrderStatus } from '../../../shared/types';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
 
 const OrderHistory: React.FC = () => {
     const { t } = useLanguage();
+    const { authState } = useAuth();
     const { orders, isLoading: isLoadingOrders } = useOrders();
     const { users, isLoading: isLoadingUsers } = useUsers();
     const { tables, isLoading: isLoadingTables } = useTables();
     const { menuItems } = useMenu();
+
+    const currency = authState?.tenant?.currency || 'USD';
+    const timezone = authState?.tenant?.timezone || 'UTC';
 
     const [filters, setFilters] = useState({
         startDate: '',
@@ -47,6 +53,7 @@ const OrderHistory: React.FC = () => {
         const order = orders?.find(o => o.id === orderId);
         if (!order) return 0;
         return order.items.reduce((total, item) => {
+            if (item.status === OrderStatus.CANCELED) return total;
             const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
             return total + (menuItem ? menuItem.price * item.quantity : 0);
         }, 0);
@@ -111,11 +118,11 @@ const OrderHistory: React.FC = () => {
                         const table = tables.find(t => t.id === order.tableId);
                         return (
                              <TableRow key={order.id}>
-                                <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
-                                <TableCell>{order.orderClosedAt ? new Date(order.orderClosedAt).toLocaleTimeString() : '-'}</TableCell>
+                                <TableCell>{formatDateTime(order.createdAt, timezone, { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
+                                <TableCell>{order.orderClosedAt ? formatDateTime(order.orderClosedAt, timezone, { timeStyle: 'short' }) : '-'}</TableCell>
                                 <TableCell>{table?.name || 'N/A'}</TableCell>
                                 <TableCell>{order.waiterName || 'N/A'}</TableCell>
-                                <TableCell>${getOrderTotal(order.id).toFixed(2)}</TableCell>
+                                <TableCell>{formatCurrency(getOrderTotal(order.id), currency)}</TableCell>
                                 <TableCell>
                                     <Badge variant={statusVariantMap[order.status] || 'gray'}>
                                         {t(`statuses.${order.status}`)}

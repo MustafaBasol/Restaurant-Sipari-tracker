@@ -6,11 +6,7 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
 
-interface LoginScreenProps {
-    onSwitchToRegister: () => void;
-}
-
-const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToRegister }) => {
+const LoginScreen: React.FC = () => {
     const { login, isLoading } = useAuth();
     const { t } = useLanguage();
     const [email, setEmail] = useState('waiter@sunsetbistro.com');
@@ -21,7 +17,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToRegister }) => {
         e.preventDefault();
         setError('');
         const success = await login(email, password);
-        if (!success) {
+        if (success) {
+            window.location.hash = '#/app';
+        } else {
             setError(t('auth.loginFailed'));
         }
     };
@@ -70,12 +68,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToRegister }) => {
                     </div>
                     <p className="mt-4 text-sm text-text-secondary">
                         {t('auth.newHere')}{' '}
-                        <button
-                            onClick={onSwitchToRegister}
+                        <a
+                            href="#/register"
                             className="font-semibold text-accent hover:underline focus:outline-none"
                         >
                             {t('auth.createAccountLink')}
-                        </button>
+                        </a>
                     </p>
                 </div>
             </div>

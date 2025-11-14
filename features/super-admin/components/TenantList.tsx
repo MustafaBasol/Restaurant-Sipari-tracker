@@ -8,6 +8,7 @@ import UserListModal from './UserListModal';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Select } from '../../../shared/components/ui/Select';
 import { Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from '../../../shared/components/ui/Table';
+import { formatDateTime } from '../../../shared/lib/utils';
 
 type SortKey = 'name' | 'createdAt' | 'subscriptionStatus';
 
@@ -73,7 +74,7 @@ const TenantList: React.FC = () => {
                     {sortedTenants.map(tenant => (
                         <TableRow key={tenant.id}>
                             <TableCell>{tenant.name}</TableCell>
-                            <TableCell>{new Date(tenant.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>{formatDateTime(tenant.createdAt, 'UTC', { dateStyle: 'medium' })}</TableCell>
                             <TableCell>
                                 <Badge variant={statusVariantMap[tenant.subscriptionStatus]}>
                                     {t(`statuses.${tenant.subscriptionStatus === SubscriptionStatus.CANCELED ? 'CANCELED_SUB' : tenant.subscriptionStatus}`)}

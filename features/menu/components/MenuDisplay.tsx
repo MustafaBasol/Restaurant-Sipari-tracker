@@ -4,6 +4,8 @@ import { MenuItem } from '../types';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { PlusIcon } from '../../../shared/components/icons/Icons';
 import { Card } from '../../../shared/components/ui/Card';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { formatCurrency } from '../../../shared/lib/utils';
 
 interface MenuDisplayProps {
     onAddItem: (item: MenuItem) => void;
@@ -11,7 +13,10 @@ interface MenuDisplayProps {
 
 const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
     const { menuCategories, menuItems } = useMenu();
+    const { authState } = useAuth();
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+
+    const currency = authState?.tenant?.currency || 'USD';
 
     // Set initial active category
     React.useEffect(() => {
@@ -50,7 +55,7 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
                             <p className="text-xs text-text-secondary mt-1">{item.description}</p>
                         </div>
                         <div className="flex justify-between items-center mt-4">
-                            <span className="font-bold text-text-primary">${item.price.toFixed(2)}</span>
+                            <span className="font-bold text-text-primary">{formatCurrency(item.price, currency)}</span>
                             <button onClick={() => onAddItem(item)} className="bg-accent/10 text-accent p-2 rounded-full hover:bg-accent/20">
                                 <PlusIcon />
                             </button>

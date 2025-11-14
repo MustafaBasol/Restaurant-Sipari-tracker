@@ -9,6 +9,7 @@ interface UserContextData {
     isLoading: boolean;
     addUser: (user: Omit<SharedUser, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string }) => Promise<void>;
     updateUser: (user: User) => Promise<void>;
+    changeUserPassword: (userId: string, newPassword: string) => Promise<void>;
     refetch: () => Promise<void>;
 }
 
@@ -51,8 +52,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateUser = (user: User) => 
         handleMutation(() => api.updateUser(user));
 
+    const changeUserPassword = async (userId: string, newPassword: string) => {
+        await api.changeUserPassword(userId, newPassword);
+        // No refetch needed as the user list UI does not change.
+    };
+
     return (
-        <UserContext.Provider value={{ users, isLoading, addUser, updateUser, refetch: fetchUsers }}>
+        <UserContext.Provider value={{ users, isLoading, addUser, updateUser, changeUserPassword, refetch: fetchUsers }}>
             {children}
         </UserContext.Provider>
     );

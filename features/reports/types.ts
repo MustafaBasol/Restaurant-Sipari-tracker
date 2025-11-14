@@ -4,8 +4,9 @@ export interface TopItem {
     revenue: number;
 }
 
-export interface DailySummaryReport {
-    date: string;
+export interface SummaryReport {
+    startDate: string;
+    endDate: string;
     totalOrders: number;
     totalRevenue: number;
     averageTicket: number;

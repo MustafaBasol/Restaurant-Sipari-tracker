@@ -1,4 +1,4 @@
-import { internalGetDailySummary } from '../../shared/lib/mockApi';
+import { internalGetSummaryReport } from '../../shared/lib/mockApi';
 
-export const getDailySummary = (tenantId: string, date: string) => 
-    internalGetDailySummary(tenantId, date);
+export const getSummaryReport = (tenantId: string, startDate: string, endDate: string) => 
+    internalGetSummaryReport(tenantId, startDate, endDate);

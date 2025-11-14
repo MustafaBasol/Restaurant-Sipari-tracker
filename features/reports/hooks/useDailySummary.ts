@@ -1,20 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as api from '../api';
-import { DailySummaryReport } from '../types';
+import { SummaryReport } from '../types';
 import { useAuth } from '../../auth/hooks/useAuth';
 
-const getTodayDateString = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const day = today.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+const toDateString = (date: Date): string => {
+    return date.toISOString().split('T')[0];
 };
 
-export const useDailySummary = () => {
+export const useSummaryReport = () => {
     const { authState } = useAuth();
-    const [date, setDate] = useState(getTodayDateString());
-    const [data, setData] = useState<DailySummaryReport | null>(null);
+    const [startDate, setStartDate] = useState(toDateString(new Date()));
+    const [endDate, setEndDate] = useState(toDateString(new Date()));
+    const [data, setData] = useState<SummaryReport | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,23 +21,27 @@ export const useDailySummary = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const reportData = await api.getDailySummary(authState.tenant.id, date);
+            const reportData = await api.getSummaryReport(authState.tenant.id, startDate, endDate);
             setData(reportData);
         } catch (err) {
-            console.error("Failed to fetch daily summary", err);
+            console.error("Failed to fetch summary report", err);
             setError("Failed to load report data.");
         } finally {
             setIsLoading(false);
         }
-    }, [authState, date]);
+    }, [authState, startDate, endDate]);
 
     useEffect(() => {
         fetchSummary();
     }, [fetchSummary]);
 
     return {
-        date,
-        setDate,
+        startDate,
+        endDate,
+        setDateRange: (start: string, end: string) => {
+            setStartDate(start);
+            setEndDate(end);
+        },
         data,
         isLoading,
         error,
