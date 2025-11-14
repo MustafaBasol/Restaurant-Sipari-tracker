@@ -4,6 +4,7 @@ import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
+import AuthHeader from './AuthHeader';
 
 const RegisterScreen: React.FC = () => {
     const { register, isLoading } = useAuth();
@@ -48,10 +49,11 @@ const RegisterScreen: React.FC = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-light-bg p-4">
+        <div className="relative flex items-center justify-center min-h-screen bg-light-bg p-4">
+            <AuthHeader />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-text-primary tracking-tight">Ordo</h1>
+                    <h1 className="text-4xl font-bold text-text-primary tracking-tight">{t('branding.name')}</h1>
                     <p className="text-text-secondary mt-2">{t('auth.register.title')}</p>
                 </div>
                 <Card>
@@ -88,9 +90,9 @@ const RegisterScreen: React.FC = () => {
                 <div className="mt-8 text-center">
                     <p className="text-sm text-text-secondary">
                         {t('auth.register.haveAccount')}{' '}
-                        <a href="#/login" className="font-medium text-accent hover:underline">
-                            {t('auth.signIn')}
-                        </a>
+                        <button onClick={() => window.location.hash = '#/login'} className="font-medium text-accent hover:underline">
+                            {t('marketing.nav.login')}
+                        </button>
                     </p>
                 </div>
             </div>

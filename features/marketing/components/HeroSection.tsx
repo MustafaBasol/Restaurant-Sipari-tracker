@@ -12,6 +12,7 @@ const HeroSection: React.FC = () => {
                     <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-6xl">
                         {t('marketing.hero.title')}
                     </h1>
+                    <p className="mt-4 text-xl text-text-secondary">{t('branding.tagline')}</p>
                     <p className="mt-6 text-lg leading-8 text-text-secondary">
                         {t('marketing.hero.subtitle')}
                     </p>
@@ -20,10 +21,10 @@ const HeroSection: React.FC = () => {
                             onClick={() => window.location.hash = '#/register'}
                             className="rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                         >
-                            {t('marketing.nav.startNow')}
+                            {t('marketing.hero.cta.primary')}
                         </button>
                         <a href="#how-it-works" className="text-sm font-semibold leading-6 text-text-primary">
-                            {t('marketing.hero.seeDemo')} <span aria-hidden="true">→</span>
+                            {t('marketing.hero.cta.secondary')} <span aria-hidden="true">→</span>
                         </a>
                     </div>
                 </div>

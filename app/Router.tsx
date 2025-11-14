@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useLanguage } from '../shared/hooks/useLanguage';
 import { UserRole } from '../shared/types';
+import { isSubscriptionActive } from '../shared/lib/utils';
 
 // Lazy load components for better performance
 const LoginScreen = React.lazy(() => import('../features/auth/components/LoginScreen'));
@@ -9,6 +10,7 @@ const RegisterScreen = React.lazy(() => import('../features/auth/components/Regi
 const MainDashboard = React.lazy(() => import('../features/dashboard/components/MainDashboard'));
 const SuperAdminDashboard = React.lazy(() => import('../features/super-admin/components/SuperAdminDashboard'));
 const HomePage = React.lazy(() => import('../features/marketing/pages/HomePage'));
+const SubscriptionEndedScreen = React.lazy(() => import('../features/subscription/components/SubscriptionEndedScreen'));
 
 const LoadingSpinner: React.FC = () => (
     <div className="flex items-center justify-center h-screen">
@@ -43,23 +45,36 @@ const AppRoutes: React.FC = () => {
 
     // If user is authenticated
     if (authState) {
+        const subscriptionIsActive = authState.user.role === UserRole.SUPER_ADMIN || (authState.tenant && isSubscriptionActive(authState.tenant));
+
         // App routes
-        // The main application dashboard is served under the `#/app` route.
         if (hash.startsWith('#/app')) {
+            if (!subscriptionIsActive) {
+                return <SubscriptionEndedScreen />;
+            }
+
             if (authState.user.role === UserRole.SUPER_ADMIN) {
                 return <SuperAdminDashboard />;
             }
             return <MainDashboard />;
         }
         
-        // Marketing routes for logged-in users.
-        // If a logged-in user visits the marketing homepage (`#/`), we show it,
-        // but the MarketingHeader component will show a "Go to Dashboard" button.
         // Redirect logged-in users trying to access login/register to the app dashboard.
         if (hash === '#/login' || hash === '#/register') {
             window.location.hash = '#/app';
             return <LoadingSpinner />;
         }
+        
+        if (hash === '#/subscription-ended' && !subscriptionIsActive) {
+            return <SubscriptionEndedScreen />;
+        }
+        
+        // If subscription is expired and they are not on a permitted page, redirect them.
+        if (!subscriptionIsActive && hash !== '#/subscription-ended') {
+            window.location.hash = '#/subscription-ended';
+            return <LoadingSpinner />;
+        }
+
         return <HomePage />;
     }
     
@@ -72,7 +87,7 @@ const AppRoutes: React.FC = () => {
         case '#/':
         default:
             // Redirect logged-out users trying to access the app to the login page
-            if (hash.startsWith('#/app')) {
+            if (hash.startsWith('#/app') || hash.startsWith('#/subscription')) {
                 window.location.hash = '#/login';
                 return <LoadingSpinner />;
             }

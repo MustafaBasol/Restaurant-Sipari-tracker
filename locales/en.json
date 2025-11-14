@@ -1,4 +1,8 @@
 {
+  "branding": {
+    "name": "Kitchorify",
+    "tagline": "From table to kitchen in one tap."
+  },
   "general": {
     "save": "Save",
     "cancel": "Cancel",
@@ -29,7 +33,7 @@
     "email": "Email",
     "password": "Password",
     "loginFailed": "Login failed. Please check your credentials.",
-    "welcome": "Welcome to Ordo",
+    "welcome": "Welcome to Kitchorify",
     "newHere": "New here?",
     "createAccountLink": "Create a Restaurant Account",
     "register": {
@@ -90,7 +94,8 @@
         "users": "Users Management",
         "orderHistory": "Order History",
         "reports": "Reports",
-        "settings": "Settings"
+        "settings": "Settings",
+        "subscription": "Subscription"
     },
     "tables": {
         "add": "Add Table",
@@ -157,6 +162,7 @@
     "CANCELED": "Canceled",
     "TRIAL": "Trial",
     "ACTIVE": "Active",
+    "EXPIRED": "Expired",
     "CANCELED_SUB": "Canceled"
   },
   "superAdmin": {
@@ -165,7 +171,22 @@
     "subscription": "Subscription",
     "registeredOn": "Registered On",
     "viewUsers": "View Users",
-    "tenantUsers": "Tenant Users"
+    "tenantUsers": "Tenant Users",
+    "searchPlaceholder": "Search by name or email...",
+    "filters": {
+      "all": "All"
+    },
+    "headers": {
+      "tenant": "Tenant",
+      "adminEmail": "Admin Email",
+      "users": "Users",
+      "trialInfo": "Trial Info"
+    },
+    "tenantDetails": {
+      "title": "Tenant Details",
+      "subscriptionManagement": "Subscription Management"
+    },
+    "viewDetails": "View Details"
   },
   "notifications": {
     "title": "New Orders",
@@ -204,13 +225,16 @@
       "pricing": "Pricing",
       "login": "Login",
       "signUp": "Sign Up",
-      "goToDashboard": "Go to Dashboard",
-      "startNow": "Start Now"
+      "goToDashboard": "Go to Dashboard"
     },
     "hero": {
-      "title": "Simple order & kitchen system for small restaurants.",
-      "subtitle": "Tablet ordering for waiters, a live kitchen dashboard, and simple daily reports. No complex hardware needed.",
-      "seeDemo": "See How It Works"
+      "title": "Kitchorify your orders from table to kitchen.",
+      "subtitle": "Tablet ordering for waiters, a live kitchen screen, and simple daily reports — built for small restaurants that want less chaos and more control.",
+      "cta": {
+          "primary": "Start 7-day free trial",
+          "secondary": "See how it works"
+      },
+      "seeDemo": "See how it works"
     },
     "benefits": {
       "title": "Everything you need, nothing you don't.",
@@ -248,31 +272,45 @@
     },
     "forWho": {
       "title": "Designed for simplicity.",
-      "description": "Ordo is perfect for cafes, bistros, and small restaurants that need a reliable and easy-to-use system without the high cost and complexity of traditional POS hardware."
+      "description": "Kitchorify is perfect for cafes, bistros, and small restaurants that need a reliable and easy-to-use system without the high cost and complexity of traditional POS hardware."
     },
     "cta": {
       "title": "Ready to streamline your restaurant?",
-      "button": "Get Started for Free"
+      "button": "Start 7-day free trial"
     },
     "pricing": {
-      "title": "Simple, transparent pricing.",
-      "subtitle": "One plan that includes everything you need. Cancel anytime.",
-      "planName": "All-in-one Plan",
-      "price": "9.90 €",
-      "pricePer": "/ month",
-      "feature1": "Unlimited users (waiter, kitchen, admin)",
-      "feature2": "Unlimited tables & orders",
-      "feature3": "Real-time waiter & kitchen screens",
-      "feature4": "Daily summary reports",
-      "feature5": "Interface in EN, TR, & FR",
-      "ctaButton": "Start Now",
-      "note": "All current features are included. In the future, we may offer optional premium add-ons."
+      "title": "Simple pricing for small restaurants",
+      "subtitle": "One plan, all features, cancel anytime.",
+      "planName": "All-in-one plan",
+      "price": "9.90 € / month",
+      "bullets": {
+          "unlimitedUsers": "Unlimited users (waiter, kitchen and admin)",
+          "unlimitedTables": "Unlimited tables and orders",
+          "realtimeScreens": "Real-time kitchen and waiter screens",
+          "dailyReports": "Daily revenue summary",
+          "multilingualInterface": "Interface in English, Turkish and French"
+      },
+      "cta": "Start 7-day free trial",
+      "note": "All current features are included for 9.90 €/month. Future advanced add-ons may be priced separately.",
+      "trialBadge": "7-day free trial",
+      "trialNoCard": "No credit card required to start."
     },
     "footer": {
       "description": "A modern OS for small restaurants.",
       "privacy": "Privacy",
       "terms": "Terms",
-      "copyright": "© 2024 Ordo. All rights reserved."
+      "copyright": "© 2024 Kitchorify. All rights reserved."
     }
+  },
+  "subscription": {
+    "trialEndsIn": "Trial: {days} days left",
+    "trialEnded": "Your free trial has ended.",
+    "activateNeeded": "To continue using Kitchorify, please activate your subscription.",
+    "activateButton": "Activate subscription",
+    "status": "Subscription Status",
+    "currentPlan": "Current Plan",
+    "activeSubscription": "Active Subscription",
+    "trialExpired": "Trial Expired",
+    "daysLeft": "{days} days left"
   }
 }

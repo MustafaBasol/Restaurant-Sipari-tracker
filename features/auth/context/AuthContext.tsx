@@ -23,7 +23,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (storedAuthState) {
             try {
                 const parsedState = JSON.parse(storedAuthState);
-                 // Date hydration could be added here if needed
+                // Hydrate dates
+                if (parsedState.tenant) {
+                    parsedState.tenant.createdAt = new Date(parsedState.tenant.createdAt);
+                    if (parsedState.tenant.trialStartAt) {
+                        parsedState.tenant.trialStartAt = new Date(parsedState.tenant.trialStartAt);
+                    }
+                    if (parsedState.tenant.trialEndAt) {
+                        parsedState.tenant.trialEndAt = new Date(parsedState.tenant.trialEndAt);
+                    }
+                }
                 setAuthState(parsedState);
             } catch (e) {
                 console.error("Failed to parse auth state from localStorage", e);

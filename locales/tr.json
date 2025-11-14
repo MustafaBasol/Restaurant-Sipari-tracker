@@ -1,4 +1,8 @@
 {
+  "branding": {
+    "name": "Kitchorify",
+    "tagline": "Masadan mutfağa, tek dokunuşla."
+  },
   "general": {
     "save": "Kaydet",
     "cancel": "İptal",
@@ -29,7 +33,7 @@
     "email": "E-posta",
     "password": "Şifre",
     "loginFailed": "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.",
-    "welcome": "Ordo'ya Hoş Geldiniz",
+    "welcome": "Kitchorify'a Hoş Geldiniz",
     "newHere": "Yeni misiniz?",
     "createAccountLink": "Restoran Hesabı Oluştur",
     "register": {
@@ -90,7 +94,8 @@
         "users": "Kullanıcı Yönetimi",
         "orderHistory": "Sipariş Geçmişi",
         "reports": "Raporlar",
-        "settings": "Ayarlar"
+        "settings": "Ayarlar",
+        "subscription": "Abonelik"
     },
     "tables": {
         "add": "Masa Ekle",
@@ -157,6 +162,7 @@
     "CANCELED": "İptal Edildi",
     "TRIAL": "Deneme",
     "ACTIVE": "Aktif",
+    "EXPIRED": "Süresi Doldu",
     "CANCELED_SUB": "İptal Edilmiş"
   },
   "superAdmin": {
@@ -165,7 +171,22 @@
     "subscription": "Abonelik",
     "registeredOn": "Kayıt Tarihi",
     "viewUsers": "Kullanıcıları Görüntüle",
-    "tenantUsers": "Restoran Kullanıcıları"
+    "tenantUsers": "Restoran Kullanıcıları",
+    "searchPlaceholder": "İsim veya e-postaya göre ara...",
+    "filters": {
+      "all": "Tümü"
+    },
+    "headers": {
+      "tenant": "Restoran",
+      "adminEmail": "Yönetici E-postası",
+      "users": "Kullanıcılar",
+      "trialInfo": "Deneme Bilgisi"
+    },
+    "tenantDetails": {
+      "title": "Restoran Detayları",
+      "subscriptionManagement": "Abonelik Yönetimi"
+    },
+    "viewDetails": "Detayları Görüntüle"
   },
   "notifications": {
     "title": "Yeni Siparişler",
@@ -204,13 +225,16 @@
       "pricing": "Fiyatlandırma",
       "login": "Giriş Yap",
       "signUp": "Kayıt Ol",
-      "goToDashboard": "Panele Git",
-      "startNow": "Hemen Başla"
+      "goToDashboard": "Panele Git"
     },
     "hero": {
-      "title": "Küçük restoranlar için basit sipariş ve mutfak sistemi.",
-      "subtitle": "Garsonlar için tabletle sipariş, canlı mutfak ekranı ve basit günlük raporlar. Karmaşık donanımlara gerek yok.",
-      "seeDemo": "Nasıl Çalışır?"
+      "title": "Siparişlerinizi Kitchorify ile masadan mutfağa taşıyın.",
+      "subtitle": "Garsonlar tabletle sipariş alır, mutfak siparişleri anında görür ve siz günü basit raporlarla takip edersiniz. Daha az karmaşa, küçük restoranlar için daha fazla kontrol.",
+       "cta": {
+          "primary": "7 günlük denemeyi başlatın",
+          "secondary": "Nasıl çalıştığını görün"
+      },
+      "seeDemo": "Nasıl çalıştığını görün"
     },
     "benefits": {
       "title": "Sadece ihtiyacınız olanlar, fazlası değil.",
@@ -248,31 +272,45 @@
     },
     "forWho": {
       "title": "Basitlik için tasarlandı.",
-      "description": "Ordo; kafeler, bistrolar ve geleneksel POS donanımlarının yüksek maliyeti ve karmaşıklığı olmadan güvenilir ve kullanımı kolay bir sisteme ihtiyaç duyan küçük restoranlar için mükemmeldir."
+      "description": "Kitchorify; kafeler, bistrolar ve geleneksel POS donanımlarının yüksek maliyeti ve karmaşıklığı olmadan güvenilir ve kullanımı kolay bir sisteme ihtiyaç duyan küçük restoranlar için mükemmeldir."
     },
     "cta": {
       "title": "Restoranınızı dijitalleştirmeye hazır mısınız?",
-      "button": "Ücretsiz Başlayın"
+      "button": "7 günlük denemeyi başlatın"
     },
     "pricing": {
-      "title": "Basit, şeffaf fiyatlandırma.",
-      "subtitle": "İhtiyacınız olan her şeyi içeren tek bir plan. İstediğiniz zaman iptal edin.",
-      "planName": "Hepsi Bir Arada Plan",
-      "price": "9.90 €",
-      "pricePer": "/ ay",
-      "feature1": "Sınırsız kullanıcı (garson, mutfak, yönetici)",
-      "feature2": "Sınırsız masa ve sipariş",
-      "feature3": "Gerçek zamanlı garson ve mutfak ekranları",
-      "feature4": "Günlük özet raporları",
-      "feature5": "Arayüz: TR, EN, ve FR",
-      "ctaButton": "Hemen Başla",
-      "note": "Tüm mevcut özellikler dahildir. Gelecekte isteğe bağlı premium eklentiler sunabiliriz."
+      "title": "Küçük restoranlar için basit fiyatlandırma",
+      "subtitle": "Tek plan, tüm özellikler; istediğiniz zaman iptal edin.",
+      "planName": "Tümü bir arada plan",
+      "price": "Aylık 9,90 €",
+      "bullets": {
+        "unlimitedUsers": "Sınırsız kullanıcı (garson, mutfak ve yönetici)",
+        "unlimitedTables": "Sınırsız masa ve sipariş",
+        "realtimeScreens": "Gerçek zamanlı mutfak ve garson ekranları",
+        "dailyReports": "Günlük ciro özeti",
+        "multilingualInterface": "İngilizce, Türkçe ve Fransızca arayüz"
+      },
+      "cta": "7 günlük denemeyi başlatın",
+      "note": "Şu anda tüm özellikler ayda 9,90 € karşılığında dahildir. Gelecekte eklenecek gelişmiş modüller ayrıca fiyatlandırılabilir.",
+      "trialBadge": "7 gün ücretsiz deneme",
+      "trialNoCard": "Başlamak için kredi kartı gerekmez."
     },
     "footer": {
       "description": "Küçük restoranlar için modern bir işletim sistemi.",
       "privacy": "Gizlilik",
       "terms": "Koşullar",
-      "copyright": "© 2024 Ordo. Tüm hakları saklıdır."
+      "copyright": "© 2024 Kitchorify. Tüm hakları saklıdır."
     }
+  },
+  "subscription": {
+    "trialEndsIn": "Deneme: {days} gün kaldı",
+    "trialEnded": "Ücretsiz deneme süreniz sona erdi.",
+    "activateNeeded": "Kitchorify'i kullanmaya devam etmek için aboneliğinizi etkinleştirin.",
+    "activateButton": "Aboneliği etkinleştir",
+    "status": "Abonelik Durumu",
+    "currentPlan": "Mevcut Plan",
+    "activeSubscription": "Aktif Abonelik",
+    "trialExpired": "Deneme Süresi Doldu",
+    "daysLeft": "{days} gün kaldı"
   }
 }

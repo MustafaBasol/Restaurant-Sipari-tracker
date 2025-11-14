@@ -11,7 +11,7 @@ const MarketingHeader: React.FC = () => {
         <header className="bg-card-bg/80 backdrop-blur-sm border-b border-border-color sticky top-0 z-20">
             <nav className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16">
                 <div className="flex items-center gap-x-8">
-                    <a href="#/" className="text-xl font-bold text-text-primary">Ordo</a>
+                    <a href="#/" className="text-xl font-bold text-text-primary">{t('branding.name')}</a>
                 </div>
                 <div className="flex items-center gap-x-4">
                     <LanguageSwitcher />

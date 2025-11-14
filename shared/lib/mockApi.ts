@@ -16,12 +16,26 @@ interface MockDB {
     orders: Order[];
 }
 
+const trialEndDate = new Date();
+trialEndDate.setDate(trialEndDate.getDate() + 5); // Trial ends in 5 days
+
 const seedData: MockDB = {
     tenants: [
-        { id: 't1', name: 'Sunset Bistro', slug: 'sunset-bistro', defaultLanguage: 'en', subscriptionStatus: SubscriptionStatus.ACTIVE, createdAt: new Date('2023-10-26T10:00:00Z'), currency: 'USD', timezone: 'America/New_York' }
+        { 
+            id: 't1', 
+            name: 'Sunset Bistro', 
+            slug: 'sunset-bistro', 
+            defaultLanguage: 'en', 
+            subscriptionStatus: SubscriptionStatus.TRIAL, 
+            createdAt: new Date('2023-10-26T10:00:00Z'), 
+            currency: 'USD', 
+            timezone: 'America/New_York',
+            trialStartAt: new Date(),
+            trialEndAt: trialEndDate,
+        }
     ],
     users: [
-        { id: 'su1', fullName: 'Super Admin', email: 'superadmin@ordo.com', passwordHash: 'superadmin', role: UserRole.SUPER_ADMIN, isActive: true },
+        { id: 'su1', fullName: 'Super Admin', email: 'superadmin@kitchorify.com', passwordHash: 'superadmin', role: UserRole.SUPER_ADMIN, isActive: true },
         { id: 'u1', tenantId: 't1', fullName: 'Admin User', email: 'admin@sunsetbistro.com', passwordHash: 'sunset-bistro', role: UserRole.ADMIN, isActive: true },
         { id: 'u2', tenantId: 't1', fullName: 'Waiter User', email: 'waiter@sunsetbistro.com', passwordHash: 'sunset-bistro', role: UserRole.WAITER, isActive: true },
         { id: 'u3', tenantId: 't1', fullName: 'Kitchen Staff', email: 'kitchen@sunsetbistro.com', passwordHash: 'sunset-bistro', role: UserRole.KITCHEN, isActive: true },
@@ -49,17 +63,23 @@ const seedData: MockDB = {
 let db: MockDB;
 
 const initializeDB = () => {
-    const savedDb = localStorage.getItem('ordo-db');
+    const savedDb = localStorage.getItem('kitchorify-db');
     if (savedDb) {
         try {
             const parsed = JSON.parse(savedDb);
+            // Date hydration
             parsed.orders = parsed.orders.map((o: any) => ({ 
                 ...o, 
                 createdAt: new Date(o.createdAt), 
                 updatedAt: new Date(o.updatedAt),
                 orderClosedAt: o.orderClosedAt ? new Date(o.orderClosedAt) : undefined,
             }));
-            parsed.tenants = parsed.tenants.map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
+            parsed.tenants = parsed.tenants.map((t: any) => ({ 
+                ...t, 
+                createdAt: new Date(t.createdAt),
+                trialStartAt: t.trialStartAt ? new Date(t.trialStartAt) : undefined,
+                trialEndAt: t.trialEndAt ? new Date(t.trialEndAt) : undefined,
+            }));
             db = parsed;
         } catch (e) {
             console.error("Failed to parse DB, seeding new data.", e);
@@ -71,7 +91,7 @@ const initializeDB = () => {
 };
 
 const saveDb = () => {
-    localStorage.setItem('ordo-db', JSON.stringify(db));
+    localStorage.setItem('kitchorify-db', JSON.stringify(db));
 };
 
 initializeDB();
@@ -93,7 +113,23 @@ export const registerTenant = async (payload: RegisterPayload): Promise<{ user: 
     if (db.tenants.some(t => t.slug === payload.tenantSlug) || db.users.some(u => u.email.toLowerCase() === payload.adminEmail.toLowerCase())) {
         return null;
     }
-    const newTenant: Tenant = { id: `t${Date.now()}`, name: payload.tenantName, slug: payload.tenantSlug, defaultLanguage: 'en', subscriptionStatus: SubscriptionStatus.TRIAL, createdAt: new Date(), currency: 'USD', timezone: 'America/New_York' };
+
+    const now = new Date();
+    const trialEndAt = new Date(now);
+    trialEndAt.setDate(now.getDate() + 7);
+
+    const newTenant: Tenant = { 
+        id: `t${Date.now()}`, 
+        name: payload.tenantName, 
+        slug: payload.tenantSlug, 
+        defaultLanguage: 'en', 
+        subscriptionStatus: SubscriptionStatus.TRIAL, 
+        createdAt: now, 
+        currency: 'USD', 
+        timezone: 'America/New_York',
+        trialStartAt: now,
+        trialEndAt: trialEndAt,
+    };
     db.tenants.push(newTenant);
     const newAdminUser: User = { id: `u${Date.now()}`, tenantId: newTenant.id, fullName: payload.adminFullName, email: payload.adminEmail, passwordHash: payload.adminPassword, role: UserRole.ADMIN, isActive: true };
     db.users.push(newAdminUser);
@@ -333,4 +369,16 @@ export const internalChangeUserPassword = async (userId: string, newPassword: st
     } else {
         throw new Error('User not found');
     }
+};
+
+export const internalActivateSubscription = async (tenantId: string): Promise<Tenant> => {
+    await simulateDelay();
+    const tenant = db.tenants.find(t => t.id === tenantId);
+    if (!tenant) {
+        throw new Error("Tenant not found");
+    }
+    tenant.subscriptionStatus = SubscriptionStatus.ACTIVE;
+    // In a real app, you'd also set an `activatedAt` date, etc.
+    saveDb();
+    return tenant;
 };

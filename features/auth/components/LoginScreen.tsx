@@ -5,6 +5,7 @@ import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
 import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
+import AuthHeader from './AuthHeader';
 
 const LoginScreen: React.FC = () => {
     const { login, isLoading } = useAuth();
@@ -25,10 +26,11 @@ const LoginScreen: React.FC = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-light-bg p-4">
+        <div className="relative flex items-center justify-center min-h-screen bg-light-bg p-4">
+            <AuthHeader />
             <div className="w-full max-w-sm">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-text-primary tracking-tight">Ordo</h1>
+                    <h1 className="text-4xl font-bold text-text-primary tracking-tight">{t('branding.name')}</h1>
                     <p className="text-text-secondary mt-2">{t('auth.welcome')}</p>
                 </div>
                 <Card>

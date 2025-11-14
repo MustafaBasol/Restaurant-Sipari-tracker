@@ -23,6 +23,7 @@ export enum OrderStatus {
 export enum SubscriptionStatus {
     TRIAL = 'TRIAL',
     ACTIVE = 'ACTIVE',
+    EXPIRED = 'EXPIRED',
     CANCELED = 'CANCELED',
 }
 
@@ -35,6 +36,8 @@ export interface Tenant {
     createdAt: Date;
     currency: string; // e.g. 'USD', 'EUR', 'TRY'
     timezone: string; // e.g. 'America/New_York'
+    trialStartAt?: Date;
+    trialEndAt?: Date;
 }
 
 export interface User {

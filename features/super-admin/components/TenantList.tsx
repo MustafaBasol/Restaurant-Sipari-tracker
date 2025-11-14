@@ -1,27 +1,73 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTenants } from '../hooks/useTenants';
-import { Tenant } from '../types';
+// FIX: Changed import from `auth/types` to `shared/types` to resolve module export error and use the correct, complete type definition.
+import { Tenant } from '../../../shared/types';
 import { User } from '../../users/types';
-import { SubscriptionStatus } from '../../../shared/types';
+import { SubscriptionStatus, UserRole } from '../../../shared/types';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
-import UserListModal from './UserListModal';
+import TenantDetailModal from './UserListModal';
 import { Badge } from '../../../shared/components/ui/Badge';
-import { Select } from '../../../shared/components/ui/Select';
 import { Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from '../../../shared/components/ui/Table';
-import { formatDateTime } from '../../../shared/lib/utils';
+import { formatDateTime, getTrialDaysLeft } from '../../../shared/lib/utils';
+import { Input } from '../../../shared/components/ui/Input';
+import { Button } from '../../../shared/components/ui/Button';
 
 type SortKey = 'name' | 'createdAt' | 'subscriptionStatus';
+type StatusFilter = 'ALL' | SubscriptionStatus;
+
 
 const TenantList: React.FC = () => {
     const { tenants, users, updateTenantSubscription } = useTenants();
     const { t } = useLanguage();
-    const [viewingUsersFor, setViewingUsersFor] = useState<Tenant | null>(null);
+    const [viewingTenant, setViewingTenant] = useState<Tenant | null>(null);
     const [sortKey, setSortKey] = useState<SortKey>('createdAt');
     const [sortAsc, setSortAsc] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
-    const sortedTenants = useMemo(() => {
-        // FIX: Refactored sorting logic to handle date comparison correctly and avoid type errors.
-        return [...tenants].sort((a, b) => {
+    useEffect(() => {
+        if (viewingTenant) {
+            // Find the latest version of the tenant from the updated list
+            const updatedTenantInList = tenants.find(t => t.id === viewingTenant.id);
+            if (updatedTenantInList) {
+                // If the tenant in the modal state is different from the one in the list, update it.
+                // This keeps the modal's data in sync after a mutation.
+                if (JSON.stringify(viewingTenant) !== JSON.stringify(updatedTenantInList)) {
+                    setViewingTenant(updatedTenantInList);
+                }
+            }
+        }
+    }, [tenants, viewingTenant]);
+
+    const tenantsWithDetails = useMemo(() => {
+        return tenants.map(tenant => {
+            const admin = users.find(u => u.tenantId === tenant.id && u.role === UserRole.ADMIN);
+            const userCount = users.filter(u => u.tenantId === tenant.id).length;
+            return {
+                ...tenant,
+                adminEmail: admin?.email,
+                userCount,
+            };
+        });
+    }, [tenants, users]);
+
+
+    const filteredAndSortedTenants = useMemo(() => {
+        let filtered = tenantsWithDetails;
+
+        if (statusFilter !== 'ALL') {
+            filtered = filtered.filter(t => t.subscriptionStatus === statusFilter);
+        }
+
+        if (searchQuery) {
+            const lowercasedQuery = searchQuery.toLowerCase();
+            filtered = filtered.filter(t => 
+                t.name.toLowerCase().includes(lowercasedQuery) ||
+                (t.adminEmail && t.adminEmail.toLowerCase().includes(lowercasedQuery))
+            );
+        }
+
+        return [...filtered].sort((a, b) => {
             if (sortKey === 'createdAt') {
                 const timeA = new Date(a.createdAt).getTime();
                 const timeB = new Date(b.createdAt).getTime();
@@ -33,23 +79,18 @@ const TenantList: React.FC = () => {
             if (compareA > compareB) return sortAsc ? 1 : -1;
             return 0;
         });
-    }, [tenants, sortKey, sortAsc]);
+    }, [tenantsWithDetails, sortKey, sortAsc, searchQuery, statusFilter]);
     
     const handleSort = (key: SortKey) => {
         if (key === sortKey) setSortAsc(!sortAsc);
         else { setSortKey(key); setSortAsc(true); }
     };
 
-    const handleSubscriptionChange = (tenantId: string, status: SubscriptionStatus) => {
-        updateTenantSubscription(tenantId, status);
-    };
-    
-    const getTenantUsers = (tenantId: string): User[] => users.filter(user => user.tenantId === tenantId);
-
     const statusVariantMap: Record<SubscriptionStatus, 'green' | 'yellow' | 'red'> = {
         [SubscriptionStatus.ACTIVE]: 'green',
         [SubscriptionStatus.TRIAL]: 'yellow',
         [SubscriptionStatus.CANCELED]: 'red',
+        [SubscriptionStatus.EXPIRED]: 'red',
     };
 
     const SortableHeader: React.FC<{ sortKey: SortKey, labelKey: string }> = ({ sortKey: key, labelKey }) => (
@@ -57,52 +98,86 @@ const TenantList: React.FC = () => {
             {t(labelKey)} {sortKey === key && (sortAsc ? '▲' : '▼')}
         </th>
     );
+    
+    const filterOptions: {labelKey: string, value: StatusFilter}[] = [
+        { labelKey: 'superAdmin.filters.all', value: 'ALL' },
+        { labelKey: 'statuses.TRIAL', value: SubscriptionStatus.TRIAL },
+        { labelKey: 'statuses.ACTIVE', value: SubscriptionStatus.ACTIVE },
+        { labelKey: 'statuses.EXPIRED', value: SubscriptionStatus.EXPIRED },
+        { labelKey: 'statuses.CANCELED_SUB', value: SubscriptionStatus.CANCELED },
+    ];
 
     return (
         <>
+            <div className="mb-4 space-y-4">
+                <Input 
+                    placeholder={t('superAdmin.searchPlaceholder')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-2">
+                    {filterOptions.map(opt => (
+                        <Button
+                            key={opt.value}
+                            variant={statusFilter === opt.value ? 'primary' : 'secondary'}
+                            onClick={() => setStatusFilter(opt.value)}
+                            className="py-1.5 px-3 text-sm"
+                        >
+                            {t(opt.labelKey)}
+                        </Button>
+                    ))}
+                </div>
+            </div>
             <Table>
                 <thead className="bg-gray-50">
                     <tr>
-                        <SortableHeader sortKey="name" labelKey='general.name' />
+                        <SortableHeader sortKey="name" labelKey='superAdmin.headers.tenant' />
+                        <TableHeaderCell>{t('superAdmin.headers.adminEmail')}</TableHeaderCell>
                         <SortableHeader sortKey="createdAt" labelKey='superAdmin.registeredOn' />
                         <SortableHeader sortKey="subscriptionStatus" labelKey='superAdmin.subscription' />
-                        <TableHeaderCell>{t('general.role', 'Users')}</TableHeaderCell>
+                        <TableHeaderCell>{t('superAdmin.headers.trialInfo')}</TableHeaderCell>
+                        <TableHeaderCell>{t('superAdmin.headers.users')}</TableHeaderCell>
                         <TableHeaderCell align="right">{t('general.actions')}</TableHeaderCell>
                     </tr>
                 </thead>
                 <TableBody>
-                    {sortedTenants.map(tenant => (
-                        <TableRow key={tenant.id}>
-                            <TableCell>{tenant.name}</TableCell>
-                            <TableCell>{formatDateTime(tenant.createdAt, 'UTC', { dateStyle: 'medium' })}</TableCell>
-                            <TableCell>
-                                <Badge variant={statusVariantMap[tenant.subscriptionStatus]}>
-                                    {t(`statuses.${tenant.subscriptionStatus === SubscriptionStatus.CANCELED ? 'CANCELED_SUB' : tenant.subscriptionStatus}`)}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>{getTenantUsers(tenant.id).length}</TableCell>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
-                                 <Select 
-                                    value={tenant.subscriptionStatus}
-                                    onChange={(e) => handleSubscriptionChange(tenant.id, e.target.value as SubscriptionStatus)}
-                                    className="p-1 text-xs w-auto inline-block"
-                                >
-                                    <option value={SubscriptionStatus.TRIAL}>{t('statuses.TRIAL')}</option>
-                                    <option value={SubscriptionStatus.ACTIVE}>{t('statuses.ACTIVE')}</option>
-                                    <option value={SubscriptionStatus.CANCELED}>{t('statuses.CANCELED_SUB')}</option>
-                                </Select>
-                                <button onClick={() => setViewingUsersFor(tenant)} className="text-accent hover:text-accent-hover">{t('superAdmin.viewUsers')}</button>
-                            </td>
-                        </TableRow>
-                    ))}
+                    {filteredAndSortedTenants.map(tenant => {
+                        // FIX: Removed unnecessary type cast `as Tenant` since the type from `useTenants` hook is now correct.
+                        const trialDays = getTrialDaysLeft(tenant);
+                        return(
+                            <TableRow key={tenant.id}>
+                                <TableCell>
+                                    <div className="font-medium">{tenant.name}</div>
+                                    <div className="text-xs text-text-secondary">{tenant.slug}</div>
+                                </TableCell>
+                                <TableCell>{tenant.adminEmail || 'N/A'}</TableCell>
+                                <TableCell>{formatDateTime(tenant.createdAt, 'UTC', { dateStyle: 'medium' })}</TableCell>
+                                <TableCell>
+                                    <Badge variant={statusVariantMap[tenant.subscriptionStatus]}>
+                                        {t(`statuses.${tenant.subscriptionStatus === SubscriptionStatus.CANCELED ? 'CANCELED_SUB' : tenant.subscriptionStatus}`)}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    {tenant.subscriptionStatus === SubscriptionStatus.TRIAL && trialDays > 0 ? 
+                                        `${trialDays} days left` : '-'}
+                                </TableCell>
+                                <TableCell>{tenant.userCount}</TableCell>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {/* FIX: Removed unnecessary type cast `as Tenant` since the type from `useTenants` hook is now correct. */}
+                                    <button onClick={() => setViewingTenant(tenant)} className="text-accent hover:text-accent-hover">{t('superAdmin.viewDetails')}</button>
+                                </td>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
             </Table>
 
-            {viewingUsersFor && (
-                <UserListModal 
-                    tenant={viewingUsersFor} 
-                    users={getTenantUsers(viewingUsersFor.id)}
-                    onClose={() => setViewingUsersFor(null)} 
+            {viewingTenant && (
+                <TenantDetailModal
+                    tenant={viewingTenant}
+                    users={users.filter(u => u.tenantId === viewingTenant.id)}
+                    onClose={() => setViewingTenant(null)}
+                    onSubscriptionChange={updateTenantSubscription}
                 />
             )}
         </>
