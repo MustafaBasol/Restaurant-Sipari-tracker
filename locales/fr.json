@@ -1,3 +1,4 @@
+
 {
   "branding": {
     "name": "Kitchorify",
@@ -299,7 +300,50 @@
       "description": "Un OS moderne pour les petits restaurants.",
       "privacy": "Confidentialité",
       "terms": "Conditions",
-      "copyright": "© 2024 Kitchorify. Tous droits réservés."
+      "copyright": "© 2025 Kitchorify. Tous droits réservés."
+    },
+    "legal": {
+      "privacyTitle": "Politique de Confidentialité",
+      "termsTitle": "Conditions d'Utilisation",
+      "lastUpdated": "Dernière mise à jour : Octobre 2024",
+      "p1_title": "1. Introduction",
+      "p1_content": "Bienvenue chez Kitchorify ('nous', 'notre' ou 'nos'). Nous nous engageons à protéger votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre application logicielle en tant que service (le 'Service'). Veuillez lire attentivement cette politique. Si vous n'êtes pas d'accord avec les termes de cette politique de confidentialité, veuillez ne pas accéder au Service.",
+      "p2_title": "2. Informations que nous collectons",
+      "p2_content": "Nous pouvons collecter des informations vous concernant de diverses manières. Les informations que nous pouvons collecter via le Service incluent : les Données Personnelles (telles que votre nom, votre adresse e-mail et votre rôle), les Données Dérivées (adresse IP, type de navigateur, pages visitées) et les Données de Restaurant (plats du menu, commandes, informations sur les tables, données de vente). Ces données sont essentielles pour fournir les fonctionnalités de base de notre Service.",
+      "p3_title": "3. Comment nous utilisons vos informations",
+      "p3_content": "Disposer d'informations exactes nous permet de vous offrir une expérience fluide, efficace et personnalisée. Spécifiquement, nous pouvons utiliser les informations collectées à votre sujet via le Service pour : créer et gérer votre compte, traiter les paiements et les abonnements, fournir les fonctionnalités de base du Service, surveiller et analyser l'utilisation et les tendances pour améliorer votre expérience, et répondre aux demandes du service client.",
+      "p4_title": "4. Base juridique du traitement (Utilisateurs de l'EEE et du Royaume-Uni)",
+      "p4_content": "Si vous vous trouvez dans l'Espace économique européen (EEE) ou au Royaume-Uni, notre base juridique pour la collecte et l'utilisation des informations personnelles décrites ci-dessus dépendra des informations personnelles concernées et du contexte spécifique dans lequel nous les collectons. Normalement, nous ne collecterons des informations personnelles auprès de vous que lorsque nous aurons votre consentement, lorsque nous aurons besoin des informations personnelles pour exécuter un contrat avec vous, ou lorsque le traitement est dans notre intérêt légitime et n'est pas supplanté par vos intérêts en matière de protection des données ou vos droits et libertés fondamentaux.",
+      "p5_title": "5. Divulgation de vos informations",
+      "p5_content": "Nous ne partageons pas vos informations personnelles avec des tiers, sauf dans les circonstances décrites dans cette politique. Nous pouvons partager des informations avec nos fournisseurs de services tiers qui effectuent des services pour nous ou en notre nom, y compris le traitement des paiements, l'analyse de données, la livraison d'e-mails, les services d'hébergement et le service client. Nous pouvons également divulguer vos informations si la loi l'exige ou en réponse à des demandes valides des autorités publiques.",
+      "p6_title": "6. Conservation des données",
+      "p6_content": "Nous ne conserverons vos informations personnelles que le temps nécessaire aux fins énoncées dans cette politique de confidentialité. Nous conserverons et utiliserons vos informations dans la mesure nécessaire pour nous conformer à nos obligations légales (par exemple, si nous sommes tenus de conserver vos données pour nous conformer aux lois applicables), résoudre les litiges et appliquer nos accords et politiques juridiques.",
+      "p7_title": "7. Vos droits en matière de protection des données en vertu du RGPD",
+      "p7_content": "Si vous êtes résident de l'EEE ou du Royaume-Uni, vous disposez de certains droits en matière de protection des données. Nous visons à prendre des mesures raisonnables pour vous permettre de corriger, modifier, supprimer ou limiter l'utilisation de vos Données Personnelles. Vous avez le droit d'accéder, de mettre à jour ou de supprimer les informations que nous détenons sur vous, le droit de rectification, le droit d'opposition, le droit de restriction, le droit à la portabilité des données et le droit de retirer votre consentement.",
+      "p8_title": "8. Transferts internationaux",
+      "p8_content": "Vos informations, y compris les Données Personnelles, peuvent être transférées et conservées sur des ordinateurs situés en dehors de votre état, province, pays ou autre juridiction gouvernementale où les lois sur la protection des données peuvent différer de celles de votre juridiction. Nous prendrons toutes les mesures raisonnablement nécessaires pour garantir que vos données sont traitées en toute sécurité et conformément à cette Politique de Confidentialité.",
+      "p9_title": "9. Sécurité de vos informations",
+      "p9_content": "Nous utilisons des mesures de sécurité administratives, techniques et physiques pour aider à protéger vos informations personnelles. Bien que nous ayons pris des mesures raisonnables pour sécuriser les informations personnelles que vous nous fournissez, veuillez être conscient que malgré nos efforts, aucune mesure de sécurité n'est parfaite ou impénétrable, et aucune méthode de transmission de données ne peut être garantie contre toute interception ou autre type d'utilisation abusive.",
+      "p10_title": "10. Contactez-nous",
+      "p10_content": "Si vous avez des questions ou des commentaires sur cette Politique de Confidentialité, veuillez nous contacter à : privacy@kitchorify.com.",
+      "t1_title": "1. Acceptation des conditions",
+      "t1_content": "En créant un compte et en utilisant le service Kitchorify ('Service'), vous acceptez d'être lié par ces Conditions d'Utilisation ('Conditions'). Si vous n'êtes pas d'accord avec une partie des conditions, vous ne pouvez pas accéder au Service. Ceci constitue un accord juridiquement contraignant entre vous et Kitchorify.",
+      "t2_title": "2. Comptes et responsabilités",
+      "t2_content": "Lorsque vous créez un compte chez nous, vous devez fournir des informations exactes, complètes et à jour à tout moment. Vous êtes responsable de la protection du mot de passe que vous utilisez pour accéder au Service et de toutes les activités ou actions effectuées sous votre mot de passe. Vous acceptez de ne pas divulguer votre mot de passe à des tiers et devez nous informer immédiatement de toute violation de la sécurité ou de toute utilisation non autorisée de votre compte.",
+      "t3_title": "3. Abonnements et paiement",
+      "t3_content": "Notre service est facturé sur la base d'un abonnement. Vous serez facturé à l'avance sur une base récurrente et périodique ('Cycle de facturation'). Les cycles de facturation sont mensuels. À la fin de chaque cycle de facturation, votre abonnement sera automatiquement renouvelé dans les mêmes conditions, à moins que vous ne l'annuliez ou que nous l'annulions. Un mode de paiement valide est requis pour traiter le paiement de votre abonnement.",
+      "t4_title": "4. Essai gratuit",
+      "t4_content": "Nous pouvons, à notre seule discrétion, proposer un abonnement avec un essai gratuit pour une période de temps limitée ('Essai gratuit'). Il se peut que vous deviez saisir vos informations de facturation pour vous inscrire à l'Essai gratuit. Si vous saisissez vos informations de facturation lors de votre inscription à l'Essai gratuit, nous ne vous facturerons pas avant l'expiration de l'Essai gratuit. Le dernier jour de la période d'Essai gratuit, à moins que vous n'ayez annulé votre abonnement, les frais d'abonnement applicables au type d'abonnement que vous avez sélectionné vous seront automatiquement facturés.",
+      "t5_title": "5. Contenu utilisateur",
+      "t5_content": "Notre Service vous permet de publier, lier, stocker, partager et rendre disponibles certaines informations, textes, graphiques ou autres matériels ('Contenu'). Vous êtes responsable du Contenu que vous publiez sur le Service, y compris de sa légalité, de sa fiabilité et de sa pertinence. Vous conservez tous vos droits sur tout Contenu que vous soumettez, et vous êtes responsable de la protection de ces droits.",
+      "t6_title": "6. Utilisations interdites",
+      "t6_content": "Vous ne pouvez utiliser le Service qu'à des fins légales et conformément aux Conditions. Vous acceptez de ne pas utiliser le Service : de quelque manière que ce soit qui viole une loi ou une réglementation nationale ou internationale applicable ; dans le but d'exploiter, de nuire ou de tenter d'exploiter ou de nuire à des mineurs de quelque manière que ce soit ; pour transmettre ou faire envoyer tout matériel publicitaire ou promotionnel, y compris tout 'courrier indésirable', 'chaîne de lettres', 'spam' ou toute autre sollicitation similaire.",
+      "t7_title": "7. Résiliation",
+      "t7_content": "Nous pouvons résilier ou suspendre votre compte immédiatement, sans préavis ni responsabilité, pour quelque raison que ce soit, y compris, sans limitation, si vous enfreignez les Conditions. En cas de résiliation, votre droit d'utiliser le Service cessera immédiatement. Si vous souhaitez résilier votre compte, vous pouvez simplement cesser d'utiliser le Service et annuler votre abonnement.",
+      "t8_title": "8. Limitation de responsabilité et exclusion de garantie",
+      "t8_content": "En aucun cas, Kitchorify, ni ses administrateurs, employés, partenaires, agents, fournisseurs ou sociétés affiliées, ne pourront être tenus responsables de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris, sans limitation, la perte de profits, de données, d'utilisation, de clientèle ou d'autres pertes immatérielles. Votre utilisation du Service est à vos risques et périls. Le Service est fourni 'TEL QUEL' et 'TEL QUE DISPONIBLE' sans aucune garantie d'aucune sorte.",
+      "t9_title": "9. Droit applicable",
+      "t9_content": "Ces Conditions seront régies et interprétées conformément aux lois de l'Union européenne, sans égard à ses dispositions en matière de conflit de lois. Tout litige découlant de ces Conditions sera résolu par les tribunaux compétents de l'État membre où notre société est enregistrée."
     }
   },
   "subscription": {
@@ -311,6 +355,16 @@
     "currentPlan": "Plan Actuel",
     "activeSubscription": "Abonnement Actif",
     "trialExpired": "Essai Expiré",
-    "daysLeft": "{days} jours restants"
+    "daysLeft": "{days} jours restants",
+    "checkout": {
+      "title": "Activez votre abonnement",
+      "subtitle": "Effectuez votre paiement pour la formule Tout-en-un.",
+      "payButton": "Payer {amount}",
+      "processing": "Traitement du paiement...",
+      "success": "Paiement réussi !",
+      "error": "Une erreur est survenue. Veuillez vérifier vos informations de paiement et réessayer.",
+      "verifying": "Vérification du paiement, veuillez patienter...",
+      "activating": "Paiement vérifié. Activation de votre compte..."
+    }
   }
 }

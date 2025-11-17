@@ -1,3 +1,4 @@
+
 {
   "branding": {
     "name": "Kitchorify",
@@ -299,7 +300,50 @@
       "description": "Küçük restoranlar için modern bir işletim sistemi.",
       "privacy": "Gizlilik",
       "terms": "Koşullar",
-      "copyright": "© 2024 Kitchorify. Tüm hakları saklıdır."
+      "copyright": "© 2025 Kitchorify. Tüm hakları saklıdır."
+    },
+    "legal": {
+      "privacyTitle": "Gizlilik Politikası",
+      "termsTitle": "Kullanım Koşulları",
+      "lastUpdated": "Son Güncelleme: Ekim 2024",
+      "p1_title": "1. Giriş",
+      "p1_content": "Kitchorify'a ('biz', 'bize' veya 'bizim') hoş geldiniz. Gizliliğinizi korumayı taahhüt ediyoruz. Bu Gizlilik Politikası, hizmet olarak yazılım uygulamamızı ('Hizmet') kullandığınızda bilgilerinizi nasıl topladığımızı, kullandığımızı, ifşa ettiğimizi ve koruduğumuzu açıklar. Lütfen bu politikayı dikkatlice okuyun. Bu gizlilik politikasının şartlarını kabul etmiyorsanız, lütfen Hizmete erişmeyin.",
+      "p2_title": "2. Topladığımız Bilgiler",
+      "p2_content": "Hakkınızda çeşitli şekillerde bilgi toplayabiliriz. Hizmet aracılığıyla toplayabileceğimiz bilgiler şunları içerir: Kişisel Veriler (adınız, e-posta adresiniz ve rolünüz gibi), Türetilmiş Veriler (IP adresi, tarayıcı türü, ziyaret edilen sayfalar) ve Restoran Verileri (menü öğeleri, siparişler, masa bilgileri, satış verileri). Bu veriler, Hizmetimizin temel işlevselliğini sağlamak için gereklidir.",
+      "p3_title": "3. Bilgilerinizi Nasıl Kullanıyoruz",
+      "p3_content": "Doğru bilgilere sahip olmak, size sorunsuz, verimli ve özelleştirilmiş bir deneyim sunmamızı sağlar. Özellikle, Hizmet aracılığıyla hakkınızda toplanan bilgileri şu amaçlarla kullanabiliriz: hesabınızı oluşturmak ve yönetmek, ödemeleri ve abonelikleri işlemek, Hizmetin temel işlevselliğini sağlamak, deneyiminizi iyileştirmek için kullanımı ve eğilimleri izlemek ve analiz etmek ve müşteri hizmetleri taleplerine yanıt vermek.",
+      "p4_title": "4. İşlemenin Yasal Dayanağı (AEA ve BK Kullanıcıları)",
+      "p4_content": "Avrupa Ekonomik Alanı (AEA) veya Birleşik Krallık'ta bulunuyorsanız, yukarıda açıklanan kişisel bilgileri toplama ve kullanma yasal dayanağımız, ilgili kişisel bilgilere ve onu topladığımız özel bağlama bağlı olacaktır. Normalde kişisel bilgileri sizden yalnızca onayınızı aldığımızda, sizinle bir sözleşme yapmak için kişisel bilgilere ihtiyacımız olduğunda veya işlemenin meşru menfaatlerimiz dahilinde olduğu ve veri koruma menfaatleriniz veya temel hak ve özgürlükleriniz tarafından geçersiz kılınmadığı durumlarda toplarız.",
+      "p5_title": "5. Bilgilerinizin İfşası",
+      "p5_content": "Kişisel bilgilerinizi, bu politikada açıklanan durumlar dışında üçüncü taraflarla paylaşmayız. Bilgileri, bizim için veya bizim adımıza hizmetler yürüten ödeme işleme, veri analizi, e-posta teslimatı, barındırma hizmetleri ve müşteri hizmetleri dahil olmak üzere üçüncü taraf hizmet sağlayıcılarımızla paylaşabiliriz. Ayrıca, yasa gereği veya kamu makamlarının geçerli taleplerine yanıt olarak bilgilerinizi ifşa edebiliriz.",
+      "p6_title": "6. Veri Saklama",
+      "p6_content": "Kişisel bilgilerinizi yalnızca bu gizlilik politikasında belirtilen amaçlar için gerekli olduğu sürece saklayacağız. Bilgilerinizi, yasal yükümlülüklerimize uymak (örneğin, verilerinizi geçerli yasalara uymak için saklamamız gerekiyorsa), anlaşmazlıkları çözmek ve yasal anlaşmalarımızı ve politikalarımızı uygulamak için gerekli olduğu ölçüde saklayacak ve kullanacağız.",
+      "p7_title": "7. GDPR Kapsamındaki Veri Koruma Haklarınız",
+      "p7_content": "AEA veya BK'da ikamet ediyorsanız, belirli veri koruma haklarınız vardır. Kişisel Verilerinizin kullanımını düzeltmenize, değiştirmenize, silmenize veya sınırlamanıza olanak tanımak için makul adımlar atmayı hedefliyoruz. Hakkınızda sahip olduğumuz bilgilere erişme, bunları güncelleme veya silme hakkına, düzeltme hakkına, itiraz etme hakkına, kısıtlama hakkına, veri taşınabilirliği hakkına ve onayı geri çekme hakkına sahipsiniz.",
+      "p8_title": "8. Uluslararası Transferler",
+      "p8_content": "Kişisel Veriler de dahil olmak üzere bilgileriniz, veri koruma yasalarının kendi yargı bölgenizden farklı olabileceği eyaletiniz, iliniz, ülkeniz veya diğer resmi yargı bölgeniz dışındaki bilgisayarlara aktarılabilir ve bu bilgisayarlarda tutulabilir. Verilerinizin güvenli bir şekilde ve bu Gizlilik Politikasına uygun olarak işlenmesini sağlamak için makul olarak gerekli tüm adımları atacağız.",
+      "p9_title": "9. Bilgilerinizin Güvenliği",
+      "p9_content": "Kişisel bilgilerinizi korumaya yardımcı olmak için idari, teknik ve fiziksel güvenlik önlemleri kullanıyoruz. Bize sağladığınız kişisel bilgileri güvence altına almak için makul adımlar atmış olsak da, çabalarımıza rağmen hiçbir güvenlik önleminin mükemmel veya aşılamaz olmadığını ve hiçbir veri aktarım yönteminin herhangi bir müdahale veya başka türde kötüye kullanıma karşı garanti edilemeyeceğini lütfen unutmayın.",
+      "p10_title": "10. Bize Ulaşın",
+      "p10_content": "Bu Gizlilik Politikası hakkında sorularınız veya yorumlarınız varsa, lütfen bize şu adresten ulaşın: privacy@kitchorify.com.",
+      "t1_title": "1. Şartların Kabulü",
+      "t1_content": "Bir hesap oluşturarak ve Kitchorify hizmetini ('Hizmet') kullanarak, bu Kullanım Koşullarına ('Koşullar') bağlı kalmayı kabul edersiniz. Koşulların herhangi bir bölümünü kabul etmiyorsanız, Hizmete erişemezsiniz. Bu, siz ve Kitchorify arasında yasal olarak bağlayıcı bir anlaşma teşkil eder.",
+      "t2_title": "2. Hesaplar ve Sorumluluklar",
+      "t2_content": "Bizde bir hesap oluşturduğunuzda, her zaman doğru, eksiksiz ve güncel bilgiler sağlamalısınız. Hizmete erişmek için kullandığınız şifreyi korumaktan ve şifreniz altındaki her türlü faaliyet veya eylemden siz sorumlusunuz. Şifrenizi üçüncü bir tarafa açıklamama konusunda anlaşırsınız ve herhangi bir güvenlik ihlali veya hesabınızın yetkisiz kullanımı hakkında bilgi sahibi olur olmaz derhal bizi bilgilirmelisiniz.",
+      "t3_title": "3. Abonelikler ve Ödeme",
+      "t3_content": "Hizmetimiz abonelik esasına göre faturalandırılır. Yinelenen ve periyodik olarak ('Faturalandırma Döngüsü') peşin olarak faturalandırılırsınız. Faturalandırma döngüleri aylık olarak ayarlanır. Her Faturalandırma Döngüsünün sonunda, siz iptal etmedikçe veya biz iptal etmedikçe Aboneliğiniz tam olarak aynı koşullar altında otomatik olarak yenilenir. Aboneliğinizin ödemesini işlemek için geçerli bir ödeme yöntemi gereklidir.",
+      "t4_title": "4. Ücretsiz Deneme",
+      "t4_content": "Tamamen kendi takdirimize bağlı olarak, sınırlı bir süre için ücretsiz deneme süresi olan bir Abonelik ('Ücretsiz Deneme') sunabiliriz. Ücretsiz Deneme için kaydolmak amacıyla fatura bilgilerinizi girmeniz istenebilir. Ücretsiz Deneme için kaydolurken fatura bilgilerinizi girerseniz, Ücretsiz Deneme süresi dolana kadar tarafımızdan ücret alınmaz. Ücretsiz Deneme süresinin son gününde, Aboneliğinizi iptal etmediğiniz sürece, seçtiğiniz Abonelik türü için geçerli Abonelik ücretleri otomatik olarak sizden tahsil edilecektir.",
+      "t5_title": "5. Kullanıcı İçeriği",
+      "t5_content": "Hizmetimiz, belirli bilgileri, metinleri, grafikleri veya diğer materyalleri ('İçerik') yayınlamanıza, bağlamanıza, saklamanıza, paylaşmanıza ve başka şekillerde kullanıma sunmanıza olanak tanır. Hizmete gönderdiğiniz İçerikten, yasallığı, güvenilirliği ve uygunluğu dahil olmak üzere siz sorumlusunuz. Gönderdiğiniz herhangi bir İçeriğe ilişkin tüm haklarınızı saklı tutarsınız ve bu hakları korumaktan siz sorumlusunuz.",
+      "t6_title": "6. Yasaklı Kullanımlar",
+      "t6_content": "Hizmeti yalnızca yasal amaçlarla ve Koşullara uygun olarak kullanabilirsiniz. Hizmeti şu şekillerde kullanmamayı kabul edersiniz: geçerli herhangi bir ulusal veya uluslararası yasa veya yönetmeliği ihlal edecek şekilde; reşit olmayanları herhangi bir şekilde istismar etmek, onlara zarar vermek veya istismar etmeye veya zarar vermeye çalışmak amacıyla; 'istenmeyen posta', 'zincirleme mektup', 'spam' veya benzeri başka bir talep dahil olmak üzere herhangi bir reklam veya tanıtım materyali göndermek veya gönderilmesini sağlamak.",
+      "t7_title": "7. Fesih",
+      "t7_content": "Koşulları ihlal etmeniz de dahil olmak üzere herhangi bir nedenle, önceden bildirimde bulunmaksızın veya herhangi bir sorumluluk altına girmeksizin hesabınızı derhal feshedebilir veya askıya alabiliriz. Fesih üzerine, Hizmeti kullanma hakkınız derhal sona erecektir. Hesabınızı feshetmek isterseniz, Hizmeti kullanmayı bırakabilir ve aboneliğinizi iptal edebilirsiniz.",
+      "t8_title": "8. Sorumluluğun Sınırlandırılması ve Garanti Reddi",
+      "t8_content": "Hiçbir durumda Kitchorify veya yöneticileri, çalışanları, ortakları, acenteleri, tedarikçileri veya bağlı kuruluşları, kar, veri, kullanım, iyi niyet kaybı veya diğer maddi olmayan kayıplar dahil ancak bunlarla sınırlı olmamak üzere dolaylı, arızi, özel, sonuç olarak ortaya çıkan veya cezai zararlardan sorumlu tutulamaz. Hizmeti kullanımınız tamamen kendi sorumluluğunuzdadır. Hizmet, 'OLDUĞU GİBİ' ve 'MEVCUT OLDUĞU GİBİ' esasına göre, herhangi bir garanti olmaksızın sunulmaktadır.",
+      "t9_title": "9. Geçerli Hukuk",
+      "t9_content": "Bu Koşullar, yasa hükümlerinin çatışmasına bakılmaksızın Avrupa Birliği yasalarına göre yönetilecek ve yorumlanacaktır. Bu Koşullardan doğan herhangi bir anlaşmazlık, şirketimizin kayıtlı olduğu üye devletin yetkili mahkemelerinde çözülecektir."
     }
   },
   "subscription": {
@@ -311,6 +355,16 @@
     "currentPlan": "Mevcut Plan",
     "activeSubscription": "Aktif Abonelik",
     "trialExpired": "Deneme Süresi Doldu",
-    "daysLeft": "{days} gün kaldı"
+    "daysLeft": "{days} gün kaldı",
+    "checkout": {
+      "title": "Aboneliğinizi Etkinleştirin",
+      "subtitle": "Tümü bir arada planı için ödemenizi tamamlayın.",
+      "payButton": "{amount} Öde",
+      "processing": "Ödeme işleniyor...",
+      "success": "Ödeme başarılı!",
+      "error": "Bir hata oluştu. Lütfen ödeme bilgilerinizi kontrol edip tekrar deneyin.",
+      "verifying": "Ödeme doğrulanıyor, lütfen bekleyin...",
+      "activating": "Ödeme doğrulandı. Hesabınız etkinleştiriliyor..."
+    }
   }
 }

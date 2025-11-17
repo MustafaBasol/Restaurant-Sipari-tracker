@@ -13,8 +13,8 @@ const MarketingFooter: React.FC = () => {
                         <p className="text-text-secondary mt-2 text-sm max-w-xs">{t('branding.tagline')}</p>
                     </div>
                     <div className="flex gap-x-6">
-                        <a href="#" className="text-sm text-text-secondary hover:text-text-primary">{t('marketing.footer.privacy')}</a>
-                        <a href="#" className="text-sm text-text-secondary hover:text-text-primary">{t('marketing.footer.terms')}</a>
+                        <button onClick={() => window.location.hash = '#/privacy'} className="text-sm text-text-secondary hover:text-text-primary">{t('marketing.footer.privacy')}</button>
+                        <button onClick={() => window.location.hash = '#/terms'} className="text-sm text-text-secondary hover:text-text-primary">{t('marketing.footer.terms')}</button>
                     </div>
                 </div>
                 <div className="mt-8 border-t border-border-color pt-8 text-center text-sm text-text-secondary">

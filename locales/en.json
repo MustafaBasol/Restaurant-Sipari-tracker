@@ -1,3 +1,4 @@
+
 {
   "branding": {
     "name": "Kitchorify",
@@ -299,7 +300,50 @@
       "description": "A modern OS for small restaurants.",
       "privacy": "Privacy",
       "terms": "Terms",
-      "copyright": "© 2024 Kitchorify. All rights reserved."
+      "copyright": "© 2025 Kitchorify. All rights reserved."
+    },
+    "legal": {
+      "privacyTitle": "Privacy Policy",
+      "termsTitle": "Terms of Service",
+      "lastUpdated": "Last Updated: October 2024",
+      "p1_title": "1. Introduction",
+      "p1_content": "Welcome to Kitchorify ('we', 'us', or 'our'). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our software-as-a-service application (the 'Service'). Please read this policy carefully. If you do not agree with the terms of this privacy policy, please do not access the Service.",
+      "p2_title": "2. Information We Collect",
+      "p2_content": "We may collect information about you in a variety of ways. The information we may collect via the Service includes: Personal Data (such as your name, email address, and role), Derivative Data (IP address, browser type, pages visited), and Restaurant Data (menu items, orders, table information, sales data). This data is essential for providing the core functionality of our Service.",
+      "p3_title": "3. How We Use Your Information",
+      "p3_content": "Having accurate information permits us to provide you with a smooth, efficient, and customized experience. Specifically, we may use information collected about you via the Service to: create and manage your account, process payments and subscriptions, provide the Service's core functionality, monitor and analyze usage and trends to improve your experience, and respond to customer service requests.",
+      "p4_title": "4. Legal Basis for Processing (EEA and UK Users)",
+      "p4_content": "If you are in the European Economic Area (EEA) or the United Kingdom, our legal basis for collecting and using the personal information described above will depend on the personal information concerned and the specific context in which we collect it. We will normally collect personal information from you only where we have your consent to do so, where we need the personal information to perform a contract with you, or where the processing is in our legitimate interests and not overridden by your data protection interests or fundamental rights and freedoms.",
+      "p5_title": "5. Disclosure of Your Information",
+      "p5_content": "We do not share your personal information with third parties except in the circumstances described in this policy. We may share information with our third-party service providers that perform services for us or on our behalf, including payment processing, data analysis, email delivery, hosting services, and customer service. We may also disclose your information if required by law or in response to valid requests by public authorities.",
+      "p6_title": "6. Data Retention",
+      "p6_content": "We will only retain your personal information for as long as is necessary for the purposes set out in this privacy policy. We will retain and use your information to the extent necessary to comply with our legal obligations (for example, if we are required to retain your data to comply with applicable laws), resolve disputes, and enforce our legal agreements and policies.",
+      "p7_title": "7. Your Data Protection Rights under GDPR",
+      "p7_content": "If you are a resident of the EEA or UK, you have certain data protection rights. We aim to take reasonable steps to allow you to correct, amend, delete, or limit the use of your Personal Data. You have the right to access, update or delete the information we have on you, the right of rectification, the right to object, the right of restriction, the right to data portability, and the right to withdraw consent.",
+      "p8_title": "8. International Transfers",
+      "p8_content": "Your information, including Personal Data, may be transferred to — and maintained on — computers located outside of your state, province, country or other governmental jurisdiction where the data protection laws may differ from those from your jurisdiction. We will take all steps reasonably necessary to ensure that your data is treated securely and in accordance with this Privacy Policy.",
+      "p9_title": "9. Security of Your Information",
+      "p9_content": "We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.",
+      "p10_title": "10. Contact Us",
+      "p10_content": "If you have questions or comments about this Privacy Policy, please contact us at: privacy@kitchorify.com.",
+      "t1_title": "1. Agreement to Terms",
+      "t1_content": "By creating an account and using the Kitchorify service ('Service'), you agree to be bound by these Terms of Service ('Terms'). If you disagree with any part of the terms, then you may not access the Service. This constitutes a legally binding agreement between you and Kitchorify.",
+      "t2_title": "2. Accounts and Responsibilities",
+      "t2_content": "When you create an account with us, you must provide information that is accurate, complete, and current at all times. You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password. You agree not to disclose your password to any third party and must notify us immediately upon becoming aware of any breach of security or unauthorized use of your account.",
+      "t3_title": "3. Subscriptions and Payment",
+      "t3_content": "Our service is billed on a subscription basis. You will be billed in advance on a recurring and periodic basis ('Billing Cycle'). Billing cycles are set on a monthly basis. At the end of each Billing Cycle, your Subscription will automatically renew under the exact same conditions unless you cancel it or we cancel it. A valid payment method is required to process the payment for your Subscription.",
+      "t4_title": "4. Free Trial",
+      "t4_content": "We may, at our sole discretion, offer a Subscription with a free trial for a limited period of time ('Free Trial'). You may be required to enter your billing information in order to sign up for the Free Trial. If you do enter your billing information when signing up for the Free Trial, you will not be charged by us until the Free Trial has expired. On the last day of the Free Trial period, unless you canceled your Subscription, you will be automatically charged the applicable Subscription fees for the type of Subscription you have selected.",
+      "t5_title": "5. User Content",
+      "t5_content": "Our Service allows you to post, link, store, share and otherwise make available certain information, text, graphics, or other material ('Content'). You are responsible for the Content that you post to the Service, including its legality, reliability, and appropriateness. You retain any and all of your rights to any Content you submit, and you are responsible for protecting those rights.",
+      "t6_title": "6. Prohibited Uses",
+      "t6_content": "You may use the Service only for lawful purposes and in accordance with the Terms. You agree not to use the Service: in any way that violates any applicable national or international law or regulation; for the purpose of exploiting, harming, or attempting to exploit or harm minors in any way; to transmit, or procure the sending of, any advertising or promotional material, including any 'junk mail', 'chain letter', 'spam', or any other similar solicitation.",
+      "t7_title": "7. Termination",
+      "t7_content": "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease. If you wish to terminate your account, you may simply discontinue using the Service and cancel your subscription.",
+      "t8_title": "8. Limitation of Liability and Disclaimer",
+      "t8_content": "In no event shall Kitchorify, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses. Your use of the Service is at your sole risk. The Service is provided on an 'AS IS' and 'AS AVAILABLE' basis without warranties of any kind.",
+      "t9_title": "9. Governing Law",
+      "t9_content": "These Terms shall be governed and construed in accordance with the laws of the European Union, without regard to its conflict of law provisions. Any disputes arising from these Terms will be resolved in the competent courts of the member state where our company is registered."
     }
   },
   "subscription": {
@@ -311,6 +355,16 @@
     "currentPlan": "Current Plan",
     "activeSubscription": "Active Subscription",
     "trialExpired": "Trial Expired",
-    "daysLeft": "{days} days left"
+    "daysLeft": "{days} days left",
+    "checkout": {
+      "title": "Activate Your Subscription",
+      "subtitle": "Complete your payment for the All-in-one plan.",
+      "payButton": "Pay {amount}",
+      "processing": "Processing payment...",
+      "success": "Payment successful!",
+      "error": "An error occurred. Please check your payment details and try again.",
+      "verifying": "Verifying payment, please wait...",
+      "activating": "Payment verified. Activating your account..."
+    }
   }
 }

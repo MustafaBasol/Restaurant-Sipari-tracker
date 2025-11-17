@@ -1,7 +1,7 @@
+
 import React from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
-import { useSubscription } from '../hooks/useSubscription';
 import { SubscriptionStatus } from '../../../shared/types';
 import { getTrialDaysLeft, isSubscriptionActive } from '../../../shared/lib/utils';
 import { Card } from '../../../shared/components/ui/Card';
@@ -11,13 +11,16 @@ import { Badge } from '../../../shared/components/ui/Badge';
 const SubscriptionManagement: React.FC = () => {
     const { authState } = useAuth();
     const { t } = useLanguage();
-    const { activateSubscription, isLoading, error } = useSubscription();
 
     const tenant = authState?.tenant;
     if (!tenant) return null;
     
     const subscriptionIsActive = isSubscriptionActive(tenant);
     const trialDaysLeft = getTrialDaysLeft(tenant);
+
+    const handleActivate = () => {
+        window.location.hash = '#/checkout';
+    };
 
     const renderStatus = () => {
         if (subscriptionIsActive) {
@@ -60,10 +63,9 @@ const SubscriptionManagement: React.FC = () => {
 
                 {!subscriptionIsActive && (
                     <div>
-                        <Button onClick={activateSubscription} disabled={isLoading} className="w-full">
-                             {isLoading ? '...' : t('subscription.activateButton')}
+                        <Button onClick={handleActivate} className="w-full">
+                             {t('subscription.activateButton')}
                         </Button>
-                        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                     </div>
                 )}
             </div>

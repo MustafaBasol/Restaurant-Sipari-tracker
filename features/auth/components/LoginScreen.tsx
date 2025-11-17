@@ -70,12 +70,12 @@ const LoginScreen: React.FC = () => {
                     </div>
                     <p className="mt-4 text-sm text-text-secondary">
                         {t('auth.newHere')}{' '}
-                        <a
-                            href="#/register"
+                        <button
+                            onClick={() => window.location.hash = '#/register'}
                             className="font-semibold text-accent hover:underline focus:outline-none"
                         >
                             {t('auth.createAccountLink')}
-                        </a>
+                        </button>
                     </p>
                 </div>
             </div>
