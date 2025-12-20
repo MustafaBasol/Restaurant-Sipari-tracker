@@ -14,7 +14,15 @@ import { Textarea } from '../../../shared/components/ui/Textarea';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useMenu } from '../../menu/hooks/useMenu';
 import { Select } from '../../../shared/components/ui/Select';
-import { formatCurrency } from '../../../shared/lib/utils';
+import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
+import {
+  buildKitchenTicketText,
+  buildReceiptText,
+  calcDiscountAmount,
+  isPrintableOrderItem,
+} from '../../../shared/lib/printTemplates';
+import { openPrintWindow } from '../../../shared/lib/print';
+import { sendToPrintServer } from '../../../shared/lib/printClient';
 
 interface OrderModalProps {
   table: Table;
@@ -84,6 +92,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   const { tables, updateTable } = useTables();
   const { menuItems } = useMenu();
   const { t } = useLanguage();
+
+  const currency = authState?.tenant?.currency || 'USD';
+  const timezone = authState?.tenant?.timezone || 'UTC';
 
   const table = useMemo(
     () => tables.find((t) => t.id === initialTable.id) || initialTable,
@@ -245,6 +256,185 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const remaining = orderTotal - paidTotal;
     return remaining > 0 ? remaining : 0;
   }, [orderTotal, paidTotal]);
+
+  const printableItems = useMemo(() => {
+    if (!activeOrder) return [];
+    return activeOrder.items.filter((i) => isPrintableOrderItem(i));
+  }, [activeOrder]);
+
+  const buildReceiptLines = () => {
+    if (!activeOrder) return null;
+
+    const currencySymbol =
+      currency === 'TRY' ? '₺' : currency === 'EUR' ? '€' : currency === 'USD' ? '$' : '';
+    const dateTimeText = formatDateTime(activeOrder.createdAt, timezone, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+
+    const items = printableItems.map((item) => {
+      const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
+
+      const details: string[] = [];
+      const variants = Array.isArray((menuItem as any)?.variants) ? (menuItem as any).variants : [];
+      const variantName = item.variantId
+        ? variants.find((v: any) => v.id === item.variantId)?.name
+        : undefined;
+      if (variantName) details.push(`${t('waiter.variant')}: ${variantName}`);
+
+      const selectedOptionIds = item.modifierOptionIds ?? [];
+      const modifiers = Array.isArray((menuItem as any)?.modifiers)
+        ? (menuItem as any).modifiers
+        : [];
+      if (selectedOptionIds.length > 0 && modifiers.length > 0) {
+        const optionNames: string[] = [];
+        for (const mod of modifiers) {
+          const options = Array.isArray(mod?.options) ? mod.options : [];
+          for (const opt of options) {
+            if (selectedOptionIds.includes(opt.id)) optionNames.push(opt.name);
+          }
+        }
+        if (optionNames.length > 0)
+          details.push(`${t('waiter.modifiers')}: ${optionNames.join(', ')}`);
+      }
+
+      const unitPrice = menuItem
+        ? getUnitPrice(menuItem, {
+            variantId: item.variantId,
+            modifierOptionIds: item.modifierOptionIds,
+          })
+        : 0;
+
+      return {
+        quantity: item.quantity,
+        name: menuItem?.name || 'Unknown Item',
+        note: item.note,
+        isComplimentary: item.isComplimentary === true,
+        unitPrice,
+        lineTotal: item.isComplimentary === true ? 0 : unitPrice * item.quantity,
+        details,
+      };
+    });
+
+    const subtotal = items.reduce((sum, it) => {
+      if (it.isComplimentary) return sum;
+      return sum + (Number.isFinite(it.lineTotal as number) ? (it.lineTotal as number) : 0);
+    }, 0);
+    const discountAmount = calcDiscountAmount(subtotal, activeOrder.discount);
+    const total = Math.max(0, subtotal - discountAmount);
+
+    const paid = paidTotal;
+    const remaining = Math.max(0, total - paid);
+
+    return buildReceiptText(
+      {
+        restaurantName: authState?.tenant?.name || 'Restaurant',
+        tableName: table.name,
+        dateTimeText,
+        orderId: activeOrder.id,
+        currencySymbol,
+      },
+      items,
+      { subtotal, discountAmount, total, paid, remaining },
+    );
+  };
+
+  const buildKitchenLines = () => {
+    if (!activeOrder) return null;
+
+    const currencySymbol =
+      currency === 'TRY' ? '₺' : currency === 'EUR' ? '€' : currency === 'USD' ? '$' : '';
+    const dateTimeText = formatDateTime(activeOrder.createdAt, timezone, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+
+    const items = printableItems
+      .filter((i) => !i.isComplimentary)
+      .map((item) => {
+        const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
+
+        const details: string[] = [];
+        const variants = Array.isArray((menuItem as any)?.variants)
+          ? (menuItem as any).variants
+          : [];
+        const variantName = item.variantId
+          ? variants.find((v: any) => v.id === item.variantId)?.name
+          : undefined;
+        if (variantName) details.push(`${t('waiter.variant')}: ${variantName}`);
+
+        const selectedOptionIds = item.modifierOptionIds ?? [];
+        const modifiers = Array.isArray((menuItem as any)?.modifiers)
+          ? (menuItem as any).modifiers
+          : [];
+        if (selectedOptionIds.length > 0 && modifiers.length > 0) {
+          const optionNames: string[] = [];
+          for (const mod of modifiers) {
+            const options = Array.isArray(mod?.options) ? mod.options : [];
+            for (const opt of options) {
+              if (selectedOptionIds.includes(opt.id)) optionNames.push(opt.name);
+            }
+          }
+          if (optionNames.length > 0)
+            details.push(`${t('waiter.modifiers')}: ${optionNames.join(', ')}`);
+        }
+
+        return {
+          quantity: item.quantity,
+          name: menuItem?.name || 'Unknown Item',
+          note: item.note,
+          details,
+          currencySymbol,
+        };
+      });
+
+    return buildKitchenTicketText(
+      {
+        restaurantName: authState?.tenant?.name || 'Restaurant',
+        tableName: table.name,
+        dateTimeText,
+        orderId: activeOrder.id,
+        currencySymbol,
+      },
+      items,
+    );
+  };
+
+  const handlePrintReceipt = async () => {
+    const text = buildReceiptLines();
+    if (!text) return;
+
+    const prefersServer = Boolean(import.meta.env.VITE_PRINT_SERVER_URL);
+    if (prefersServer) {
+      await sendToPrintServer('receipt', text);
+      return;
+    }
+
+    openPrintWindow(
+      `<div class="ticket">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`,
+      {
+        title: 'Receipt',
+      },
+    );
+  };
+
+  const handlePrintKitchenTicket = async () => {
+    const text = buildKitchenLines();
+    if (!text) return;
+
+    const prefersServer = Boolean(import.meta.env.VITE_PRINT_SERVER_URL);
+    if (prefersServer) {
+      await sendToPrintServer('kitchen', text);
+      return;
+    }
+
+    openPrintWindow(
+      `<div class="ticket">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`,
+      {
+        title: 'Kitchen Ticket',
+      },
+    );
+  };
 
   const isPaymentComplete = useMemo(() => {
     return remainingTotal <= 0.00001;
@@ -667,6 +857,27 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
               >
                 {t('actions.closeTable')}
               </Button>
+            )}
+
+            {activeOrder && printableItems.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={handlePrintKitchenTicket}
+                  className="w-full"
+                  disabled={!activeOrder}
+                >
+                  {t('actions.printKitchenTicket')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handlePrintReceipt}
+                  className="w-full"
+                  disabled={!activeOrder}
+                >
+                  {t('actions.printReceipt')}
+                </Button>
+              </div>
             )}
           </div>
         </div>

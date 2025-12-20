@@ -31,6 +31,8 @@
     "closeTable": "Fermer la Table",
     "cancelItem": "Annuler l'article",
     "addPayment": "Ajouter un Paiement",
+    "printReceipt": "Imprimer l'addition",
+    "printKitchenTicket": "Imprimer le ticket cuisine",
     "applyDiscount": "Appliquer une Remise",
     "removeDiscount": "Retirer la Remise",
     "makeComplimentary": "Offert",

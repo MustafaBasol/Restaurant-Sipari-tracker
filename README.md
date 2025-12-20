@@ -89,6 +89,29 @@ Bu repo, demo amaçlı **gerçek backend olmadan** çalışır. Veri mock API ü
 
 Veriyi sıfırlamak için tarayıcıda bu anahtarları silin (veya “Site Data/Clear Storage” ile temizleyin), ardından sayfayı yenileyin.
 
+## Yazıcı (Adisyon / Mutfak Fişi)
+
+Bu repo frontend-only demo olduğu için yazdırma iki şekilde çalışır:
+
+1. **Varsayılan (tarayıcı yazdırma):** Garson sipariş ekranında “Adisyon Yazdır” ve “Mutfak Fişi Yazdır” ile tarayıcı yazdırma penceresi açılır.
+
+2. **Opsiyonel Print Server (gelişmiş entegrasyon):** Eğer cihaz/termal yazıcıya doğrudan göndermek isterseniz örnek sunucu: `printer-server.cjs`.
+
+Çalıştırma:
+
+```bash
+npm install
+npm install express cors dotenv
+
+# Terminal 1: print server
+PORT=4243 CORS_ORIGINS=http://localhost:3000 node printer-server.cjs
+
+# Terminal 2: frontend (print server'a job göndermek için)
+VITE_PRINT_SERVER_URL=http://localhost:4243 npm run dev
+```
+
+Not: `printer-server.cjs` şu an gelen işleri stdout'a yazar (demo). İhtiyaca göre ESC/POS, CUPS vb. ile gerçek yazıcıya gönderilecek şekilde genişletilebilir.
+
 ## Abonelik / Stripe Notları
 
 - Stripe publishable key, ortam değişkeninden okunur: `VITE_STRIPE_PUBLISHABLE_KEY`.

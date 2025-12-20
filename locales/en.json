@@ -31,6 +31,8 @@
     "closeTable": "Close Table",
     "cancelItem": "Cancel Item",
     "addPayment": "Add Payment",
+    "printReceipt": "Print Receipt",
+    "printKitchenTicket": "Print Kitchen Ticket",
     "applyDiscount": "Apply Discount",
     "removeDiscount": "Remove Discount",
     "makeComplimentary": "Complimentary",
