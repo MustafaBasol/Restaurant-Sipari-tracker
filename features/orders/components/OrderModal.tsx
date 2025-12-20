@@ -22,7 +22,45 @@ interface OrderModalProps {
   onClose: () => void;
 }
 
-type TempOrderItem = Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>;
+type TempOrderItem = {
+  tempId: string;
+  menuItemId: string;
+  variantId?: string;
+  modifierOptionIds?: string[];
+  quantity: number;
+  note: string;
+};
+
+const makeTempId = () => `tmp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+const signatureForTempItem = (item: Pick<TempOrderItem, 'menuItemId' | 'variantId' | 'modifierOptionIds'>) => {
+  const mods = [...(item.modifierOptionIds ?? [])].sort().join('|');
+  return `${item.menuItemId}::${item.variantId ?? ''}::${mods}`;
+};
+
+const getUnitPrice = (menuItem: any, item: { variantId?: string; modifierOptionIds?: string[] }) => {
+  const variants = Array.isArray(menuItem?.variants) ? menuItem.variants : [];
+  const variantPrice = item.variantId
+    ? variants.find((v: any) => v.id === item.variantId)?.price
+    : undefined;
+  const basePrice = Number.isFinite(variantPrice) ? Number(variantPrice) : Number(menuItem?.price) || 0;
+
+  const selectedOptionIds = item.modifierOptionIds ?? [];
+  const modifiers = Array.isArray(menuItem?.modifiers) ? menuItem.modifiers : [];
+  if (selectedOptionIds.length === 0 || modifiers.length === 0) return basePrice;
+
+  let delta = 0;
+  for (const mod of modifiers) {
+    const options = Array.isArray(mod?.options) ? mod.options : [];
+    for (const opt of options) {
+      if (selectedOptionIds.includes(opt.id)) {
+        const d = Number(opt.priceDelta);
+        delta += Number.isFinite(d) ? d : 0;
+      }
+    }
+  }
+  return basePrice + delta;
+};
 
 const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose }) => {
   const { authState } = useAuth();
@@ -70,32 +108,46 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   };
 
   const handleAddItem = (menuItem: MenuItem) => {
+    const variants = Array.isArray((menuItem as any).variants) ? (menuItem as any).variants : [];
+    const defaultVariantId = variants.length > 0 ? variants[0]?.id : undefined;
+    const newEntry: TempOrderItem = {
+      tempId: makeTempId(),
+      menuItemId: menuItem.id,
+      quantity: 1,
+      note: '',
+      variantId: defaultVariantId,
+      modifierOptionIds: [],
+    };
+
     setCurrentOrderItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.menuItemId === menuItem.id);
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item.menuItemId === menuItem.id ? { ...item, quantity: item.quantity + 1 } : item,
+      const sig = signatureForTempItem(newEntry);
+      const existingIndex = prevItems.findIndex((i) => signatureForTempItem(i) === sig);
+      if (existingIndex >= 0) {
+        return prevItems.map((it, idx) =>
+          idx === existingIndex ? { ...it, quantity: it.quantity + 1 } : it,
         );
       }
-      return [...prevItems, { menuItemId: menuItem.id, quantity: 1, note: '' }];
+      return [...prevItems, newEntry];
     });
   };
 
-  const handleUpdateItem = (menuItemId: string, newQuantity: number, newNote: string) => {
+  const handleUpdateItem = (
+    tempId: string,
+    updates: Partial<Pick<TempOrderItem, 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>>,
+  ) => {
     setCurrentOrderItems((prevItems) =>
-      prevItems.map((item) =>
-        item.menuItemId === menuItemId ? { ...item, quantity: newQuantity, note: newNote } : item,
-      ),
+      prevItems.map((item) => (item.tempId === tempId ? { ...item, ...updates } : item)),
     );
   };
 
-  const handleRemoveItem = (menuItemId: string) => {
-    setCurrentOrderItems((prevItems) => prevItems.filter((item) => item.menuItemId !== menuItemId));
+  const handleRemoveItem = (tempId: string) => {
+    setCurrentOrderItems((prevItems) => prevItems.filter((item) => item.tempId !== tempId));
   };
 
   const handleSendToKitchen = async () => {
     if (currentOrderItems.length > 0 && authState?.user.id) {
-      await createOrder(table.id, currentOrderItems, authState.user.id, orderNote);
+      const payload = currentOrderItems.map(({ tempId, ...rest }) => rest);
+      await createOrder(table.id, payload, authState.user.id, orderNote);
       setCurrentOrderItems([]);
     }
   };
@@ -121,7 +173,12 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
       .reduce((sum, item) => {
         if (item.isComplimentary) return sum;
         const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
-        return sum + (menuItem ? menuItem.price * item.quantity : 0);
+        if (!menuItem) return sum;
+        const unit = getUnitPrice(menuItem, {
+          variantId: (item as any).variantId,
+          modifierOptionIds: (item as any).modifierOptionIds,
+        });
+        return sum + unit * item.quantity;
       }, 0);
 
     const discount = activeOrder.discount;

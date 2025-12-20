@@ -20,7 +20,7 @@ export const getOrders = (tenantId: string) => getDataByTenant<Order>('orders', 
 export const createOrder = (
   tenantId: string,
   tableId: string,
-  items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[],
+  items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>[],
   waiterId: string,
   note?: string,
 ) => internalCreateOrder(tenantId, tableId, items, waiterId, note);

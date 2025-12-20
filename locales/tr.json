@@ -70,6 +70,8 @@
     "sendToKitchen": "Mutfağa Gönder",
     "total": "Toplam",
     "notes": "Notlar",
+    "variant": "Varyant",
+    "modifiers": "Ekstralar",
     "addNote": "Not ekle...",
     "quantity": "Adet",
     "orderSent": "Sipariş mutfağa gönderildi!",

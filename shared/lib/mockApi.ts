@@ -136,6 +136,20 @@ const seedData: MockDB = {
       description: 'Pasta with eggs, cheese, pancetta, and pepper.',
       price: 16.0,
       isAvailable: true,
+      variants: [
+        { id: 'v_carbonara_regular', name: 'Regular', price: 16.0 },
+        { id: 'v_carbonara_large', name: 'Large', price: 19.0 },
+      ],
+      modifiers: [
+        {
+          id: 'm_carbonara_extras',
+          name: 'Extras',
+          options: [
+            { id: 'o_extra_parmesan', name: 'Extra Parmesan', priceDelta: 1.25 },
+            { id: 'o_extra_pancetta', name: 'Extra Pancetta', priceDelta: 2.5 },
+          ],
+        },
+      ],
     },
     {
       id: 'item4',
@@ -156,6 +170,20 @@ const seedData: MockDB = {
       description: 'Classic pizza with tomatoes, mozzarella, and basil.',
       price: 14.0,
       isAvailable: false,
+      variants: [
+        { id: 'v_pizza_small', name: 'Small', price: 10.99 },
+        { id: 'v_pizza_large', name: 'Large', price: 14.99 },
+      ],
+      modifiers: [
+        {
+          id: 'm_pizza_extras',
+          name: 'Extras',
+          options: [
+            { id: 'o_extra_cheese', name: 'Extra Cheese', priceDelta: 1.5 },
+            { id: 'o_olives', name: 'Olives', priceDelta: 1.0 },
+          ],
+        },
+      ],
     },
     {
       id: 'item6',
@@ -282,13 +310,44 @@ const writeAuditLog = (
   db.auditLogs.push(entry);
 };
 
+const calcOrderItemUnitPrice = (item: OrderItem): number => {
+  const menuItem = db.menuItems.find((mi) => mi.id === item.menuItemId);
+  if (!menuItem) return 0;
+
+  const variantPrice =
+    item.variantId && Array.isArray((menuItem as any).variants)
+      ? (menuItem as any).variants.find((v: any) => v.id === item.variantId)?.price
+      : undefined;
+
+  const basePrice = Number.isFinite(variantPrice) ? Number(variantPrice) : menuItem.price;
+
+  const selectedOptionIds = item.modifierOptionIds ?? [];
+  if (selectedOptionIds.length === 0) return basePrice;
+
+  const modifiers = (menuItem as any).modifiers;
+  if (!Array.isArray(modifiers)) return basePrice;
+
+  let modifiersTotal = 0;
+  for (const mod of modifiers) {
+    if (!Array.isArray(mod?.options)) continue;
+    for (const opt of mod.options) {
+      if (selectedOptionIds.includes(opt.id)) {
+        const delta = Number(opt.priceDelta);
+        modifiersTotal += Number.isFinite(delta) ? delta : 0;
+      }
+    }
+  }
+
+  return basePrice + modifiersTotal;
+};
+
 const calcOrderTotal = (order: Order): number => {
   const subtotal = order.items
     .filter((i) => i.status !== OrderStatus.CANCELED)
     .reduce((sum, item) => {
       if (item.isComplimentary) return sum;
-      const menuItem = db.menuItems.find((mi) => mi.id === item.menuItemId);
-      return sum + (menuItem ? menuItem.price * item.quantity : 0);
+      const unitPrice = calcOrderItemUnitPrice(item);
+      return sum + unitPrice * item.quantity;
     }, 0);
 
   const discount = order.discount;
@@ -537,7 +596,7 @@ export const updateData = async <T extends { id: string }>(
 export const internalCreateOrder = async (
   tenantId: string,
   tableId: string,
-  items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[],
+  items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>[],
   waiterId: string,
   note?: string,
 ): Promise<Order> => {
@@ -552,6 +611,7 @@ export const internalCreateOrder = async (
       id: `orditem${Date.now()}-${index}`,
       orderId: order!.id,
       status: OrderStatus.NEW,
+      modifierOptionIds: item.modifierOptionIds ?? [],
     }));
     order.items.push(...newItems);
     order.updatedAt = new Date();
@@ -570,6 +630,7 @@ export const internalCreateOrder = async (
         id: `orditem${Date.now()}-${index}`,
         orderId,
         status: OrderStatus.NEW,
+        modifierOptionIds: item.modifierOptionIds ?? [],
       })),
       payments: [],
       paymentStatus: PaymentStatus.UNPAID,

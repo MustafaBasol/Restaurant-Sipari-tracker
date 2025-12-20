@@ -24,7 +24,7 @@ interface OrderContextData {
   isLoading: boolean;
   createOrder: (
     tableId: string,
-    items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[],
+    items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>[],
     waiterId: string,
     note?: string,
   ) => Promise<void>;
@@ -95,7 +95,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const createOrder = (
     tableId: string,
-    items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>[],
+    items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>[],
     waiterId: string,
     note?: string,
   ) =>

@@ -24,6 +24,22 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
   const { t } = useLanguage();
   const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
 
+  const variantName = item.variantId
+    ? (Array.isArray((menuItem as any)?.variants) ? (menuItem as any).variants : []).find(
+        (v: any) => v.id === item.variantId,
+      )?.name
+    : undefined;
+
+  const selectedOptionIds = item.modifierOptionIds ?? [];
+  const modifierOptionNames: string[] = [];
+  const modifiers = Array.isArray((menuItem as any)?.modifiers) ? (menuItem as any).modifiers : [];
+  for (const mod of modifiers) {
+    const options = Array.isArray(mod?.options) ? mod.options : [];
+    for (const opt of options) {
+      if (selectedOptionIds.includes(opt.id)) modifierOptionNames.push(opt.name);
+    }
+  }
+
   const handleStatusChange = async (newStatus: OrderStatus) => {
     await updateOrderItemStatus(orderId, item.id, newStatus);
   };
@@ -36,6 +52,13 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
         <p className="font-semibold">
           {item.quantity}x {menuItem.name}
         </p>
+        {(variantName || modifierOptionNames.length > 0) && (
+          <p className="text-xs text-text-secondary">
+            {variantName ? variantName : null}
+            {variantName && modifierOptionNames.length > 0 ? ' • ' : null}
+            {modifierOptionNames.length > 0 ? modifierOptionNames.join(', ') : null}
+          </p>
+        )}
         {item.note && <p className="text-xs text-text-secondary italic">"{item.note}"</p>}
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">

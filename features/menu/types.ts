@@ -1,5 +1,23 @@
 import { KitchenStation } from '../../shared/types';
 
+export interface MenuItemVariant {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface MenuItemModifierOption {
+  id: string;
+  name: string;
+  priceDelta: number;
+}
+
+export interface MenuItemModifier {
+  id: string;
+  name: string;
+  options: MenuItemModifierOption[];
+}
+
 export interface MenuCategory {
   id: string;
   tenantId: string;
@@ -15,4 +33,6 @@ export interface MenuItem {
   price: number;
   isAvailable: boolean;
   station?: KitchenStation;
+  variants?: MenuItemVariant[];
+  modifiers?: MenuItemModifier[];
 }

@@ -13,6 +13,8 @@ export interface OrderItem {
   id: string;
   orderId: string;
   menuItemId: string;
+  variantId?: string;
+  modifierOptionIds?: string[];
   quantity: number;
   note: string;
   status: OrderStatus;

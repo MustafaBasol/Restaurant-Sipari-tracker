@@ -5,17 +5,28 @@ import { Order, OrderItem } from '../types';
 import { DiscountType, OrderStatus, UserRole } from '../../../shared/types';
 import { TrashIcon } from '../../../shared/components/icons/Icons';
 import { Input } from '../../../shared/components/ui/Input';
+import { Select } from '../../../shared/components/ui/Select';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
 
-type TempOrderItem = Pick<OrderItem, 'menuItemId' | 'quantity' | 'note'>;
+export interface TempOrderItem {
+  tempId: string;
+  menuItemId: string;
+  variantId?: string;
+  modifierOptionIds?: string[];
+  quantity: number;
+  note: string;
+}
 
 interface CurrentOrderProps {
   order?: Order | null;
   tempItems: TempOrderItem[];
-  onUpdateItem: (menuItemId: string, quantity: number, note: string) => void;
-  onRemoveItem: (menuItemId: string) => void;
+  onUpdateItem: (
+    tempId: string,
+    updates: Partial<Pick<TempOrderItem, 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>>,
+  ) => void;
+  onRemoveItem: (tempId: string) => void;
 }
 
 const statusColors: Record<OrderStatus, string> = {
@@ -27,10 +38,60 @@ const statusColors: Record<OrderStatus, string> = {
   [OrderStatus.CLOSED]: 'text-status-closed',
 };
 
+const getUnitPrice = (
+  menuItem: any,
+  item: { variantId?: string; modifierOptionIds?: string[] },
+): number => {
+  const variants = Array.isArray(menuItem?.variants) ? menuItem.variants : [];
+  const variantPrice = item.variantId
+    ? variants.find((v: any) => v.id === item.variantId)?.price
+    : undefined;
+  const basePrice = Number.isFinite(variantPrice) ? Number(variantPrice) : Number(menuItem?.price) || 0;
+
+  const selectedOptionIds = item.modifierOptionIds ?? [];
+  const modifiers = Array.isArray(menuItem?.modifiers) ? menuItem.modifiers : [];
+  if (selectedOptionIds.length === 0 || modifiers.length === 0) return basePrice;
+
+  let delta = 0;
+  for (const mod of modifiers) {
+    const options = Array.isArray(mod?.options) ? mod.options : [];
+    for (const opt of options) {
+      if (selectedOptionIds.includes(opt.id)) {
+        const d = Number(opt.priceDelta);
+        delta += Number.isFinite(d) ? d : 0;
+      }
+    }
+  }
+  return basePrice + delta;
+};
+
+const getVariantName = (menuItem: any, variantId?: string): string | undefined => {
+  const variants = Array.isArray(menuItem?.variants) ? menuItem.variants : [];
+  if (!variantId) return undefined;
+  return variants.find((v: any) => v.id === variantId)?.name;
+};
+
+const getSelectedModifierOptionNames = (menuItem: any, optionIds: string[]): string[] => {
+  const modifiers = Array.isArray(menuItem?.modifiers) ? menuItem.modifiers : [];
+  if (modifiers.length === 0 || optionIds.length === 0) return [];
+  const names: string[] = [];
+  for (const mod of modifiers) {
+    const options = Array.isArray(mod?.options) ? mod.options : [];
+    for (const opt of options) {
+      if (optionIds.includes(opt.id)) {
+        names.push(opt.name);
+      }
+    }
+  }
+  return names;
+};
+
 const OrderItemRow: React.FC<{
   item: TempOrderItem | OrderItem;
   isTemp: boolean;
-  onUpdate: (quantity: number, note: string) => void;
+  onUpdate: (
+    updates: Partial<Pick<TempOrderItem, 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>>,
+  ) => void;
   onRemove: () => void;
 }> = ({ item, isTemp, onUpdate, onRemove }) => {
   const { menuItems } = useMenu();
@@ -46,6 +107,18 @@ const OrderItemRow: React.FC<{
   const isComplimentary = 'isComplimentary' in item ? Boolean(item.isComplimentary) : false;
   const canManageDiscounts =
     authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
+
+  const variants = Array.isArray((menuItem as any).variants) ? (menuItem as any).variants : [];
+  const modifiers = Array.isArray((menuItem as any).modifiers) ? (menuItem as any).modifiers : [];
+  const selectedVariantName = getVariantName(menuItem, (item as any).variantId);
+  const selectedModifierNames = getSelectedModifierOptionNames(
+    menuItem,
+    ((item as any).modifierOptionIds ?? []) as string[],
+  );
+  const unitPrice = getUnitPrice(menuItem, {
+    variantId: (item as any).variantId,
+    modifierOptionIds: (item as any).modifierOptionIds,
+  });
 
   const handleServeItem = () => {
     if ('orderId' in item && item.orderId && item.id) {
@@ -75,6 +148,13 @@ const OrderItemRow: React.FC<{
           <p className={`font-semibold ${status === OrderStatus.CANCELED ? 'line-through' : ''}`}>
             {menuItem.name}
           </p>
+          {(selectedVariantName || selectedModifierNames.length > 0) && (
+            <p className="text-xs text-text-secondary">
+              {selectedVariantName ? selectedVariantName : null}
+              {selectedVariantName && selectedModifierNames.length > 0 ? ' • ' : null}
+              {selectedModifierNames.length > 0 ? selectedModifierNames.join(', ') : null}
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-1">
             <p className={`text-xs font-medium ${statusColors[status]}`}>
               {t(`statuses.${status}`)}
@@ -88,7 +168,10 @@ const OrderItemRow: React.FC<{
         </div>
         <div className="flex flex-col items-end gap-2">
           <p className={`font-semibold ${status === OrderStatus.CANCELED ? 'line-through' : ''}`}>
-            {formatCurrency(isComplimentary && status !== OrderStatus.CANCELED ? 0 : menuItem.price * item.quantity, currency)}
+            {formatCurrency(
+              isComplimentary && status !== OrderStatus.CANCELED ? 0 : unitPrice * item.quantity,
+              currency,
+            )}
           </p>
           {status === OrderStatus.READY && (
             <button
@@ -101,24 +184,85 @@ const OrderItemRow: React.FC<{
         </div>
       </div>
       {isTemp ? (
-        <div className="flex items-center gap-2 mt-2">
+        <div className="mt-2 space-y-2">
+          {variants.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-text-secondary">{t('waiter.variant')}</label>
+              <Select
+                value={(item as any).variantId || variants[0]?.id}
+                onChange={(e) => onUpdate({ variantId: e.target.value })}
+                className="py-2"
+                aria-label={t('waiter.variant')}
+              >
+                {variants.map((v: any) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} ({formatCurrency(v.price, currency)})
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {modifiers.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-text-secondary">{t('waiter.modifiers')}</label>
+              <div className="space-y-2">
+                {modifiers.map((m: any) => (
+                  <div key={m.id} className="space-y-1">
+                    <p className="text-xs text-text-secondary">{m.name}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(Array.isArray(m.options) ? m.options : []).map((opt: any) => {
+                        const current = (((item as any).modifierOptionIds ?? []) as string[]);
+                        const selected = current.includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              const next = selected
+                                ? current.filter((id) => id !== opt.id)
+                                : [...current, opt.id];
+                              onUpdate({ modifierOptionIds: next });
+                            }}
+                            className={
+                              selected
+                                ? 'px-2 py-1 rounded-full text-xs font-semibold bg-accent text-white'
+                                : 'px-2 py-1 rounded-full text-xs font-semibold bg-card-bg text-text-secondary hover:bg-gray-200'
+                            }
+                          >
+                            {opt.name}
+                            {Number(opt.priceDelta) > 0
+                              ? ` (+${formatCurrency(Number(opt.priceDelta), currency)})`
+                              : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
           <Input
             type="number"
             min="1"
             value={item.quantity}
-            onChange={(e) => onUpdate(parseInt(e.target.value) || 1, item.note)}
+            onChange={(e) => onUpdate({ quantity: parseInt(e.target.value) || 1 })}
             className="w-16 text-center py-1"
           />
           <Input
             type="text"
             value={item.note}
-            onChange={(e) => onUpdate(item.quantity, e.target.value)}
+            onChange={(e) => onUpdate({ note: e.target.value })}
             placeholder={t('waiter.addNote')}
             className="flex-grow py-1 px-2 text-sm"
           />
           <button onClick={onRemove} className="text-red-500 hover:text-red-700 p-1">
             <TrashIcon />
           </button>
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-between mt-1">
@@ -170,7 +314,12 @@ const CurrentOrder: React.FC<CurrentOrderProps> = ({
       const isComplimentary = 'isComplimentary' in item ? Boolean(item.isComplimentary) : false;
       if (isComplimentary && (!('status' in item) || item.status !== OrderStatus.CANCELED)) return acc;
       const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
-      return acc + (menuItem ? menuItem.price * item.quantity : 0);
+      if (!menuItem) return acc;
+      const unit = getUnitPrice(menuItem, {
+        variantId: (item as any).variantId,
+        modifierOptionIds: (item as any).modifierOptionIds,
+      });
+      return acc + unit * item.quantity;
     }, 0);
 
   const totalPrice = (() => {
@@ -201,11 +350,11 @@ const CurrentOrder: React.FC<CurrentOrderProps> = ({
         ))}
         {tempItems.map((item) => (
           <OrderItemRow
-            key={item.menuItemId}
+            key={item.tempId}
             item={item}
             isTemp={true}
-            onUpdate={(q, n) => onUpdateItem(item.menuItemId, q, n)}
-            onRemove={() => onRemoveItem(item.menuItemId)}
+            onUpdate={(updates) => onUpdateItem(item.tempId, updates)}
+            onRemove={() => onRemoveItem(item.tempId)}
           />
         ))}
         {allItems.length === 0 && (

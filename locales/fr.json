@@ -70,6 +70,8 @@
     "sendToKitchen": "Envoyer en Cuisine",
     "total": "Total",
     "notes": "Notes",
+    "variant": "Variante",
+    "modifiers": "Suppléments",
     "addNote": "Ajouter une note...",
     "quantity": "Qté",
     "orderSent": "Commande envoyée en cuisine !",
