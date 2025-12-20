@@ -136,3 +136,63 @@ Kabul kriteri örneği:
 
 - Gerçek kullanım için veri kaynağı localStorage yerine sunucu + gerçek zamanlı senkron (örn. WebSocket) gerekebilir.
 - Ödeme/fiş entegrasyonları ülkeye/cihaza göre değişir; ürün stratejisinde hedef pazar netleşmeli.
+
+---
+
+## 8) Uygulanan geliştirmeler (repo notu)
+
+Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işlendiğini** ve **nasıl kullanıldığını** özetler.
+
+### 8.1 P1 — Masa taşıma + masa birleştir/ayır
+
+**Amaç**
+
+- Garsonun, aktif bir adisyonu başka masaya **taşıyabilmesi**.
+- 2+ masayı tek bir adisyona **bağlayabilmesi (birleştirme)** ve sonradan **ayırabilmesi**.
+
+**Kullanım (Garson / WAITER)**
+
+- Bir masaya girip sipariş oluşturduktan sonra, sipariş ekranında **“Masa İşlemleri”** alanı görünür.
+  - **Taşı**: “Başka masaya taşı” dropdown’ından hedef masayı seçip “Taşı”ya bas.
+  - **Birleştir**: “Masa birleştir” dropdown’ından eklenecek masayı seçip “Birleştir”e bas.
+  - **Ayır**: Birleştirilen masalar varsa “Masayı ayır” dropdown’ından masayı seçip “Ayır”a bas.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin “Masa Yönetimi” ekranında “Siparişi Görüntüle” linki, birleştirilmiş (secondary) masalarda da doğru siparişi bulur.
+
+**İş kuralları / kısıtlar**
+
+- **Taşıma** yalnızca **birleştirilmemiş** (linkedTableIds olmayan) siparişlerde yapılır.
+- Taşıma hedefi:
+  - Masa mevcut olmalı.
+  - Masa durumu **FREE** olmalı.
+  - Hedef masada aktif sipariş olmamalı.
+- **Birleştirme**:
+  - Secondary masa mevcut olmalı.
+  - Secondary masada aktif sipariş olmamalı.
+  - Secondary masa, order’a `linkedTableIds` ile bağlanır ve masa durumu **OCCUPIED** olur.
+- **Ayırma**:
+  - Seçilen masa `linkedTableIds` listesinden çıkarılır.
+  - Ayrılan masa durumu **FREE** olur.
+- **Kapatma (close order)**:
+  - Order kapatıldığında hem ana masa (`tableId`) hem de bağlı masalar (`linkedTableIds`) **FREE** yapılır.
+
+**Görsel geri bildirim**
+
+- Garson masalar grid’inde, bir sipariş birden fazla masaya bağlandıysa bağlı masalarda da “aktif sipariş” ikonu görünür.
+- Birleştirilen secondary masaya tıklayıp sipariş ekranını açtığınızda aynı order açılır (order lookup `linkedTableIds`’ı da kapsar).
+
+**Audit / denetim izi**
+
+- Aşağıdaki aksiyonlar audit log’a yazılır:
+  - `ORDER_MOVED`
+  - `ORDER_TABLE_MERGED`
+  - `ORDER_TABLE_UNMERGED`
+
+**Teknik notlar (kısa)**
+
+- Veri modeli: `Order.linkedTableIds?: string[]` (backward-compatible, opsiyonel).
+- Mock backend (localStorage) tarafında taşıma/birleştirme/ayırma için özel mutation’lar eklendi.
+- UI + lookup tarafında `tableId` eşleşmesine ek olarak `linkedTableIds.includes(tableId)` kontrolü yapılıyor.
+- Repo doğrulama komutu: `npm run check` (format+lint+typecheck+build). `npm test` script’i tanımlı değil.
