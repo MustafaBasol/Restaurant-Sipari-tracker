@@ -98,7 +98,7 @@ Veriyi sıfırlamak için tarayıcıda bu anahtarları silin (veya “Site Data/
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 - Ödeme onayı **mock** çalışır: ödeme başarılı varsayılır ve mock “webhook” simülasyonu ile tenant aboneliği ACTIVE’e çekilir.
-- Klasörde ayrıca örnek bir webhook sunucusu vardır: `server.js`.
+- Klasörde ayrıca örnek bir webhook sunucusu vardır: `server.cjs`.
   - Bu dosya, mevcut `package.json` scriptlerine bağlı değildir.
   - Çalıştırmak isterseniz `express/stripe/dotenv/cors` gibi bağımlılıkları ayrıca kurmanız gerekir (detaylar dosya içinde yorum olarak var).
 
@@ -110,8 +110,6 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 - `locales/` çeviri JSON dosyaları
 
 ## Notlar
-
-- Repoda eski/alternatif bir akışa ait dosyalar da bulunabilir (ör. kökteki `App.tsx`, `services/api.ts`, `contexts/AppContext.tsx`). Uygulama giriş noktası `index.tsx` üzerinden `app/App.tsx`’i kullanır.
 
 ## Geliştirme / İyileştirme Takibi
 

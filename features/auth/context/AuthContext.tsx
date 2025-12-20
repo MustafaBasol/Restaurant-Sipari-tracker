@@ -3,6 +3,50 @@ import * as api from '../api';
 import { AuthState } from '../types';
 import { Tenant } from '../../../shared/types';
 
+const AUTH_STORAGE_KEY = 'authState';
+
+const isRecord = (value: unknown): value is Record<string, any> => {
+    return typeof value === 'object' && value !== null;
+};
+
+const sanitizeAuthStateForStorage = (state: AuthState): AuthState => {
+    return {
+        ...state,
+        user: {
+            ...state.user,
+            // Never persist credential-like fields to localStorage.
+            passwordHash: '',
+        },
+    };
+};
+
+const hydrateAuthStateFromStorage = (raw: unknown): AuthState => {
+    if (!isRecord(raw) || !isRecord(raw.user)) {
+        throw new Error('Invalid auth state in storage');
+    }
+
+    const hydrated: AuthState = {
+        ...raw,
+        user: {
+            ...raw.user,
+            passwordHash: '',
+        },
+        tenant: raw.tenant ?? null,
+    };
+
+    if (hydrated.tenant) {
+        hydrated.tenant.createdAt = new Date(hydrated.tenant.createdAt);
+        if (hydrated.tenant.trialStartAt) {
+            hydrated.tenant.trialStartAt = new Date(hydrated.tenant.trialStartAt);
+        }
+        if (hydrated.tenant.trialEndAt) {
+            hydrated.tenant.trialEndAt = new Date(hydrated.tenant.trialEndAt);
+        }
+    }
+
+    return hydrated;
+};
+
 interface AuthContextData {
     authState: AuthState | null;
     isLoading: boolean;
@@ -19,24 +63,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        const storedAuthState = localStorage.getItem('authState');
+        const storedAuthState = localStorage.getItem(AUTH_STORAGE_KEY);
         if (storedAuthState) {
             try {
                 const parsedState = JSON.parse(storedAuthState);
-                // Hydrate dates
-                if (parsedState.tenant) {
-                    parsedState.tenant.createdAt = new Date(parsedState.tenant.createdAt);
-                    if (parsedState.tenant.trialStartAt) {
-                        parsedState.tenant.trialStartAt = new Date(parsedState.tenant.trialStartAt);
-                    }
-                    if (parsedState.tenant.trialEndAt) {
-                        parsedState.tenant.trialEndAt = new Date(parsedState.tenant.trialEndAt);
-                    }
-                }
-                setAuthState(parsedState);
+                setAuthState(hydrateAuthStateFromStorage(parsedState));
             } catch (e) {
                 console.error("Failed to parse auth state from localStorage", e);
-                localStorage.removeItem('authState');
+                localStorage.removeItem(AUTH_STORAGE_KEY);
             }
         }
         setIsLoading(false);
@@ -47,8 +81,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const response = await api.login(email, passwordOrSlug);
             if (response) {
-                setAuthState(response);
-                localStorage.setItem('authState', JSON.stringify(response));
+                const sanitized = sanitizeAuthStateForStorage(response);
+                setAuthState(sanitized);
+                localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized));
                 return true;
             }
             return false;
@@ -64,8 +99,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const response = await api.registerTenant(payload);
             if (response) {
-                setAuthState(response);
-                localStorage.setItem('authState', JSON.stringify(response));
+                const sanitized = sanitizeAuthStateForStorage(response);
+                setAuthState(sanitized);
+                localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized));
                 return true;
             }
             return false;
@@ -85,7 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // the race condition that was redirecting to /login.
         setTimeout(() => {
             setAuthState(null);
-            localStorage.removeItem('authState');
+            localStorage.removeItem(AUTH_STORAGE_KEY);
         }, 0);
     };
 
@@ -93,8 +129,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAuthState(prevState => {
             if (!prevState) return null;
             const newState = { ...prevState, tenant };
-            localStorage.setItem('authState', JSON.stringify(newState));
-            return newState;
+            const sanitized = sanitizeAuthStateForStorage(newState);
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized));
+            return sanitized;
         });
     };
 

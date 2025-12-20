@@ -31,8 +31,14 @@ Bu doküman, repodaki eksikleri/yanlışları tespit edip düzeltirken ilerlemey
 
 ## P1 — Güvenlik / Prod’a Yakınlaştırma
 
-- ⏳ Mock auth ve şifre saklama yaklaşımını izole et (prod modunda localStorage’a hassas veri yazma).
-- ⏳ `server.js` örnek webhook sunucusunu ESM/CJS uyumlu hale getir ve CORS’u kısıtla (örnek bile olsa yanlış yönlendirmesin).
+- ✅ Mock auth state localStorage sanitization
+	- `authState` localStorage’a yazılırken `user.passwordHash` persist edilmez.
+	- localStorage’dan okurken hydrate edilir ve `passwordHash` zorunlu olarak temizlenir.
+
+- ✅ Örnek webhook sunucusu ESM/CJS uyumu + CORS kısıtlama
+	- Repo `type: module` olduğu için örnek server `server.cjs` olarak tutulur.
+	- CORS varsayılanı wildcard değil; `CORS_ORIGINS` env ile whitelist.
+	- Origin header olmayan istekler (Stripe webhooks) engellenmez.
 
 ---
 
