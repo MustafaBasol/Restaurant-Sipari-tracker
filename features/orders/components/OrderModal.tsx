@@ -404,9 +404,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const text = buildReceiptLines();
     if (!text) return;
 
-    const prefersServer = Boolean(import.meta.env.VITE_PRINT_SERVER_URL);
+    const tenantPrintConfig = authState?.tenant?.printConfig;
+    const tenantServerUrl =
+      tenantPrintConfig?.mode === 'server' ? tenantPrintConfig.serverUrl?.trim() : undefined;
+
+    const prefersServer = Boolean(tenantServerUrl || import.meta.env.VITE_PRINT_SERVER_URL);
     if (prefersServer) {
-      await sendToPrintServer('receipt', text);
+      await sendToPrintServer('receipt', text, { serverUrl: tenantServerUrl });
       return;
     }
 
@@ -422,9 +426,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const text = buildKitchenLines();
     if (!text) return;
 
-    const prefersServer = Boolean(import.meta.env.VITE_PRINT_SERVER_URL);
+    const tenantPrintConfig = authState?.tenant?.printConfig;
+    const tenantServerUrl =
+      tenantPrintConfig?.mode === 'server' ? tenantPrintConfig.serverUrl?.trim() : undefined;
+
+    const prefersServer = Boolean(tenantServerUrl || import.meta.env.VITE_PRINT_SERVER_URL);
     if (prefersServer) {
-      await sendToPrintServer('kitchen', text);
+      await sendToPrintServer('kitchen', text, { serverUrl: tenantServerUrl });
       return;
     }
 

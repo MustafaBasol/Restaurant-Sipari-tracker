@@ -82,6 +82,11 @@ export interface AuditLog {
   metadata?: Record<string, unknown>;
 }
 
+export interface TenantPrintConfig {
+  mode: 'browser' | 'server';
+  serverUrl?: string;
+}
+
 export interface Tenant {
   id: string;
   name: string;
@@ -93,6 +98,7 @@ export interface Tenant {
   timezone: string; // e.g. 'America/New_York'
   trialStartAt?: Date;
   trialEndAt?: Date;
+  printConfig?: TenantPrintConfig;
 }
 
 export interface User {

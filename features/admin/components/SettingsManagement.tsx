@@ -5,6 +5,7 @@ import { updateTenantSettings } from '../api';
 import { Button } from '../../../shared/components/ui/Button';
 import { Select } from '../../../shared/components/ui/Select';
 import { Card } from '../../../shared/components/ui/Card';
+import { Input } from '../../../shared/components/ui/Input';
 import { Tenant } from '../../../shared/types';
 
 const timezones = ['America/New_York', 'Europe/Paris', 'Europe/Istanbul', 'Asia/Tokyo'];
@@ -49,9 +50,42 @@ const SettingsManagement: React.FC = () => {
     }
   };
 
+  const handlePrintModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const mode = e.target.value as 'browser' | 'server';
+    setSettings((prev) =>
+      prev
+        ? {
+            ...prev,
+            printConfig: {
+              ...(prev.printConfig ?? { mode: 'browser' }),
+              mode,
+            },
+          }
+        : null,
+    );
+  };
+
+  const handlePrintServerUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const serverUrl = e.target.value;
+    setSettings((prev) =>
+      prev
+        ? {
+            ...prev,
+            printConfig: {
+              ...(prev.printConfig ?? { mode: 'browser' }),
+              serverUrl,
+            },
+          }
+        : null,
+    );
+  };
+
   if (!settings) {
     return <div>Loading settings...</div>;
   }
+
+  const printMode = settings.printConfig?.mode ?? 'browser';
+  const printServerUrl = settings.printConfig?.serverUrl ?? '';
 
   return (
     <Card>
@@ -93,6 +127,38 @@ const SettingsManagement: React.FC = () => {
             ))}
           </Select>
         </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-text-primary mb-3">
+            {t('admin.settings.printing')}
+          </h3>
+
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            {t('admin.settings.printModeLabel')}
+          </label>
+          <Select name="printMode" value={printMode} onChange={handlePrintModeChange}>
+            <option value="browser">{t('admin.settings.printModeOptions.browser')}</option>
+            <option value="server">{t('admin.settings.printModeOptions.server')}</option>
+          </Select>
+
+          {printMode === 'server' && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                {t('admin.settings.printServerUrl')}
+              </label>
+              <Input
+                value={printServerUrl}
+                onChange={handlePrintServerUrlChange}
+                placeholder="http://localhost:4243"
+                inputMode="url"
+              />
+              <p className="text-xs text-text-secondary mt-2">
+                {t('admin.settings.printServerUrlHelp')}
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-4">
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? '...' : t('general.save')}

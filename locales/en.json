@@ -201,6 +201,14 @@
       "currency": "Currency",
       "timezone": "Timezone",
       "defaultLanguage": "Default Language",
+      "printing": "Printer",
+      "printModeLabel": "Print mode",
+      "printModeOptions": {
+        "browser": "Browser print",
+        "server": "Print Server"
+      },
+      "printServerUrl": "Print Server URL",
+      "printServerUrlHelp": "Example: http://localhost:4243 (leave empty to use browser print)",
       "saveSuccess": "Settings updated successfully!"
     }
   },

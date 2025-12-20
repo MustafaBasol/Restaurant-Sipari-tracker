@@ -213,6 +213,14 @@
       "currency": "Devise",
       "timezone": "Fuseau horaire",
       "defaultLanguage": "Langue par défaut",
+      "printing": "Imprimante",
+      "printModeLabel": "Mode d'impression",
+      "printModeOptions": {
+        "browser": "Impression navigateur",
+        "server": "Serveur d'impression"
+      },
+      "printServerUrl": "URL du serveur d'impression",
+      "printServerUrlHelp": "Exemple : http://localhost:4243 (laisser vide pour utiliser l'impression navigateur)",
       "saveSuccess": "Paramètres mis à jour avec succès !"
     }
   },

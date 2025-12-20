@@ -110,7 +110,30 @@ PORT=4243 CORS_ORIGINS=http://localhost:3000 node printer-server.cjs
 VITE_PRINT_SERVER_URL=http://localhost:4243 npm run dev
 ```
 
-Not: `printer-server.cjs` şu an gelen işleri stdout'a yazar (demo). İhtiyaca göre ESC/POS, CUPS vb. ile gerçek yazıcıya gönderilecek şekilde genişletilebilir.
+Print server yazıcıya gönderim için `PRINT_TRANSPORT` ile çalışır:
+
+- `PRINT_TRANSPORT=stdout` (varsayılan): Gelen işleri terminale yazar.
+- `PRINT_TRANSPORT=tcp9100`: Network termal yazıcıya RAW TCP (genelde 9100 port) ile ESC/POS gönderir.
+- `PRINT_TRANSPORT=cups`: Linux üzerinde CUPS kuyruğuna `lp` komutu ile RAW gönderir.
+
+Örnekler:
+
+```bash
+# 1) Sadece log (demo)
+PORT=4243 CORS_ORIGINS=http://localhost:3000 PRINT_TRANSPORT=stdout node printer-server.cjs
+
+# 2) Network termal yazıcı (ESC/POS, RAW 9100)
+PORT=4243 CORS_ORIGINS=http://localhost:3000 PRINT_TRANSPORT=tcp9100 PRINTER_HOST=192.168.1.50 PRINTER_PORT=9100 node printer-server.cjs
+
+# 3) CUPS (lp gerekli)
+PORT=4243 CORS_ORIGINS=http://localhost:3000 PRINT_TRANSPORT=cups PRINTER_NAME=EPSON_TM_T20 node printer-server.cjs
+```
+
+Notlar:
+
+- `tcp9100`/`cups` yolları ESC/POS gönderir. UTF-8 her firmware’de kusursuz olmayabilir; bazı yazıcılarda Türkçe karakterler için codepage ayarı gerekebilir.
+- `cups` için sistemde CUPS ve `lp` komutu kurulu olmalıdır.
+- Print Server URL ayrıca uygulama içinde **Admin → Ayarlar → Yazıcı** bölümünden restoran (tenant) bazında da tanımlanabilir.
 
 ## Abonelik / Stripe Notları
 

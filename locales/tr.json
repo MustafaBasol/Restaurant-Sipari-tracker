@@ -201,6 +201,14 @@
       "currency": "Para Birimi",
       "timezone": "Saat Dilimi",
       "defaultLanguage": "Varsayılan Dil",
+      "printing": "Yazıcı",
+      "printModeLabel": "Yazdırma modu",
+      "printModeOptions": {
+        "browser": "Tarayıcı yazdırma",
+        "server": "Print Server"
+      },
+      "printServerUrl": "Print Server URL",
+      "printServerUrlHelp": "Örn: http://localhost:4243 (boş bırakılırsa tarayıcı yazdırma kullanılır)",
       "saveSuccess": "Ayarlar başarıyla güncellendi!"
     }
   },
