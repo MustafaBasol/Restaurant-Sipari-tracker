@@ -6,7 +6,7 @@ export const formatCurrency = (amount: number, currency: string): string => {
       style: 'currency',
       currency,
     }).format(amount);
-  } catch (e) {
+  } catch {
     // Fallback for invalid currency code
     console.warn(`Invalid currency code: ${currency}`);
     return `$${amount.toFixed(2)}`;
@@ -24,7 +24,7 @@ export const formatDateTime = (
       ...options,
       timeZone,
     }).format(dateObj);
-  } catch (e) {
+  } catch {
     console.warn(`Invalid timezone or date: ${timeZone}`, date);
     // Fallback
     const dateObj = typeof date === 'string' ? new Date(date) : date;

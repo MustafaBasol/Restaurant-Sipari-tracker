@@ -40,15 +40,6 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
     }
   };
 
-  const statusBadgeVariant: Record<OrderStatus, 'blue' | 'orange' | 'green' | 'gray' | 'red'> = {
-    [OrderStatus.NEW]: 'blue',
-    [OrderStatus.IN_PREPARATION]: 'orange',
-    [OrderStatus.READY]: 'green',
-    [OrderStatus.SERVED]: 'gray',
-    [OrderStatus.CANCELED]: 'red',
-    [OrderStatus.CLOSED]: 'gray',
-  };
-
   return (
     <Modal isOpen={!!order} onClose={onClose} title={t('kitchen.orderDetails')}>
       <div className="p-6">

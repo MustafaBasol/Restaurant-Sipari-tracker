@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
       return false;
-    } catch (error) {
+    } catch {
       return false;
     } finally {
       setIsLoading(false);
@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
       return false;
-    } catch (error) {
+    } catch {
       return false;
     } finally {
       setIsLoading(false);

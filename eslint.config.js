@@ -54,6 +54,12 @@ export default [
     },
   },
   {
+    files: ['**/*Context.tsx', '**/context/**/*.tsx', '**/contexts/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['**/*.cjs'],
     languageOptions: {
       globals: {

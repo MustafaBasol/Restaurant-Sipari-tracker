@@ -2,14 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTenants } from '../hooks/useTenants';
 // FIX: Changed import from `auth/types` to `shared/types` to resolve module export error and use the correct, complete type definition.
 import { Tenant } from '../../../shared/types';
-import { User } from '../../users/types';
 import { SubscriptionStatus, UserRole } from '../../../shared/types';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import TenantDetailModal from './UserListModal';
 import { Badge } from '../../../shared/components/ui/Badge';
 import {
   Table,
-  TableHeader,
   TableHeaderCell,
   TableBody,
   TableRow,

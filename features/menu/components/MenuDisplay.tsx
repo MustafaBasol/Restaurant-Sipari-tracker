@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useMenu } from '../hooks/useMenu';
 import { MenuItem } from '../types';
-import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { PlusIcon } from '../../../shared/components/icons/Icons';
 import { Card } from '../../../shared/components/ui/Card';
 import { useAuth } from '../../auth/hooks/useAuth';
