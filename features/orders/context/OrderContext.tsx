@@ -24,7 +24,10 @@ interface OrderContextData {
   isLoading: boolean;
   createOrder: (
     tableId: string,
-    items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>[],
+    items: Pick<
+      OrderItem,
+      'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'
+    >[],
     waiterId: string,
     note?: string,
   ) => Promise<void>;
@@ -35,7 +38,14 @@ interface OrderContextData {
   updateOrderNote: (orderId: string, note: string) => Promise<void>;
   addOrderPayment: (orderId: string, method: PaymentMethod, amount: number) => Promise<void>;
   setOrderDiscount: (orderId: string, type: DiscountType, value: number) => Promise<void>;
-  setOrderItemComplimentary: (orderId: string, itemId: string, isComplimentary: boolean) => Promise<void>;
+  setOrderItemComplimentary: (
+    orderId: string,
+    itemId: string,
+    isComplimentary: boolean,
+  ) => Promise<void>;
+  moveOrderToTable: (orderId: string, fromTableId: string, toTableId: string) => Promise<void>;
+  mergeOrderWithTable: (orderId: string, secondaryTableId: string) => Promise<void>;
+  unmergeOrderFromTable: (orderId: string, tableIdToDetach: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -95,7 +105,10 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const createOrder = (
     tableId: string,
-    items: Pick<OrderItem, 'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'>[],
+    items: Pick<
+      OrderItem,
+      'menuItemId' | 'quantity' | 'note' | 'variantId' | 'modifierOptionIds'
+    >[],
     waiterId: string,
     note?: string,
   ) =>
@@ -126,6 +139,11 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const updated = await api.closeOrder(orderId, actor);
       if (updated) {
         setTableStatusInState(updated.tableId, TableStatus.FREE);
+        if (Array.isArray((updated as any).linkedTableIds)) {
+          for (const linkedId of (updated as any).linkedTableIds as string[]) {
+            setTableStatusInState(linkedId, TableStatus.FREE);
+          }
+        }
       }
       return updated;
     });
@@ -145,7 +163,43 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const setOrderItemComplimentary = (orderId: string, itemId: string, isComplimentary: boolean) => {
     if (!actor) return Promise.resolve();
-    return handleOrderMutation(() => api.setOrderItemComplimentary(orderId, itemId, isComplimentary, actor));
+    return handleOrderMutation(() =>
+      api.setOrderItemComplimentary(orderId, itemId, isComplimentary, actor),
+    );
+  };
+
+  const moveOrderToTable = (orderId: string, fromTableId: string, toTableId: string) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(async () => {
+      const updated = await api.moveOrderToTable(orderId, toTableId, actor);
+      if (updated) {
+        setTableStatusInState(fromTableId, TableStatus.FREE);
+        setTableStatusInState(toTableId, TableStatus.OCCUPIED);
+      }
+      return updated;
+    });
+  };
+
+  const mergeOrderWithTable = (orderId: string, secondaryTableId: string) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(async () => {
+      const updated = await api.mergeOrderWithTable(orderId, secondaryTableId, actor);
+      if (updated) {
+        setTableStatusInState(secondaryTableId, TableStatus.OCCUPIED);
+      }
+      return updated;
+    });
+  };
+
+  const unmergeOrderFromTable = (orderId: string, tableIdToDetach: string) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(async () => {
+      const updated = await api.unmergeOrderFromTable(orderId, tableIdToDetach, actor);
+      if (updated) {
+        setTableStatusInState(tableIdToDetach, TableStatus.FREE);
+      }
+      return updated;
+    });
   };
 
   return (
@@ -162,6 +216,9 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         addOrderPayment,
         setOrderDiscount,
         setOrderItemComplimentary,
+        moveOrderToTable,
+        mergeOrderWithTable,
+        unmergeOrderFromTable,
         refetch: fetchOrders,
       }}
     >

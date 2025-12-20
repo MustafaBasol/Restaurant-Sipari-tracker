@@ -146,7 +146,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFil
                       {t('kitchen.table')} {table?.name}
                     </h3>
                     <div className="flex items-center gap-2 text-xs text-text-secondary">
-                      <span>{formatDateTime(order.createdAt, timezone, { timeStyle: 'short' })}</span>
+                      <span>
+                        {formatDateTime(order.createdAt, timezone, { timeStyle: 'short' })}
+                      </span>
                       <span>•</span>
                       <span>
                         {ageMinutes} {t('kitchen.minutesShort')}

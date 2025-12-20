@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useMenu } from '../hooks/useMenu';
 import { MenuItem, MenuItemModifier, MenuItemVariant } from '../types';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
@@ -24,7 +24,8 @@ const parseAllergens = (value: string): string[] =>
     .map((s) => s.trim())
     .filter(Boolean);
 
-const formatAllergens = (allergens?: string[]): string => (Array.isArray(allergens) ? allergens : []).join(', ');
+const formatAllergens = (allergens?: string[]): string =>
+  (Array.isArray(allergens) ? allergens : []).join(', ');
 
 const VariantsEditor: React.FC<{
   variants: MenuItemVariant[];
@@ -159,9 +160,7 @@ const ModifiersEditor: React.FC<{
                     value={m.name}
                     onChange={(e) =>
                       onChange(
-                        modifiers.map((x) =>
-                          x.id === m.id ? { ...x, name: e.target.value } : x,
-                        ),
+                        modifiers.map((x) => (x.id === m.id ? { ...x, name: e.target.value } : x)),
                       )
                     }
                   />
@@ -319,11 +318,6 @@ const MenuManagement: React.FC = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<MenuItem | null>(null);
 
-  const editingItem = useMemo(
-    () => (editingItemId ? menuItems.find((mi) => mi.id === editingItemId) : undefined),
-    [editingItemId, menuItems],
-  );
-
   const handleAddCategory = async () => {
     if (newCategoryName.trim()) {
       await addCategory(newCategoryName);
@@ -389,11 +383,7 @@ const MenuManagement: React.FC = () => {
     if (!editDraft) return;
     const variants = normalizeVariants(editDraft.variants);
     const normalizedPrice =
-      (editDraft.price ?? 0) > 0
-        ? editDraft.price
-        : variants.length > 0
-          ? variants[0].price
-          : 0;
+      (editDraft.price ?? 0) > 0 ? editDraft.price : variants.length > 0 ? variants[0].price : 0;
     await updateMenuItem({
       ...editDraft,
       price: normalizedPrice,
@@ -533,10 +523,7 @@ const MenuManagement: React.FC = () => {
         </div>
         <ul className="mt-4 space-y-2">
           {menuItems.map((item) => (
-            <li
-              key={item.id}
-              className="bg-gray-100 p-3 rounded-lg text-sm"
-            >
+            <li key={item.id} className="bg-gray-100 p-3 rounded-lg text-sm">
               <div className="flex justify-between items-start gap-3">
                 <div>
                   <p className="font-semibold">{item.name}</p>
@@ -550,11 +537,15 @@ const MenuManagement: React.FC = () => {
                   )}
                   {(item.variants?.length || item.modifiers?.length) && (
                     <p className="text-text-secondary text-xs">
-                      {(item.variants?.length || 0) > 0 ? `${item.variants?.length} ${t('admin.menu.variants')}` : null}
+                      {(item.variants?.length || 0) > 0
+                        ? `${item.variants?.length} ${t('admin.menu.variants')}`
+                        : null}
                       {(item.variants?.length || 0) > 0 && (item.modifiers?.length || 0) > 0
                         ? ' • '
                         : null}
-                      {(item.modifiers?.length || 0) > 0 ? `${item.modifiers?.length} ${t('admin.menu.modifiers')}` : null}
+                      {(item.modifiers?.length || 0) > 0
+                        ? `${item.modifiers?.length} ${t('admin.menu.modifiers')}`
+                        : null}
                     </p>
                   )}
                 </div>
@@ -583,7 +574,9 @@ const MenuManagement: React.FC = () => {
                       </label>
                       <Input
                         value={editDraft.name}
-                        onChange={(e) => setEditDraft((p) => (p ? { ...p, name: e.target.value } : p))}
+                        onChange={(e) =>
+                          setEditDraft((p) => (p ? { ...p, name: e.target.value } : p))
+                        }
                       />
                     </div>
                     <div>
@@ -643,7 +636,9 @@ const MenuManagement: React.FC = () => {
                         <option value={KitchenStation.BAR}>{t('kitchen.stations.bar')}</option>
                         <option value={KitchenStation.HOT}>{t('kitchen.stations.hot')}</option>
                         <option value={KitchenStation.COLD}>{t('kitchen.stations.cold')}</option>
-                        <option value={KitchenStation.DESSERT}>{t('kitchen.stations.dessert')}</option>
+                        <option value={KitchenStation.DESSERT}>
+                          {t('kitchen.stations.dessert')}
+                        </option>
                       </Select>
                     </div>
 
@@ -654,7 +649,9 @@ const MenuManagement: React.FC = () => {
                       <Input
                         value={formatAllergens(editDraft.allergens)}
                         onChange={(e) =>
-                          setEditDraft((p) => (p ? { ...p, allergens: parseAllergens(e.target.value) } : p))
+                          setEditDraft((p) =>
+                            p ? { ...p, allergens: parseAllergens(e.target.value) } : p,
+                          )
                         }
                         placeholder={t('general.allergensPlaceholder')}
                       />

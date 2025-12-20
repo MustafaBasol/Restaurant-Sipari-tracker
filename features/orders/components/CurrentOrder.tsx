@@ -46,7 +46,9 @@ const getUnitPrice = (
   const variantPrice = item.variantId
     ? variants.find((v: any) => v.id === item.variantId)?.price
     : undefined;
-  const basePrice = Number.isFinite(variantPrice) ? Number(variantPrice) : Number(menuItem?.price) || 0;
+  const basePrice = Number.isFinite(variantPrice)
+    ? Number(variantPrice)
+    : Number(menuItem?.price) || 0;
 
   const selectedOptionIds = item.modifierOptionIds ?? [];
   const modifiers = Array.isArray(menuItem?.modifiers) ? menuItem.modifiers : [];
@@ -187,7 +189,9 @@ const OrderItemRow: React.FC<{
         <div className="mt-2 space-y-2">
           {variants.length > 0 && (
             <div>
-              <label className="text-xs font-medium text-text-secondary">{t('waiter.variant')}</label>
+              <label className="text-xs font-medium text-text-secondary">
+                {t('waiter.variant')}
+              </label>
               <Select
                 value={(item as any).variantId || variants[0]?.id}
                 onChange={(e) => onUpdate({ variantId: e.target.value })}
@@ -205,14 +209,16 @@ const OrderItemRow: React.FC<{
 
           {modifiers.length > 0 && (
             <div>
-              <label className="text-xs font-medium text-text-secondary">{t('waiter.modifiers')}</label>
+              <label className="text-xs font-medium text-text-secondary">
+                {t('waiter.modifiers')}
+              </label>
               <div className="space-y-2">
                 {modifiers.map((m: any) => (
                   <div key={m.id} className="space-y-1">
                     <p className="text-xs text-text-secondary">{m.name}</p>
                     <div className="flex flex-wrap gap-2">
                       {(Array.isArray(m.options) ? m.options : []).map((opt: any) => {
-                        const current = (((item as any).modifierOptionIds ?? []) as string[]);
+                        const current = ((item as any).modifierOptionIds ?? []) as string[];
                         const selected = current.includes(opt.id);
                         return (
                           <button
@@ -245,23 +251,23 @@ const OrderItemRow: React.FC<{
           )}
 
           <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min="1"
-            value={item.quantity}
-            onChange={(e) => onUpdate({ quantity: parseInt(e.target.value) || 1 })}
-            className="w-16 text-center py-1"
-          />
-          <Input
-            type="text"
-            value={item.note}
-            onChange={(e) => onUpdate({ note: e.target.value })}
-            placeholder={t('waiter.addNote')}
-            className="flex-grow py-1 px-2 text-sm"
-          />
-          <button onClick={onRemove} className="text-red-500 hover:text-red-700 p-1">
-            <TrashIcon />
-          </button>
+            <Input
+              type="number"
+              min="1"
+              value={item.quantity}
+              onChange={(e) => onUpdate({ quantity: parseInt(e.target.value) || 1 })}
+              className="w-16 text-center py-1"
+            />
+            <Input
+              type="text"
+              value={item.note}
+              onChange={(e) => onUpdate({ note: e.target.value })}
+              placeholder={t('waiter.addNote')}
+              className="flex-grow py-1 px-2 text-sm"
+            />
+            <button onClick={onRemove} className="text-red-500 hover:text-red-700 p-1">
+              <TrashIcon />
+            </button>
           </div>
         </div>
       ) : (
@@ -277,7 +283,9 @@ const OrderItemRow: React.FC<{
                 onClick={handleToggleComplimentary}
                 className="px-2 py-0.5 bg-border-color text-text-secondary text-xs font-semibold rounded-full hover:opacity-90 transition-opacity"
               >
-                {isComplimentary ? t('actions.removeComplimentary') : t('actions.makeComplimentary')}
+                {isComplimentary
+                  ? t('actions.removeComplimentary')
+                  : t('actions.makeComplimentary')}
               </button>
             )}
             {isCancelable && (
@@ -312,7 +320,8 @@ const CurrentOrder: React.FC<CurrentOrderProps> = ({
     .filter((item) => !('status' in item) || item.status !== OrderStatus.CANCELED)
     .reduce((acc, item) => {
       const isComplimentary = 'isComplimentary' in item ? Boolean(item.isComplimentary) : false;
-      if (isComplimentary && (!('status' in item) || item.status !== OrderStatus.CANCELED)) return acc;
+      if (isComplimentary && (!('status' in item) || item.status !== OrderStatus.CANCELED))
+        return acc;
       const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
       if (!menuItem) return acc;
       const unit = getUnitPrice(menuItem, {

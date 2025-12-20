@@ -9,9 +9,18 @@ import {
   internalAddOrderPayment,
   internalSetOrderDiscount,
   internalSetOrderItemComplimentary,
+  internalMoveOrderToTable,
+  internalMergeOrderWithTable,
+  internalUnmergeOrderFromTable,
 } from '../../shared/lib/mockApi';
 import { Order, OrderItem } from './types';
-import { DiscountType, KitchenStation, OrderStatus, PaymentMethod, UserRole } from '../../shared/types';
+import {
+  DiscountType,
+  KitchenStation,
+  OrderStatus,
+  PaymentMethod,
+  UserRole,
+} from '../../shared/types';
 
 type Actor = { userId: string; role: UserRole };
 
@@ -43,11 +52,19 @@ export const closeOrder = (orderId: string, actor: Actor) => internalCloseOrder(
 export const updateOrderNote = (orderId: string, note: string, actor?: Actor) =>
   internalUpdateOrderNote(orderId, note, actor);
 
-export const addOrderPayment = (orderId: string, method: PaymentMethod, amount: number, actor: Actor) =>
-  internalAddOrderPayment(orderId, method, amount, actor);
+export const addOrderPayment = (
+  orderId: string,
+  method: PaymentMethod,
+  amount: number,
+  actor: Actor,
+) => internalAddOrderPayment(orderId, method, amount, actor);
 
-export const setOrderDiscount = (orderId: string, discountType: DiscountType, value: number, actor: Actor) =>
-  internalSetOrderDiscount(orderId, discountType, value, actor);
+export const setOrderDiscount = (
+  orderId: string,
+  discountType: DiscountType,
+  value: number,
+  actor: Actor,
+) => internalSetOrderDiscount(orderId, discountType, value, actor);
 
 export const setOrderItemComplimentary = (
   orderId: string,
@@ -55,3 +72,12 @@ export const setOrderItemComplimentary = (
   isComplimentary: boolean,
   actor: Actor,
 ) => internalSetOrderItemComplimentary(orderId, itemId, isComplimentary, actor);
+
+export const moveOrderToTable = (orderId: string, toTableId: string, actor: Actor) =>
+  internalMoveOrderToTable(orderId, toTableId, actor);
+
+export const mergeOrderWithTable = (orderId: string, secondaryTableId: string, actor: Actor) =>
+  internalMergeOrderWithTable(orderId, secondaryTableId, actor);
+
+export const unmergeOrderFromTable = (orderId: string, tableIdToDetach: string, actor: Actor) =>
+  internalUnmergeOrderFromTable(orderId, tableIdToDetach, actor);

@@ -65,6 +65,14 @@
     "logout": "Logout"
   },
   "waiter": {
+    "tableActions": "Table Actions",
+    "moveToTable": "Move to table",
+    "mergeWithTable": "Merge with table",
+    "splitFromTable": "Split from table",
+    "selectTable": "Select table",
+    "move": "Move",
+    "merge": "Merge",
+    "split": "Split",
     "tablesTitle": "Tables",
     "startNewOrder": "Start New Order",
     "viewOrder": "View Order",

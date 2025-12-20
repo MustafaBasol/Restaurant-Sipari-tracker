@@ -4,7 +4,6 @@ import { DiscountType, OrderStatus, PaymentMethod, UserRole } from '../../../sha
 import { Table } from '../../tables/types';
 import { useTables } from '../../tables/hooks/useTables';
 import { MenuItem } from '../../menu/types';
-import { OrderItem } from '../types';
 import { useOrders } from '../hooks/useOrders';
 import MenuDisplay from '../../menu/components/MenuDisplay';
 import CurrentOrder from './CurrentOrder';
@@ -33,17 +32,24 @@ type TempOrderItem = {
 
 const makeTempId = () => `tmp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-const signatureForTempItem = (item: Pick<TempOrderItem, 'menuItemId' | 'variantId' | 'modifierOptionIds'>) => {
+const signatureForTempItem = (
+  item: Pick<TempOrderItem, 'menuItemId' | 'variantId' | 'modifierOptionIds'>,
+) => {
   const mods = [...(item.modifierOptionIds ?? [])].sort().join('|');
   return `${item.menuItemId}::${item.variantId ?? ''}::${mods}`;
 };
 
-const getUnitPrice = (menuItem: any, item: { variantId?: string; modifierOptionIds?: string[] }) => {
+const getUnitPrice = (
+  menuItem: any,
+  item: { variantId?: string; modifierOptionIds?: string[] },
+) => {
   const variants = Array.isArray(menuItem?.variants) ? menuItem.variants : [];
   const variantPrice = item.variantId
     ? variants.find((v: any) => v.id === item.variantId)?.price
     : undefined;
-  const basePrice = Number.isFinite(variantPrice) ? Number(variantPrice) : Number(menuItem?.price) || 0;
+  const basePrice = Number.isFinite(variantPrice)
+    ? Number(variantPrice)
+    : Number(menuItem?.price) || 0;
 
   const selectedOptionIds = item.modifierOptionIds ?? [];
   const modifiers = Array.isArray(menuItem?.modifiers) ? menuItem.modifiers : [];
@@ -64,7 +70,17 @@ const getUnitPrice = (menuItem: any, item: { variantId?: string; modifierOptionI
 
 const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose }) => {
   const { authState } = useAuth();
-  const { orders, createOrder, closeOrder, updateOrderNote, addOrderPayment, setOrderDiscount } = useOrders();
+  const {
+    orders,
+    createOrder,
+    closeOrder,
+    updateOrderNote,
+    addOrderPayment,
+    setOrderDiscount,
+    moveOrderToTable,
+    mergeOrderWithTable,
+    unmergeOrderFromTable,
+  } = useOrders();
   const { tables, updateTable } = useTables();
   const { menuItems } = useMenu();
   const { t } = useLanguage();
@@ -85,9 +101,38 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   }, [table]);
 
   const activeOrder = useMemo(
-    () => orders?.find((o) => o.tableId === table.id && o.status !== OrderStatus.CLOSED),
+    () =>
+      orders?.find(
+        (o) =>
+          (o.tableId === table.id || o.linkedTableIds?.includes(table.id)) &&
+          o.status !== OrderStatus.CLOSED,
+      ),
     [orders, table.id],
   );
+
+  const mergedTableIds = useMemo(() => {
+    return activeOrder?.linkedTableIds ?? [];
+  }, [activeOrder]);
+
+  const [moveToTableId, setMoveToTableId] = useState<string>('');
+  const [mergeWithTableId, setMergeWithTableId] = useState<string>('');
+  const [detachTableId, setDetachTableId] = useState<string>('');
+
+  const tableHasActiveOrder = useMemo(() => {
+    const isOrderForTable = (
+      o: { tableId: string; linkedTableIds?: string[] },
+      tId: string,
+    ): boolean => o.tableId === tId || o.linkedTableIds?.includes(tId) === true;
+    return (tableId: string): boolean =>
+      Boolean(
+        orders?.some(
+          (o) =>
+            o.status !== OrderStatus.CLOSED &&
+            o.status !== OrderStatus.CANCELED &&
+            isOrderForTable(o, tableId),
+        ),
+      );
+  }, [orders]);
 
   useEffect(() => {
     if (activeOrder) {
@@ -146,7 +191,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const handleSendToKitchen = async () => {
     if (currentOrderItems.length > 0 && authState?.user.id) {
-      const payload = currentOrderItems.map(({ tempId, ...rest }) => rest);
+      const payload = currentOrderItems.map(({ tempId: _tempId, ...rest }) => rest);
       await createOrder(table.id, payload, authState.user.id, orderNote);
       setCurrentOrderItems([]);
     }
@@ -203,7 +248,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const isPaymentComplete = useMemo(() => {
     return remainingTotal <= 0.00001;
-  }, [orderTotal, remainingTotal]);
+  }, [remainingTotal]);
 
   const canManagePayment =
     authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
@@ -253,6 +298,46 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   const canAddItems =
     !activeOrder ||
     (activeOrder.status !== OrderStatus.SERVED && activeOrder.status !== OrderStatus.CLOSED);
+
+  const canManageTables =
+    authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
+
+  const canMoveOrder = Boolean(activeOrder) && mergedTableIds.length === 0;
+
+  const moveCandidates = useMemo(
+    () =>
+      tables.filter((t) => t.id !== table.id && t.status === 'FREE' && !tableHasActiveOrder(t.id)),
+    [tables, table.id, tableHasActiveOrder],
+  );
+
+  const mergeCandidates = useMemo(
+    () =>
+      tables.filter(
+        (t) => t.id !== table.id && !mergedTableIds.includes(t.id) && !tableHasActiveOrder(t.id),
+      ),
+    [tables, table.id, mergedTableIds, tableHasActiveOrder],
+  );
+
+  const handleMoveOrder = async () => {
+    if (!activeOrder || !canManageTables) return;
+    if (!moveToTableId) return;
+    await moveOrderToTable(activeOrder.id, table.id, moveToTableId);
+    onClose();
+  };
+
+  const handleMergeOrder = async () => {
+    if (!activeOrder || !canManageTables) return;
+    if (!mergeWithTableId) return;
+    await mergeOrderWithTable(activeOrder.id, mergeWithTableId);
+    setMergeWithTableId('');
+  };
+
+  const handleDetachTable = async () => {
+    if (!activeOrder || !canManageTables) return;
+    if (!detachTableId) return;
+    await unmergeOrderFromTable(activeOrder.id, detachTableId);
+    setDetachTableId('');
+  };
 
   return (
     <Modal
@@ -333,6 +418,98 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
             )}
             {activeOrder && activeOrder.items.length > 0 && (
               <div className="space-y-2 rounded-xl border border-border-color bg-white p-3">
+                {canManageTables && activeOrder && (
+                  <div className="rounded-lg border border-border-color p-2">
+                    <p className="text-sm font-medium text-text-secondary">
+                      {t('waiter.tableActions')}
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                        <div className="sm:col-span-2">
+                          <label className="text-xs font-medium text-text-secondary">
+                            {t('waiter.moveToTable')}
+                          </label>
+                          <Select
+                            value={moveToTableId}
+                            onChange={(e) => setMoveToTableId(e.target.value)}
+                            className="py-2"
+                            disabled={!canMoveOrder}
+                          >
+                            <option value="">{t('waiter.selectTable')}</option>
+                            {moveCandidates.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
+                        <Button
+                          onClick={handleMoveOrder}
+                          disabled={!canMoveOrder || !moveToTableId}
+                        >
+                          {t('waiter.move')}
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                        <div className="sm:col-span-2">
+                          <label className="text-xs font-medium text-text-secondary">
+                            {t('waiter.mergeWithTable')}
+                          </label>
+                          <Select
+                            value={mergeWithTableId}
+                            onChange={(e) => setMergeWithTableId(e.target.value)}
+                            className="py-2"
+                          >
+                            <option value="">{t('waiter.selectTable')}</option>
+                            {mergeCandidates.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
+                        <Button onClick={handleMergeOrder} disabled={!mergeWithTableId}>
+                          {t('waiter.merge')}
+                        </Button>
+                      </div>
+
+                      {mergedTableIds.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-medium text-text-secondary">
+                              {t('waiter.splitFromTable')}
+                            </label>
+                            <Select
+                              value={detachTableId}
+                              onChange={(e) => setDetachTableId(e.target.value)}
+                              className="py-2"
+                            >
+                              <option value="">{t('waiter.selectTable')}</option>
+                              {mergedTableIds.map((id) => {
+                                const tObj = tables.find((x) => x.id === id);
+                                return (
+                                  <option key={id} value={id}>
+                                    {tObj?.name ?? id}
+                                  </option>
+                                );
+                              })}
+                            </Select>
+                          </div>
+                          <Button
+                            onClick={handleDetachTable}
+                            disabled={!detachTableId}
+                            variant="secondary"
+                          >
+                            {t('waiter.split')}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-text-secondary">{t('waiter.payment')}</span>
                   <span className="font-semibold text-text-primary">
@@ -360,7 +537,10 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                         {activeOrder.discount && activeOrder.discount.value > 0
                           ? activeOrder.discount.type === DiscountType.PERCENT
                             ? `%${activeOrder.discount.value}`
-                            : formatCurrency(activeOrder.discount.value, authState?.tenant?.currency || 'USD')
+                            : formatCurrency(
+                                activeOrder.discount.value,
+                                authState?.tenant?.currency || 'USD',
+                              )
                           : '-'}
                       </span>
                     </div>
@@ -371,8 +551,12 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                         className="py-2"
                         aria-label={t('waiter.discountType')}
                       >
-                        <option value={DiscountType.PERCENT}>{t('waiter.discountTypes.percent')}</option>
-                        <option value={DiscountType.AMOUNT}>{t('waiter.discountTypes.amount')}</option>
+                        <option value={DiscountType.PERCENT}>
+                          {t('waiter.discountTypes.percent')}
+                        </option>
+                        <option value={DiscountType.AMOUNT}>
+                          {t('waiter.discountTypes.amount')}
+                        </option>
                       </Select>
                       <Input
                         type="number"
@@ -405,7 +589,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                           {t('waiter.splitBill')}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-text-secondary">{t('waiter.splitPeopleCount')}</span>
+                          <span className="text-xs text-text-secondary">
+                            {t('waiter.splitPeopleCount')}
+                          </span>
                           <Input
                             type="number"
                             min="1"

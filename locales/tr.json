@@ -65,6 +65,14 @@
     "logout": "Çıkış Yap"
   },
   "waiter": {
+    "tableActions": "Masa İşlemleri",
+    "moveToTable": "Başka masaya taşı",
+    "mergeWithTable": "Masa birleştir",
+    "splitFromTable": "Masayı ayır",
+    "selectTable": "Masa seç",
+    "move": "Taşı",
+    "merge": "Birleştir",
+    "split": "Ayır",
     "tablesTitle": "Masalar",
     "startNewOrder": "Yeni Sipariş Başlat",
     "viewOrder": "Siparişi Görüntüle",

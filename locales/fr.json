@@ -65,6 +65,14 @@
     "logout": "Déconnexion"
   },
   "waiter": {
+    "tableActions": "Actions de table",
+    "moveToTable": "Déplacer vers la table",
+    "mergeWithTable": "Fusionner avec la table",
+    "splitFromTable": "Séparer de la table",
+    "selectTable": "Sélectionner une table",
+    "move": "Déplacer",
+    "merge": "Fusionner",
+    "split": "Séparer",
     "tablesTitle": "Tables",
     "startNewOrder": "Nouvelle Commande",
     "viewOrder": "Voir la Commande",

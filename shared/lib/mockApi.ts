@@ -23,6 +23,7 @@ const cloneOrder = (order: Order): Order => ({
   items: order.items.map((i) => ({ ...i })),
   discount: order.discount ? { ...order.discount } : undefined,
   payments: order.payments ? order.payments.map((p) => ({ ...p })) : undefined,
+  linkedTableIds: order.linkedTableIds ? [...order.linkedTableIds] : undefined,
 });
 
 const cloneTable = (table: Table): Table => ({ ...table });
@@ -604,7 +605,11 @@ export const internalCreateOrder = async (
 ): Promise<Order> => {
   await simulateDelay();
   const waiter = db.users.find((u) => u.id === waiterId);
-  let order = db.orders.find((o) => o.tableId === tableId && o.status !== OrderStatus.CLOSED);
+
+  const isOrderForTable = (o: Order, tId: string): boolean =>
+    o.tableId === tId || (Array.isArray(o.linkedTableIds) && o.linkedTableIds.includes(tId));
+
+  let order = db.orders.find((o) => isOrderForTable(o, tableId) && o.status !== OrderStatus.CLOSED);
 
   if (order) {
     if (order.status === OrderStatus.CLOSED) throw new Error('Cannot add items to a closed order.');
@@ -664,6 +669,154 @@ export const internalCreateOrder = async (
   return cloneOrder(order);
 };
 
+export const internalMoveOrderToTable = async (
+  orderId: string,
+  toTableId: string,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to move order');
+  }
+
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+  if (order.status === OrderStatus.CLOSED) throw new Error('Cannot move a closed order');
+
+  const fromTableId = order.tableId;
+  if (fromTableId === toTableId) return cloneOrder(order);
+
+  if (Array.isArray(order.linkedTableIds) && order.linkedTableIds.length > 0) {
+    throw new Error('Cannot move a merged order');
+  }
+
+  const toTable = db.tables.find((t) => t.id === toTableId);
+  if (!toTable) throw new Error('Target table not found');
+  if (toTable.status !== TableStatus.FREE) {
+    throw new Error('Target table is not free');
+  }
+
+  const isOrderForTable = (o: Order, tId: string): boolean =>
+    o.tableId === tId || (Array.isArray(o.linkedTableIds) && o.linkedTableIds.includes(tId));
+
+  const existingOnTarget = db.orders.some(
+    (o) => o.status !== OrderStatus.CLOSED && isOrderForTable(o, toTableId) && o.id !== orderId,
+  );
+  if (existingOnTarget) {
+    throw new Error('Target table already has an active order');
+  }
+
+  order.tableId = toTableId;
+  order.updatedAt = new Date();
+
+  const fromTable = db.tables.find((t) => t.id === fromTableId);
+  if (fromTable) fromTable.status = TableStatus.FREE;
+  toTable.status = TableStatus.OCCUPIED;
+
+  writeAuditLog(order.tenantId, actor, AuditAction.ORDER_MOVED, AuditEntityType.ORDER, orderId, {
+    fromTableId,
+    toTableId,
+  });
+
+  saveDb();
+  return cloneOrder(order);
+};
+
+export const internalMergeOrderWithTable = async (
+  orderId: string,
+  secondaryTableId: string,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to merge tables');
+  }
+
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+  if (order.status === OrderStatus.CLOSED) throw new Error('Cannot merge a closed order');
+
+  if (order.tableId === secondaryTableId) return cloneOrder(order);
+
+  const secondaryTable = db.tables.find((t) => t.id === secondaryTableId);
+  if (!secondaryTable) throw new Error('Secondary table not found');
+
+  const isOrderForTable = (o: Order, tId: string): boolean =>
+    o.tableId === tId || (Array.isArray(o.linkedTableIds) && o.linkedTableIds.includes(tId));
+
+  const secondaryHasActive = db.orders.some(
+    (o) =>
+      o.status !== OrderStatus.CLOSED && isOrderForTable(o, secondaryTableId) && o.id !== orderId,
+  );
+  if (secondaryHasActive) {
+    throw new Error('Secondary table already has an active order');
+  }
+
+  if (!Array.isArray(order.linkedTableIds)) order.linkedTableIds = [];
+  if (!order.linkedTableIds.includes(secondaryTableId)) {
+    order.linkedTableIds.push(secondaryTableId);
+  }
+
+  secondaryTable.status = TableStatus.OCCUPIED;
+  order.updatedAt = new Date();
+
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.ORDER_TABLE_MERGED,
+    AuditEntityType.ORDER,
+    orderId,
+    { primaryTableId: order.tableId, secondaryTableId },
+  );
+
+  saveDb();
+  return cloneOrder(order);
+};
+
+export const internalUnmergeOrderFromTable = async (
+  orderId: string,
+  tableIdToDetach: string,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to unmerge tables');
+  }
+
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+  if (!Array.isArray(order.linkedTableIds) || order.linkedTableIds.length === 0) {
+    return cloneOrder(order);
+  }
+
+  if (!order.linkedTableIds.includes(tableIdToDetach)) {
+    return cloneOrder(order);
+  }
+
+  order.linkedTableIds = order.linkedTableIds.filter((t) => t !== tableIdToDetach);
+  if (order.linkedTableIds.length === 0) {
+    delete (order as any).linkedTableIds;
+  }
+
+  const table = db.tables.find((t) => t.id === tableIdToDetach);
+  if (table) table.status = TableStatus.FREE;
+
+  order.updatedAt = new Date();
+
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.ORDER_TABLE_UNMERGED,
+    AuditEntityType.ORDER,
+    orderId,
+    { primaryTableId: order.tableId, detachedTableId: tableIdToDetach },
+  );
+
+  saveDb();
+  return cloneOrder(order);
+};
+
 export const internalUpdateOrderItemStatus = async (
   orderId: string,
   itemId: string,
@@ -714,11 +867,16 @@ export const internalMarkOrderAsReady = async (
   if (order) {
     order.items.forEach((item) => {
       const matchesStation = station ? getMenuItemStation(item.menuItemId) === station : true;
-      if (matchesStation && (item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION))
+      if (
+        matchesStation &&
+        (item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION)
+      )
         item.status = OrderStatus.READY;
     });
 
-    if (order.items.every((i) => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED)) {
+    if (
+      order.items.every((i) => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED)
+    ) {
       order.status = OrderStatus.SERVED;
     } else if (
       order.items.every((i) =>
@@ -808,17 +966,27 @@ export const internalAddOrderPayment = async (
   order.updatedAt = new Date();
   updatePaymentStatus(order);
 
-  writeAuditLog(order.tenantId, actor, AuditAction.PAYMENT_ADDED, AuditEntityType.PAYMENT, payment.id, {
-    orderId,
-    method,
-    amount,
-  });
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.PAYMENT_ADDED,
+    AuditEntityType.PAYMENT,
+    payment.id,
+    {
+      orderId,
+      method,
+      amount,
+    },
+  );
 
   saveDb();
   return cloneOrder(order);
 };
 
-export const internalCloseOrder = async (orderId: string, actor: Actor): Promise<Order | undefined> => {
+export const internalCloseOrder = async (
+  orderId: string,
+  actor: Actor,
+): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
@@ -835,6 +1003,13 @@ export const internalCloseOrder = async (orderId: string, actor: Actor): Promise
       const table = db.tables.find((t) => t.id === order.tableId);
       if (table) {
         table.status = TableStatus.FREE;
+      }
+
+      if (Array.isArray(order.linkedTableIds)) {
+        for (const linkedId of order.linkedTableIds) {
+          const linked = db.tables.find((t) => t.id === linkedId);
+          if (linked) linked.status = TableStatus.FREE;
+        }
       }
 
       writeAuditLog(

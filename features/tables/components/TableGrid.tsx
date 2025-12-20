@@ -32,7 +32,7 @@ const TableGrid: React.FC<TableGridProps> = ({ onSelectTable }) => {
   const hasActiveOrder = (tableId: string) => {
     return orders?.some(
       (order) =>
-        order.tableId === tableId &&
+        (order.tableId === tableId || order.linkedTableIds?.includes(tableId)) &&
         order.status !== OrderStatus.CLOSED &&
         order.status !== OrderStatus.CANCELED,
     );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { KitchenStation, OrderStatus } from '../../../shared/types';
 import { useOrders } from '../../orders/hooks/useOrders';
@@ -17,25 +17,29 @@ const KitchenDashboard: React.FC = () => {
   const [stationFilter, setStationFilter] = useState<'ALL' | KitchenStation>('ALL');
   const { menuItems } = useMenu();
 
-  const getItemStation = (menuItemId: string): KitchenStation => {
-    const menuItem = menuItems.find((mi) => mi.id === menuItemId);
-    if (menuItem?.station) return menuItem.station;
-    if (menuItem?.categoryId === 'cat4') return KitchenStation.BAR;
-    if (menuItem?.categoryId === 'cat3') return KitchenStation.DESSERT;
-    return KitchenStation.HOT;
-  };
+  const getItemStation = useCallback(
+    (menuItemId: string): KitchenStation => {
+      const menuItem = menuItems.find((mi) => mi.id === menuItemId);
+      if (menuItem?.station) return menuItem.station;
+      if (menuItem?.categoryId === 'cat4') return KitchenStation.BAR;
+      if (menuItem?.categoryId === 'cat3') return KitchenStation.DESSERT;
+      return KitchenStation.HOT;
+    },
+    [menuItems],
+  );
 
   const activeOrders = useMemo(() => {
     if (!orders) return [];
     return orders
       .filter((order) =>
-        order.items.some((item) =>
-          (stationFilter === 'ALL' ? true : getItemStation(item.menuItemId) === stationFilter) &&
-          [OrderStatus.NEW, OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status),
+        order.items.some(
+          (item) =>
+            (stationFilter === 'ALL' ? true : getItemStation(item.menuItemId) === stationFilter) &&
+            [OrderStatus.NEW, OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status),
         ),
       )
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [orders, stationFilter, menuItems]);
+  }, [orders, stationFilter, getItemStation]);
 
   const handleSelectOrder = (order: Order) => {
     setSelectedOrder(order);
