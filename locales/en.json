@@ -1,4 +1,3 @@
-
 {
   "branding": {
     "name": "Kitchorify",
@@ -90,43 +89,43 @@
   "admin": {
     "title": "Admin Dashboard",
     "tabs": {
-        "tables": "Tables Management",
-        "menu": "Menu Management",
-        "users": "Users Management",
-        "orderHistory": "Order History",
-        "reports": "Reports",
-        "settings": "Settings",
-        "subscription": "Subscription"
+      "tables": "Tables Management",
+      "menu": "Menu Management",
+      "users": "Users Management",
+      "orderHistory": "Order History",
+      "reports": "Reports",
+      "settings": "Settings",
+      "subscription": "Subscription"
     },
     "tables": {
-        "add": "Add Table",
-        "edit": "Edit Table",
-        "name": "Table Name",
-        "viewOrder": "View Order",
-        "orderModalTitle": "Order for {tableName}"
+      "add": "Add Table",
+      "edit": "Edit Table",
+      "name": "Table Name",
+      "viewOrder": "View Order",
+      "orderModalTitle": "Order for {tableName}"
     },
     "menu": {
-        "addCategory": "Add Category",
-        "editCategory": "Edit Category",
-        "categoryName": "Category Name",
-        "addItem": "Add Menu Item",
-        "editItem": "Edit Menu Item",
-        "itemName": "Menu Item Name"
+      "addCategory": "Add Category",
+      "editCategory": "Edit Category",
+      "categoryName": "Category Name",
+      "addItem": "Add Menu Item",
+      "editItem": "Edit Menu Item",
+      "itemName": "Menu Item Name"
     },
     "users": {
-        "add": "Add User",
-        "edit": "Edit User",
-        "fullName": "Full Name",
-        "passwordOptional": "Password (leave blank to not change)",
-        "deactivate": "Deactivate",
-        "activate": "Activate",
-        "changePassword": "Change Password",
-        "newPassword": "New Password",
-        "confirmPassword": "Confirm Password",
-        "passwordUpdateSuccess": "Password updated successfully.",
-        "passwordMismatch": "Passwords do not match.",
-        "passwordTooShort": "Password must be at least 6 characters.",
-        "changePasswordTitle": "Change Password for {userName}"
+      "add": "Add User",
+      "edit": "Edit User",
+      "fullName": "Full Name",
+      "passwordOptional": "Password (leave blank to not change)",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "changePassword": "Change Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "passwordUpdateSuccess": "Password updated successfully.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "changePasswordTitle": "Change Password for {userName}"
     },
     "history": {
       "startDate": "Start Date",
@@ -232,8 +231,8 @@
       "title": "Kitchorify your orders from table to kitchen.",
       "subtitle": "Tablet ordering for waiters, a live kitchen screen, and simple daily reports — built for small restaurants that want less chaos and more control.",
       "cta": {
-          "primary": "Start 7-day free trial",
-          "secondary": "See how it works"
+        "primary": "Start 7-day free trial",
+        "secondary": "See how it works"
       },
       "seeDemo": "See how it works"
     },
@@ -285,11 +284,11 @@
       "planName": "All-in-one plan",
       "price": "9.90 € / month",
       "bullets": {
-          "unlimitedUsers": "Unlimited users (waiter, kitchen and admin)",
-          "unlimitedTables": "Unlimited tables and orders",
-          "realtimeScreens": "Real-time kitchen and waiter screens",
-          "dailyReports": "Daily revenue summary",
-          "multilingualInterface": "Interface in English, Turkish and French"
+        "unlimitedUsers": "Unlimited users (waiter, kitchen and admin)",
+        "unlimitedTables": "Unlimited tables and orders",
+        "realtimeScreens": "Real-time kitchen and waiter screens",
+        "dailyReports": "Daily revenue summary",
+        "multilingualInterface": "Interface in English, Turkish and French"
       },
       "cta": "Start 7-day free trial",
       "note": "All current features are included for 9.90 €/month. Future advanced add-ons may be priced separately.",

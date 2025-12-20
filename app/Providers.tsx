@@ -8,23 +8,21 @@ import { OrderProvider } from '../features/orders/context/OrderContext';
 import { NotificationProvider } from '../features/notifications/context/NotificationContext';
 
 const Providers: React.FC<{ children: ReactNode }> = ({ children }) => {
-    return (
-        <LanguageProvider>
-            <AuthProvider>
-                <UserProvider>
-                    <MenuProvider>
-                        <TableProvider>
-                            <OrderProvider>
-                                <NotificationProvider>
-                                    {children}
-                                </NotificationProvider>
-                            </OrderProvider>
-                        </TableProvider>
-                    </MenuProvider>
-                </UserProvider>
-            </AuthProvider>
-        </LanguageProvider>
-    );
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <UserProvider>
+          <MenuProvider>
+            <TableProvider>
+              <OrderProvider>
+                <NotificationProvider>{children}</NotificationProvider>
+              </OrderProvider>
+            </TableProvider>
+          </MenuProvider>
+        </UserProvider>
+      </AuthProvider>
+    </LanguageProvider>
+  );
 };
 
 export default Providers;

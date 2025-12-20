@@ -1,4 +1,3 @@
-
 {
   "branding": {
     "name": "Kitchorify",
@@ -90,43 +89,43 @@
   "admin": {
     "title": "Yönetici Paneli",
     "tabs": {
-        "tables": "Masa Yönetimi",
-        "menu": "Menü Yönetimi",
-        "users": "Kullanıcı Yönetimi",
-        "orderHistory": "Sipariş Geçmişi",
-        "reports": "Raporlar",
-        "settings": "Ayarlar",
-        "subscription": "Abonelik"
+      "tables": "Masa Yönetimi",
+      "menu": "Menü Yönetimi",
+      "users": "Kullanıcı Yönetimi",
+      "orderHistory": "Sipariş Geçmişi",
+      "reports": "Raporlar",
+      "settings": "Ayarlar",
+      "subscription": "Abonelik"
     },
     "tables": {
-        "add": "Masa Ekle",
-        "edit": "Masayı Düzenle",
-        "name": "Masa Adı",
-        "viewOrder": "Siparişi Görüntüle",
-        "orderModalTitle": "{tableName} Masası Siparişi"
+      "add": "Masa Ekle",
+      "edit": "Masayı Düzenle",
+      "name": "Masa Adı",
+      "viewOrder": "Siparişi Görüntüle",
+      "orderModalTitle": "{tableName} Masası Siparişi"
     },
     "menu": {
-        "addCategory": "Kategori Ekle",
-        "editCategory": "Kategoriyi Düzenle",
-        "categoryName": "Kategori Adı",
-        "addItem": "Menü Öğesi Ekle",
-        "editItem": "Menü Öğesini Düzenle",
-        "itemName": "Menü Öğesi Adı"
+      "addCategory": "Kategori Ekle",
+      "editCategory": "Kategoriyi Düzenle",
+      "categoryName": "Kategori Adı",
+      "addItem": "Menü Öğesi Ekle",
+      "editItem": "Menü Öğesini Düzenle",
+      "itemName": "Menü Öğesi Adı"
     },
     "users": {
-        "add": "Kullanıcı Ekle",
-        "edit": "Kullanıcıyı Düzenle",
-        "fullName": "Tam Ad",
-        "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
-        "deactivate": "Pasif Yap",
-        "activate": "Aktif Yap",
-        "changePassword": "Şifre Değiştir",
-        "newPassword": "Yeni Şifre",
-        "confirmPassword": "Şifreyi Onayla",
-        "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",
-        "passwordMismatch": "Şifreler eşleşmiyor.",
-        "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
-        "changePasswordTitle": "{userName} için Şifre Değiştir"
+      "add": "Kullanıcı Ekle",
+      "edit": "Kullanıcıyı Düzenle",
+      "fullName": "Tam Ad",
+      "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
+      "deactivate": "Pasif Yap",
+      "activate": "Aktif Yap",
+      "changePassword": "Şifre Değiştir",
+      "newPassword": "Yeni Şifre",
+      "confirmPassword": "Şifreyi Onayla",
+      "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",
+      "passwordMismatch": "Şifreler eşleşmiyor.",
+      "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
+      "changePasswordTitle": "{userName} için Şifre Değiştir"
     },
     "history": {
       "startDate": "Başlangıç Tarihi",
@@ -231,9 +230,9 @@
     "hero": {
       "title": "Siparişlerinizi Kitchorify ile masadan mutfağa taşıyın.",
       "subtitle": "Garsonlar tabletle sipariş alır, mutfak siparişleri anında görür ve siz günü basit raporlarla takip edersiniz. Daha az karmaşa, küçük restoranlar için daha fazla kontrol.",
-       "cta": {
-          "primary": "7 günlük denemeyi başlatın",
-          "secondary": "Nasıl çalıştığını görün"
+      "cta": {
+        "primary": "7 günlük denemeyi başlatın",
+        "secondary": "Nasıl çalıştığını görün"
       },
       "seeDemo": "Nasıl çalıştığını görün"
     },

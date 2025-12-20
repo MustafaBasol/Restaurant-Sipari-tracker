@@ -8,16 +8,16 @@ import CtaSection from '../components/CtaSection';
 import PricingSection from '../components/PricingSection';
 
 const HomePage: React.FC = () => {
-    return (
-        <MarketingLayout>
-            <HeroSection />
-            <BenefitsSection />
-            <HowItWorksSection />
-            <ForWhoSection />
-            <PricingSection />
-            <CtaSection />
-        </MarketingLayout>
-    );
+  return (
+    <MarketingLayout>
+      <HeroSection />
+      <BenefitsSection />
+      <HowItWorksSection />
+      <ForWhoSection />
+      <PricingSection />
+      <CtaSection />
+    </MarketingLayout>
+  );
 };
 
 export default HomePage;

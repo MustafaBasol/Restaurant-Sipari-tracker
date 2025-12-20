@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
@@ -9,68 +8,72 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 
 const SubscriptionManagement: React.FC = () => {
-    const { authState } = useAuth();
-    const { t } = useLanguage();
+  const { authState } = useAuth();
+  const { t } = useLanguage();
 
-    const tenant = authState?.tenant;
-    if (!tenant) return null;
-    
-    const subscriptionIsActive = isSubscriptionActive(tenant);
-    const trialDaysLeft = getTrialDaysLeft(tenant);
+  const tenant = authState?.tenant;
+  if (!tenant) return null;
 
-    const handleActivate = () => {
-        window.location.hash = '#/checkout';
-    };
+  const subscriptionIsActive = isSubscriptionActive(tenant);
+  const trialDaysLeft = getTrialDaysLeft(tenant);
 
-    const renderStatus = () => {
-        if (subscriptionIsActive) {
-            if (tenant.subscriptionStatus === SubscriptionStatus.TRIAL) {
-                return (
-                    <div>
-                        <Badge variant="yellow">{t('statuses.TRIAL')}</Badge>
-                        {/* FIX: Use .replace() for variable substitution in translations. */}
-                        <p className="mt-2 text-text-secondary">{t('subscription.daysLeft').replace('{days}', trialDaysLeft.toString())}</p>
-                    </div>
-                );
-            }
-            return (
-                <div>
-                     <Badge variant="green">{t('statuses.ACTIVE')}</Badge>
-                     <p className="mt-2 text-text-secondary">{t('subscription.activeSubscription')}</p>
-                </div>
-            );
-        } else {
-             return (
-                <div>
-                    <Badge variant="red">{t('subscription.trialExpired')}</Badge>
-                     <p className="mt-2 text-text-secondary">{t('subscription.activateNeeded')}</p>
-                </div>
-            );
-        }
-    };
+  const handleActivate = () => {
+    window.location.hash = '#/checkout';
+  };
 
-    return (
-        <Card>
-            <h2 className="text-2xl font-bold text-text-primary mb-6">{t('subscription.status')}</h2>
-            <div className="space-y-6 max-w-md">
-                <div className="bg-light-bg p-4 rounded-xl">
-                    <p className="text-sm font-medium text-text-secondary mb-2">{t('subscription.currentPlan')}</p>
-                    <div className="flex items-center justify-between">
-                        <p className="font-bold text-lg">{t('marketing.pricing.planName')}</p>
-                        {renderStatus()}
-                    </div>
-                </div>
+  const renderStatus = () => {
+    if (subscriptionIsActive) {
+      if (tenant.subscriptionStatus === SubscriptionStatus.TRIAL) {
+        return (
+          <div>
+            <Badge variant="yellow">{t('statuses.TRIAL')}</Badge>
+            {/* FIX: Use .replace() for variable substitution in translations. */}
+            <p className="mt-2 text-text-secondary">
+              {t('subscription.daysLeft').replace('{days}', trialDaysLeft.toString())}
+            </p>
+          </div>
+        );
+      }
+      return (
+        <div>
+          <Badge variant="green">{t('statuses.ACTIVE')}</Badge>
+          <p className="mt-2 text-text-secondary">{t('subscription.activeSubscription')}</p>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <Badge variant="red">{t('subscription.trialExpired')}</Badge>
+          <p className="mt-2 text-text-secondary">{t('subscription.activateNeeded')}</p>
+        </div>
+      );
+    }
+  };
 
-                {!subscriptionIsActive && (
-                    <div>
-                        <Button onClick={handleActivate} className="w-full">
-                             {t('subscription.activateButton')}
-                        </Button>
-                    </div>
-                )}
-            </div>
-        </Card>
-    );
+  return (
+    <Card>
+      <h2 className="text-2xl font-bold text-text-primary mb-6">{t('subscription.status')}</h2>
+      <div className="space-y-6 max-w-md">
+        <div className="bg-light-bg p-4 rounded-xl">
+          <p className="text-sm font-medium text-text-secondary mb-2">
+            {t('subscription.currentPlan')}
+          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-lg">{t('marketing.pricing.planName')}</p>
+            {renderStatus()}
+          </div>
+        </div>
+
+        {!subscriptionIsActive && (
+          <div>
+            <Button onClick={handleActivate} className="w-full">
+              {t('subscription.activateButton')}
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
 };
 
 export default SubscriptionManagement;

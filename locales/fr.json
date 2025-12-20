@@ -1,4 +1,3 @@
-
 {
   "branding": {
     "name": "Kitchorify",
@@ -90,43 +89,43 @@
   "admin": {
     "title": "Panneau d'Administration",
     "tabs": {
-        "tables": "Gestion des Tables",
-        "menu": "Gestion du Menu",
-        "users": "Gestion des Utilisateurs",
-        "orderHistory": "Historique des Commandes",
-        "reports": "Rapports",
-        "settings": "Paramètres",
-        "subscription": "Abonnement"
+      "tables": "Gestion des Tables",
+      "menu": "Gestion du Menu",
+      "users": "Gestion des Utilisateurs",
+      "orderHistory": "Historique des Commandes",
+      "reports": "Rapports",
+      "settings": "Paramètres",
+      "subscription": "Abonnement"
     },
     "tables": {
-        "add": "Ajouter une Table",
-        "edit": "Modifier la Table",
-        "name": "Nom de la Table",
-        "viewOrder": "Voir la Commande",
-        "orderModalTitle": "Commande pour {tableName}"
+      "add": "Ajouter une Table",
+      "edit": "Modifier la Table",
+      "name": "Nom de la Table",
+      "viewOrder": "Voir la Commande",
+      "orderModalTitle": "Commande pour {tableName}"
     },
     "menu": {
-        "addCategory": "Ajouter une Catégorie",
-        "editCategory": "Modifier la Catégorie",
-        "categoryName": "Nom de la Catégorie",
-        "addItem": "Ajouter un Plat",
-        "editItem": "Modifier le Plat",
-        "itemName": "Nom du Plat"
+      "addCategory": "Ajouter une Catégorie",
+      "editCategory": "Modifier la Catégorie",
+      "categoryName": "Nom de la Catégorie",
+      "addItem": "Ajouter un Plat",
+      "editItem": "Modifier le Plat",
+      "itemName": "Nom du Plat"
     },
     "users": {
-        "add": "Ajouter un Utilisateur",
-        "edit": "Modifier l'Utilisateur",
-        "fullName": "Nom Complet",
-        "passwordOptional": "Mot de passe (laisser vide pour ne pas changer)",
-        "deactivate": "Désactiver",
-        "activate": "Activer",
-        "changePassword": "Changer le mot de passe",
-        "newPassword": "Nouveau mot de passe",
-        "confirmPassword": "Confirmer le mot de passe",
-        "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",
-        "passwordMismatch": "Les mots de passe ne correspondent pas.",
-        "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
-        "changePasswordTitle": "Changer le mot de passe pour {userName}"
+      "add": "Ajouter un Utilisateur",
+      "edit": "Modifier l'Utilisateur",
+      "fullName": "Nom Complet",
+      "passwordOptional": "Mot de passe (laisser vide pour ne pas changer)",
+      "deactivate": "Désactiver",
+      "activate": "Activer",
+      "changePassword": "Changer le mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
+      "changePasswordTitle": "Changer le mot de passe pour {userName}"
     },
     "history": {
       "startDate": "Date de début",
@@ -189,7 +188,7 @@
     },
     "viewDetails": "Voir Détails"
   },
-   "notifications": {
+  "notifications": {
     "title": "Nouvelles Commandes",
     "dismiss": "Fermer",
     "noNewOrders": "Aucune nouvelle commande à afficher."
@@ -232,8 +231,8 @@
       "title": "Kitchorify envoie vos commandes des tables vers la cuisine.",
       "subtitle": "Prise de commande sur tablette pour les serveurs, écran de cuisine en temps réel et rapports quotidiens simples — conçu pour les petits restaurants qui veulent moins de chaos et plus de contrôle.",
       "cta": {
-          "primary": "Commencer l’essai gratuit de 7 jours",
-          "secondary": "Voir comment ça marche"
+        "primary": "Commencer l’essai gratuit de 7 jours",
+        "secondary": "Voir comment ça marche"
       },
       "seeDemo": "Voir comment ça marche"
     },

@@ -25,7 +25,7 @@ const app = express();
 
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
   .split(',')
-  .map(s => s.trim())
+  .map((s) => s.trim())
   .filter(Boolean);
 
 app.use(
@@ -36,7 +36,7 @@ app.use(
       if (allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
-  })
+  }),
 );
 
 app.get('/', (_req, res) => {
@@ -44,41 +44,37 @@ app.get('/', (_req, res) => {
 });
 
 // Stripe webhooks must use express.raw for signature verification.
-app.post(
-  '/stripe-webhook',
-  express.raw({ type: 'application/json' }),
-  (request, response) => {
-    console.log('Webhook received!');
+app.post('/stripe-webhook', express.raw({ type: 'application/json' }), (request, response) => {
+  console.log('Webhook received!');
 
-    const sig = request.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const sig = request.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    let event;
+  let event;
 
-    try {
-      event = stripe.webhooks.constructEvent(request.body, sig, webhookSecret);
-    } catch (err) {
-      console.log(`❌ Error message: ${err.message}`);
-      response.status(400).send(`Webhook Error: ${err.message}`);
-      return;
-    }
-
-    console.log(`✅ Success: Verified webhook event: ${event.id}`);
-
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-        console.log('TODO: Update database subscription status for the customer.');
-        break;
-      }
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
-
-    response.send();
+  try {
+    event = stripe.webhooks.constructEvent(request.body, sig, webhookSecret);
+  } catch (err) {
+    console.log(`❌ Error message: ${err.message}`);
+    response.status(400).send(`Webhook Error: ${err.message}`);
+    return;
   }
-);
+
+  console.log(`✅ Success: Verified webhook event: ${event.id}`);
+
+  switch (event.type) {
+    case 'payment_intent.succeeded': {
+      const paymentIntent = event.data.object;
+      console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
+      console.log('TODO: Update database subscription status for the customer.');
+      break;
+    }
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  response.send();
+});
 
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
