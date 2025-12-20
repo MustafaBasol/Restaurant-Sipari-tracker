@@ -35,4 +35,5 @@ export interface MenuItem {
   station?: KitchenStation;
   variants?: MenuItemVariant[];
   modifiers?: MenuItemModifier[];
+  allergens?: string[];
 }

@@ -18,6 +18,14 @@ const normalizeVariants = (variants?: MenuItemVariant[]): MenuItemVariant[] =>
 const normalizeModifiers = (modifiers?: MenuItemModifier[]): MenuItemModifier[] =>
   Array.isArray(modifiers) ? modifiers : [];
 
+const parseAllergens = (value: string): string[] =>
+  value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+const formatAllergens = (allergens?: string[]): string => (Array.isArray(allergens) ? allergens : []).join(', ');
+
 const VariantsEditor: React.FC<{
   variants: MenuItemVariant[];
   currency: string;
@@ -303,7 +311,10 @@ const MenuManagement: React.FC = () => {
     station: KitchenStation.HOT,
     variants: [],
     modifiers: [],
+    allergens: [],
   });
+
+  const [newAllergensText, setNewAllergensText] = useState('');
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<MenuItem | null>(null);
@@ -339,6 +350,7 @@ const MenuManagement: React.FC = () => {
         price: normalizedPrice,
         variants,
         modifiers: normalizeModifiers(newMenuItem.modifiers),
+        allergens: parseAllergens(newAllergensText),
       });
       setNewMenuItem({
         name: '',
@@ -349,7 +361,9 @@ const MenuManagement: React.FC = () => {
         station: KitchenStation.HOT,
         variants: [],
         modifiers: [],
+        allergens: [],
       });
+      setNewAllergensText('');
     }
   };
 
@@ -385,6 +399,7 @@ const MenuManagement: React.FC = () => {
       price: normalizedPrice,
       variants,
       modifiers: normalizeModifiers(editDraft.modifiers),
+      allergens: Array.isArray(editDraft.allergens) ? editDraft.allergens : [],
     });
     cancelEdit();
   };
@@ -486,6 +501,17 @@ const MenuManagement: React.FC = () => {
               <option value={KitchenStation.COLD}>{t('kitchen.stations.cold')}</option>
               <option value={KitchenStation.DESSERT}>{t('kitchen.stations.dessert')}</option>
             </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              {t('general.allergens')}
+            </label>
+            <Input
+              value={newAllergensText}
+              onChange={(e) => setNewAllergensText(e.target.value)}
+              placeholder={t('general.allergensPlaceholder')}
+            />
           </div>
 
           <VariantsEditor
@@ -619,6 +645,19 @@ const MenuManagement: React.FC = () => {
                         <option value={KitchenStation.COLD}>{t('kitchen.stations.cold')}</option>
                         <option value={KitchenStation.DESSERT}>{t('kitchen.stations.dessert')}</option>
                       </Select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-text-secondary mb-1">
+                        {t('general.allergens')}
+                      </label>
+                      <Input
+                        value={formatAllergens(editDraft.allergens)}
+                        onChange={(e) =>
+                          setEditDraft((p) => (p ? { ...p, allergens: parseAllergens(e.target.value) } : p))
+                        }
+                        placeholder={t('general.allergensPlaceholder')}
+                      />
                     </div>
                   </div>
 

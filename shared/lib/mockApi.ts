@@ -116,6 +116,7 @@ const seedData: MockDB = {
       description: 'Grilled bread with tomatoes, garlic, and basil.',
       price: 8.5,
       isAvailable: true,
+      allergens: ['gluten'],
     },
     {
       id: 'item2',
@@ -136,6 +137,7 @@ const seedData: MockDB = {
       description: 'Pasta with eggs, cheese, pancetta, and pepper.',
       price: 16.0,
       isAvailable: true,
+      allergens: ['gluten', 'egg', 'dairy'],
       variants: [
         { id: 'v_carbonara_regular', name: 'Regular', price: 16.0 },
         { id: 'v_carbonara_large', name: 'Large', price: 19.0 },

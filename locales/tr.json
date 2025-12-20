@@ -22,7 +22,9 @@
     "availability": "Müsaitlik",
     "available": "Müsait",
     "unavailable": "Müsait Değil",
-    "station": "İstasyon"
+    "station": "İstasyon",
+    "allergens": "Alerjenler",
+    "allergensPlaceholder": "örn. gluten, süt, yumurta"
   },
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",

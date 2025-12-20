@@ -5,6 +5,7 @@ import { PlusIcon } from '../../../shared/components/icons/Icons';
 import { Card } from '../../../shared/components/ui/Card';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
+import { useLanguage } from '../../../shared/hooks/useLanguage';
 
 interface MenuDisplayProps {
   onAddItem: (item: MenuItem) => void;
@@ -13,6 +14,7 @@ interface MenuDisplayProps {
 const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
   const { menuCategories, menuItems } = useMenu();
   const { authState } = useAuth();
+  const { t } = useLanguage();
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
   const currency = authState?.tenant?.currency || 'USD';
@@ -54,6 +56,11 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
             <div className="flex-grow">
               <h3 className="font-semibold text-text-primary">{item.name}</h3>
               <p className="text-xs text-text-secondary mt-1">{item.description}</p>
+              {Array.isArray(item.allergens) && item.allergens.length > 0 && (
+                <p className="text-xs text-text-secondary mt-1">
+                  {t('general.allergens')}: {item.allergens.join(', ')}
+                </p>
+              )}
             </div>
             <div className="flex justify-between items-center mt-4">
               <span className="font-bold text-text-primary">

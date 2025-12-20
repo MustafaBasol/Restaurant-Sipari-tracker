@@ -22,7 +22,9 @@
     "availability": "Disponibilité",
     "available": "Disponible",
     "unavailable": "Indisponible",
-    "station": "Station"
+    "station": "Station",
+    "allergens": "Allergènes",
+    "allergensPlaceholder": "ex. gluten, lait, œuf"
   },
   "actions": {
     "markAsServed": "Marquer comme Servi",
