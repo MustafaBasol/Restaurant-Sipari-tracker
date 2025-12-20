@@ -27,19 +27,19 @@
 
 **Gereksinimler:** Node.js (öneri: 18+), npm
 
-1) Bağımlılıkları kur:
+1. Bağımlılıkları kur:
 
 ```bash
 npm install
 ```
 
-2) Geliştirme sunucusunu başlat:
+2. Geliştirme sunucusunu başlat:
 
 ```bash
 npm run dev
 ```
 
-3) Tarayıcıdan aç:
+3. Tarayıcıdan aç:
 
 - http://localhost:3000
 
@@ -60,12 +60,12 @@ npm run preview
 
 Uygulama ilk açılışta mock verilerle gelir.
 
-| Rol | Email | Şifre / Tenant Slug |
-|---|---|---|
-| Super Admin | `superadmin@kitchorify.com` | `superadmin` |
-| Admin | `admin@sunsetbistro.com` | `sunset-bistro` |
-| Garson | `waiter@sunsetbistro.com` | `sunset-bistro` |
-| Mutfak | `kitchen@sunsetbistro.com` | `sunset-bistro` |
+| Rol         | Email                       | Şifre / Tenant Slug |
+| ----------- | --------------------------- | ------------------- |
+| Super Admin | `superadmin@kitchorify.com` | `superadmin`        |
+| Admin       | `admin@sunsetbistro.com`    | `sunset-bistro`     |
+| Garson      | `waiter@sunsetbistro.com`   | `sunset-bistro`     |
+| Mutfak      | `kitchen@sunsetbistro.com`  | `sunset-bistro`     |
 
 Not: Tenant kullanıcıları için girişte ikinci alan “şifre/slug” gibi davranır; demo veride şifre olarak tenant slug kullanılır.
 
@@ -97,6 +97,7 @@ Veriyi sıfırlamak için tarayıcıda bu anahtarları silin (veya “Site Data/
 ```bash
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
+
 - Ödeme onayı **mock** çalışır: ödeme başarılı varsayılır ve mock “webhook” simülasyonu ile tenant aboneliği ACTIVE’e çekilir.
 - Klasörde ayrıca örnek bir webhook sunucusu vardır: `server.cjs`.
   - Bu dosya, mevcut `package.json` scriptlerine bağlı değildir.
