@@ -57,17 +57,46 @@ const VariantsEditor: React.FC<{
       {variants.length > 0 && (
         <div className="space-y-1">
           {variants.map((v) => (
-            <div key={v.id} className="flex items-center justify-between bg-gray-100 p-2 rounded-lg">
-              <div className="text-sm">
-                <span className="font-semibold">{v.name}</span>{' '}
-                <span className="text-text-secondary">({formatCurrency(v.price, currency)})</span>
+            <div key={v.id} className="bg-gray-100 p-2 rounded-lg space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-text-secondary mb-1">
+                    {t('admin.menu.variantName')}
+                  </label>
+                  <Input
+                    value={v.name}
+                    onChange={(e) =>
+                      onChange(
+                        variants.map((x) => (x.id === v.id ? { ...x, name: e.target.value } : x)),
+                      )
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">
+                    {t('admin.menu.variantPrice')}
+                  </label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(v.price) ? v.price : 0}
+                    onChange={(e) => {
+                      const nextPrice = parseFloat(e.target.value) || 0;
+                      onChange(
+                        variants.map((x) => (x.id === v.id ? { ...x, price: nextPrice } : x)),
+                      );
+                    }}
+                  />
+                </div>
               </div>
+              <p className="text-xs text-text-secondary">
+                {t('general.price')}: {formatCurrency(v.price, currency)}
+              </p>
               <button
                 type="button"
                 className="text-xs text-red-600 hover:text-red-800"
                 onClick={() => onChange(variants.filter((x) => x.id !== v.id))}
               >
-                {t('general.remove', 'Remove')}
+                {t('general.delete', 'Delete')}
               </button>
             </div>
           ))}
@@ -114,13 +143,27 @@ const ModifiersEditor: React.FC<{
           {modifiers.map((m) => (
             <div key={m.id} className="bg-gray-100 p-3 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-sm">{m.name}</p>
+                <div className="flex-1 pr-2">
+                  <label className="block text-xs font-medium text-text-secondary mb-1">
+                    {t('admin.menu.modifierName')}
+                  </label>
+                  <Input
+                    value={m.name}
+                    onChange={(e) =>
+                      onChange(
+                        modifiers.map((x) =>
+                          x.id === m.id ? { ...x, name: e.target.value } : x,
+                        ),
+                      )
+                    }
+                  />
+                </div>
                 <button
                   type="button"
                   className="text-xs text-red-600 hover:text-red-800"
                   onClick={() => onChange(modifiers.filter((x) => x.id !== m.id))}
                 >
-                  {t('general.remove', 'Remove')}
+                  {t('general.delete', 'Delete')}
                 </button>
               </div>
 
@@ -185,11 +228,46 @@ const ModifierOptionsEditor: React.FC<{
       {modifier.options.length > 0 && (
         <div className="space-y-1">
           {modifier.options.map((opt) => (
-            <div key={opt.id} className="flex items-center justify-between bg-light-bg p-2 rounded-lg">
-              <div className="text-sm">
-                <span className="font-semibold">{opt.name}</span>{' '}
-                <span className="text-text-secondary">(+{formatCurrency(opt.priceDelta, currency)})</span>
+            <div key={opt.id} className="bg-light-bg p-2 rounded-lg space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-text-secondary mb-1">
+                    {t('admin.menu.optionName')}
+                  </label>
+                  <Input
+                    value={opt.name}
+                    onChange={(e) =>
+                      onChange({
+                        ...modifier,
+                        options: modifier.options.map((x) =>
+                          x.id === opt.id ? { ...x, name: e.target.value } : x,
+                        ),
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">
+                    {t('admin.menu.optionPriceDelta')}
+                  </label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(opt.priceDelta) ? opt.priceDelta : 0}
+                    onChange={(e) => {
+                      const nextDelta = parseFloat(e.target.value) || 0;
+                      onChange({
+                        ...modifier,
+                        options: modifier.options.map((x) =>
+                          x.id === opt.id ? { ...x, priceDelta: nextDelta } : x,
+                        ),
+                      });
+                    }}
+                  />
+                </div>
               </div>
+              <p className="text-xs text-text-secondary">
+                +{formatCurrency(opt.priceDelta, currency)}
+              </p>
               <button
                 type="button"
                 className="text-xs text-red-600 hover:text-red-800"
@@ -200,7 +278,7 @@ const ModifierOptionsEditor: React.FC<{
                   })
                 }
               >
-                {t('general.remove', 'Remove')}
+                {t('general.delete', 'Delete')}
               </button>
             </div>
           ))}
@@ -460,7 +538,7 @@ const MenuManagement: React.FC = () => {
                     onClick={() => (editingItemId === item.id ? cancelEdit() : startEdit(item))}
                     variant="secondary"
                   >
-                    {editingItemId === item.id ? t('admin.menu.cancelEdit') : t('admin.menu.editItem')}
+                    {editingItemId === item.id ? t('general.cancel') : t('general.edit')}
                   </Button>
                   <button onClick={() => handleAvailabilityToggle(item)}>
                     <Badge variant={item.isAvailable ? 'green' : 'red'}>
@@ -559,10 +637,10 @@ const MenuManagement: React.FC = () => {
 
                   <div className="flex gap-2">
                     <Button onClick={saveEdit} className="py-2">
-                      {t('admin.menu.saveItem')}
+                      {t('general.save')}
                     </Button>
                     <Button onClick={cancelEdit} variant="secondary" className="py-2">
-                      {t('admin.menu.cancelEdit')}
+                      {t('general.cancel')}
                     </Button>
                   </div>
                 </div>
