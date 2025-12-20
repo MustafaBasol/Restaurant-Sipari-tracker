@@ -27,6 +27,51 @@ export enum SubscriptionStatus {
   CANCELED = 'CANCELED',
 }
 
+export enum PaymentMethod {
+  CASH = 'CASH',
+  CARD = 'CARD',
+  MEAL_CARD = 'MEAL_CARD',
+}
+
+export enum PaymentStatus {
+  UNPAID = 'UNPAID',
+  PARTIALLY_PAID = 'PARTIALLY_PAID',
+  PAID = 'PAID',
+}
+
+export enum DiscountType {
+  PERCENT = 'PERCENT',
+  AMOUNT = 'AMOUNT',
+}
+
+export enum AuditEntityType {
+  ORDER = 'ORDER',
+  ORDER_ITEM = 'ORDER_ITEM',
+  PAYMENT = 'PAYMENT',
+}
+
+export enum AuditAction {
+  ORDER_CREATED = 'ORDER_CREATED',
+  ORDER_ITEM_STATUS_UPDATED = 'ORDER_ITEM_STATUS_UPDATED',
+  ORDER_NOTE_UPDATED = 'ORDER_NOTE_UPDATED',
+  PAYMENT_ADDED = 'PAYMENT_ADDED',
+  ORDER_DISCOUNT_UPDATED = 'ORDER_DISCOUNT_UPDATED',
+  ORDER_ITEM_COMPLIMENTARY_UPDATED = 'ORDER_ITEM_COMPLIMENTARY_UPDATED',
+  ORDER_CLOSED = 'ORDER_CLOSED',
+}
+
+export interface AuditLog {
+  id: string;
+  tenantId: string;
+  actorUserId: string;
+  actorRole: UserRole;
+  action: AuditAction;
+  entityType: AuditEntityType;
+  entityId: string;
+  createdAt: Date;
+  metadata?: Record<string, unknown>;
+}
+
 export interface Tenant {
   id: string;
   name: string;

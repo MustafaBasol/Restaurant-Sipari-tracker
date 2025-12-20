@@ -2,7 +2,7 @@ import React from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { useMenu } from '../../menu/hooks/useMenu';
 import { Order, OrderItem } from '../types';
-import { OrderStatus } from '../../../shared/types';
+import { DiscountType, OrderStatus, UserRole } from '../../../shared/types';
 import { TrashIcon } from '../../../shared/components/icons/Icons';
 import { Input } from '../../../shared/components/ui/Input';
 import { useOrders } from '../hooks/useOrders';
@@ -35,7 +35,7 @@ const OrderItemRow: React.FC<{
 }> = ({ item, isTemp, onUpdate, onRemove }) => {
   const { menuItems } = useMenu();
   const { t } = useLanguage();
-  const { serveOrderItem, updateOrderItemStatus } = useOrders();
+  const { serveOrderItem, updateOrderItemStatus, setOrderItemComplimentary } = useOrders();
   const { authState } = useAuth();
   const currency = authState?.tenant?.currency || 'USD';
   const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
@@ -43,6 +43,9 @@ const OrderItemRow: React.FC<{
   if (!menuItem) return null;
 
   const status = 'status' in item ? item.status : OrderStatus.NEW;
+  const isComplimentary = 'isComplimentary' in item ? Boolean(item.isComplimentary) : false;
+  const canManageDiscounts =
+    authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
 
   const handleServeItem = () => {
     if ('orderId' in item && item.orderId && item.id) {
@@ -53,6 +56,13 @@ const OrderItemRow: React.FC<{
   const handleCancelItem = () => {
     if ('orderId' in item && item.orderId && item.id) {
       updateOrderItemStatus(item.orderId, item.id, OrderStatus.CANCELED);
+    }
+  };
+
+  const handleToggleComplimentary = () => {
+    if (!canManageDiscounts) return;
+    if ('orderId' in item && item.orderId && item.id) {
+      setOrderItemComplimentary(item.orderId, item.id, !isComplimentary);
     }
   };
   const isCancelable =
@@ -69,11 +79,16 @@ const OrderItemRow: React.FC<{
             <p className={`text-xs font-medium ${statusColors[status]}`}>
               {t(`statuses.${status}`)}
             </p>
+            {!isTemp && isComplimentary && status !== OrderStatus.CANCELED && (
+              <p className="text-xs font-semibold text-text-secondary">
+                {t('waiter.complimentary')}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           <p className={`font-semibold ${status === OrderStatus.CANCELED ? 'line-through' : ''}`}>
-            {formatCurrency(menuItem.price * item.quantity, currency)}
+            {formatCurrency(isComplimentary && status !== OrderStatus.CANCELED ? 0 : menuItem.price * item.quantity, currency)}
           </p>
           {status === OrderStatus.READY && (
             <button
@@ -112,14 +127,24 @@ const OrderItemRow: React.FC<{
           ) : (
             <div />
           )}
-          {isCancelable && (
-            <button
-              onClick={handleCancelItem}
-              className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full hover:bg-red-200 transition-colors"
-            >
-              {t('actions.cancelItem')}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canManageDiscounts && status !== OrderStatus.CANCELED && (
+              <button
+                onClick={handleToggleComplimentary}
+                className="px-2 py-0.5 bg-border-color text-text-secondary text-xs font-semibold rounded-full hover:opacity-90 transition-opacity"
+              >
+                {isComplimentary ? t('actions.removeComplimentary') : t('actions.makeComplimentary')}
+              </button>
+            )}
+            {isCancelable && (
+              <button
+                onClick={handleCancelItem}
+                className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full hover:bg-red-200 transition-colors"
+              >
+                {t('actions.cancelItem')}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -139,12 +164,25 @@ const CurrentOrder: React.FC<CurrentOrderProps> = ({
 
   const allItems = [...(order?.items || []), ...tempItems];
 
-  const totalPrice = allItems
+  const subtotal = allItems
     .filter((item) => !('status' in item) || item.status !== OrderStatus.CANCELED)
     .reduce((acc, item) => {
+      const isComplimentary = 'isComplimentary' in item ? Boolean(item.isComplimentary) : false;
+      if (isComplimentary && (!('status' in item) || item.status !== OrderStatus.CANCELED)) return acc;
       const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
       return acc + (menuItem ? menuItem.price * item.quantity : 0);
     }, 0);
+
+  const totalPrice = (() => {
+    const discount = order?.discount;
+    if (!discount || !Number.isFinite(discount.value) || discount.value <= 0) return subtotal;
+    const discountAmount =
+      discount.type === DiscountType.PERCENT
+        ? (subtotal * Math.max(0, Math.min(100, discount.value))) / 100
+        : Math.max(0, discount.value);
+    const total = subtotal - Math.min(subtotal, discountAmount);
+    return total > 0 ? total : 0;
+  })();
 
   return (
     <div className="flex-1 p-4 flex flex-col">

@@ -9,7 +9,7 @@ import React, {
 import { useAuth } from '../../auth/hooks/useAuth';
 import * as api from '../api';
 import { Order, OrderItem } from '../types';
-import { OrderStatus, TableStatus } from '../../../shared/types';
+import { DiscountType, OrderStatus, PaymentMethod, TableStatus, UserRole } from '../../../shared/types';
 import { useTableContext } from '../../tables/context/TableContext';
 
 interface OrderContextData {
@@ -26,6 +26,9 @@ interface OrderContextData {
   serveOrderItem: (orderId: string, itemId: string) => Promise<void>;
   closeOrder: (orderId: string) => Promise<void>;
   updateOrderNote: (orderId: string, note: string) => Promise<void>;
+  addOrderPayment: (orderId: string, method: PaymentMethod, amount: number) => Promise<void>;
+  setOrderDiscount: (orderId: string, type: DiscountType, value: number) => Promise<void>;
+  setOrderItemComplimentary: (orderId: string, itemId: string, isComplimentary: boolean) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -36,6 +39,10 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const { setTableStatusInState } = useTableContext();
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const actor = authState?.user?.id
+    ? { userId: authState.user.id, role: authState.user.role as UserRole }
+    : undefined;
 
   const fetchOrders = useCallback(async () => {
     if (authState?.tenant?.id) {
@@ -98,17 +105,18 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
 
   const updateOrderItemStatus = (orderId: string, itemId: string, status: OrderStatus) =>
-    handleOrderMutation(() => api.updateOrderItemStatus(orderId, itemId, status));
+    handleOrderMutation(() => api.updateOrderItemStatus(orderId, itemId, status, actor));
 
   const markOrderAsReady = (orderId: string) =>
     handleOrderMutation(() => api.markOrderAsReady(orderId));
 
   const serveOrderItem = (orderId: string, itemId: string) =>
-    handleOrderMutation(() => api.serveOrderItem(orderId, itemId));
+    handleOrderMutation(() => api.serveOrderItem(orderId, itemId, actor));
 
   const closeOrder = (orderId: string) =>
     handleOrderMutation(async () => {
-      const updated = await api.closeOrder(orderId);
+      if (!actor) return undefined;
+      const updated = await api.closeOrder(orderId, actor);
       if (updated) {
         setTableStatusInState(updated.tableId, TableStatus.FREE);
       }
@@ -116,7 +124,22 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
 
   const updateOrderNote = (orderId: string, note: string) =>
-    handleOrderMutation(() => api.updateOrderNote(orderId, note));
+    handleOrderMutation(() => api.updateOrderNote(orderId, note, actor));
+
+  const addOrderPayment = (orderId: string, method: PaymentMethod, amount: number) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(() => api.addOrderPayment(orderId, method, amount, actor));
+  };
+
+  const setOrderDiscount = (orderId: string, type: DiscountType, value: number) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(() => api.setOrderDiscount(orderId, type, value, actor));
+  };
+
+  const setOrderItemComplimentary = (orderId: string, itemId: string, isComplimentary: boolean) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(() => api.setOrderItemComplimentary(orderId, itemId, isComplimentary, actor));
+  };
 
   return (
     <OrderContext.Provider
@@ -129,6 +152,9 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         serveOrderItem,
         closeOrder,
         updateOrderNote,
+        addOrderPayment,
+        setOrderDiscount,
+        setOrderItemComplimentary,
         refetch: fetchOrders,
       }}
     >

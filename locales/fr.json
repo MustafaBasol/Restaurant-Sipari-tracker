@@ -26,7 +26,12 @@
   "actions": {
     "markAsServed": "Marquer comme Servi",
     "closeTable": "Fermer la Table",
-    "cancelItem": "Annuler l'article"
+    "cancelItem": "Annuler l'article",
+    "addPayment": "Ajouter un Paiement",
+    "applyDiscount": "Appliquer une Remise",
+    "removeDiscount": "Retirer la Remise",
+    "makeComplimentary": "Offert",
+    "removeComplimentary": "Retirer l'Offert"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -73,7 +78,30 @@
     "occupyTable": "Occuper",
     "freeUpTable": "Libérer",
     "customerName": "Nom du Client",
-    "tableNote": "Note de Table"
+    "tableNote": "Note de Table",
+    "payment": "Paiement",
+    "paid": "Payé",
+    "remaining": "Restant",
+    "paymentMethod": "Méthode de paiement",
+    "paymentAmount": "Montant",
+    "discount": "Remise",
+    "discountType": "Type de remise",
+    "discountValue": "Valeur de remise",
+    "discountTypes": {
+      "percent": "Pourcentage",
+      "amount": "Montant"
+    },
+    "complimentary": "Offert",
+    "paymentMethods": {
+      "cash": "Espèces",
+      "card": "Carte",
+      "mealCard": "Carte repas"
+    },
+    "splitBill": "Partager l'addition",
+    "splitPeopleCount": "Personnes",
+    "perPerson": "Par personne",
+    "fillRemaining": "Remplir le restant",
+    "fillPerPerson": "Remplir par personne"
   },
   "kitchen": {
     "title": "Tableau de Bord Cuisine",
@@ -84,7 +112,9 @@
     "noActiveOrders": "Aucune commande active.",
     "orderDetails": "Détails de la Commande",
     "orderBy": "Commande par",
-    "generalOrderNote": "Note Générale de la Commande"
+    "generalOrderNote": "Note Générale de la Commande",
+    "late": "En retard",
+    "minutesShort": "min"
   },
   "admin": {
     "title": "Panneau d'Administration",

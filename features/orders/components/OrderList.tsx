@@ -7,6 +7,8 @@ import { Order, OrderItem } from '../types';
 import { OrderStatus } from '../../../shared/types';
 import { Card } from '../../../shared/components/ui/Card';
 import { NoteIcon } from '../../../shared/components/icons/Icons';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { formatDateTime } from '../../../shared/lib/utils';
 
 interface OrderListProps {
   orders: Order[];
@@ -64,11 +66,19 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const { tables } = useTables();
   const { t } = useLanguage();
   const { markOrderAsReady } = useOrders();
+  const { authState } = useAuth();
+  const timezone = authState?.tenant?.timezone || 'UTC';
+  const LATE_THRESHOLD_MINUTES = 7;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {orders.map((order) => {
         const table = tables.find((t) => t.id === order.tableId);
+        const ageMinutes = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000),
+        );
+        const isLate = ageMinutes >= LATE_THRESHOLD_MINUTES;
         const activeItems = order.items.filter((item) =>
           [OrderStatus.NEW, OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status),
         );
@@ -90,9 +100,18 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                     <h3 className="font-bold text-lg">
                       {t('kitchen.table')} {table?.name}
                     </h3>
-                    <p className="text-xs text-text-secondary">
-                      {new Date(order.createdAt).toLocaleTimeString()}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <span>{formatDateTime(order.createdAt, timezone, { timeStyle: 'short' })}</span>
+                      <span>•</span>
+                      <span>
+                        {ageMinutes} {t('kitchen.minutesShort')}
+                      </span>
+                      {isLate && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                          {t('kitchen.late')}
+                        </span>
+                      )}
+                    </div>
                     {order.waiterName && (
                       <p className="text-xs text-text-secondary">
                         {t('kitchen.orderBy')}: {order.waiterName}

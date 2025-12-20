@@ -26,7 +26,12 @@
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",
     "closeTable": "Masayı Kapat",
-    "cancelItem": "Ürünü İptal Et"
+    "cancelItem": "Ürünü İptal Et",
+    "addPayment": "Ödeme Ekle",
+    "applyDiscount": "İndirimi Uygula",
+    "removeDiscount": "İndirimi Kaldır",
+    "makeComplimentary": "İkram",
+    "removeComplimentary": "İkramı Kaldır"
   },
   "auth": {
     "signIn": "Giriş Yap",
@@ -73,7 +78,30 @@
     "occupyTable": "Doldur",
     "freeUpTable": "Boşalt",
     "customerName": "Müşteri Adı",
-    "tableNote": "Masa Notu"
+    "tableNote": "Masa Notu",
+    "payment": "Ödeme",
+    "paid": "Ödendi",
+    "remaining": "Kalan",
+    "paymentMethod": "Ödeme yöntemi",
+    "paymentAmount": "Tutar",
+    "discount": "İndirim",
+    "discountType": "İndirim türü",
+    "discountValue": "İndirim değeri",
+    "discountTypes": {
+      "percent": "Yüzde",
+      "amount": "Tutar"
+    },
+    "complimentary": "İkram",
+    "paymentMethods": {
+      "cash": "Nakit",
+      "card": "Kart",
+      "mealCard": "Yemek Kartı"
+    },
+    "splitBill": "Hesabı Böl",
+    "splitPeopleCount": "Kişi",
+    "perPerson": "Kişi başı",
+    "fillRemaining": "Kalanı Doldur",
+    "fillPerPerson": "Kişi Başı Doldur"
   },
   "kitchen": {
     "title": "Mutfak Ekranı",
@@ -84,7 +112,9 @@
     "noActiveOrders": "Aktif sipariş bulunmamaktadır.",
     "orderDetails": "Sipariş Detayları",
     "orderBy": "Siparişi Alan",
-    "generalOrderNote": "Genel Sipariş Notu"
+    "generalOrderNote": "Genel Sipariş Notu",
+    "late": "Gecikti",
+    "minutesShort": "dk"
   },
   "admin": {
     "title": "Yönetici Paneli",

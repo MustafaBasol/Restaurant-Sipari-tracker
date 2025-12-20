@@ -26,7 +26,12 @@
   "actions": {
     "markAsServed": "Mark as Served",
     "closeTable": "Close Table",
-    "cancelItem": "Cancel Item"
+    "cancelItem": "Cancel Item",
+    "addPayment": "Add Payment",
+    "applyDiscount": "Apply Discount",
+    "removeDiscount": "Remove Discount",
+    "makeComplimentary": "Complimentary",
+    "removeComplimentary": "Remove Complimentary"
   },
   "auth": {
     "signIn": "Sign In",
@@ -73,7 +78,30 @@
     "occupyTable": "Occupy",
     "freeUpTable": "Free Up",
     "customerName": "Customer Name",
-    "tableNote": "Table Note"
+    "tableNote": "Table Note",
+    "payment": "Payment",
+    "paid": "Paid",
+    "remaining": "Remaining",
+    "paymentMethod": "Payment method",
+    "paymentAmount": "Amount",
+    "discount": "Discount",
+    "discountType": "Discount type",
+    "discountValue": "Discount value",
+    "discountTypes": {
+      "percent": "Percent",
+      "amount": "Amount"
+    },
+    "complimentary": "Complimentary",
+    "paymentMethods": {
+      "cash": "Cash",
+      "card": "Card",
+      "mealCard": "Meal card"
+    },
+    "splitBill": "Split Bill",
+    "splitPeopleCount": "People",
+    "perPerson": "Per person",
+    "fillRemaining": "Fill Remaining",
+    "fillPerPerson": "Fill Per Person"
   },
   "kitchen": {
     "title": "Kitchen Dashboard",
@@ -84,7 +112,9 @@
     "noActiveOrders": "No active orders.",
     "orderDetails": "Order Details",
     "orderBy": "Order by",
-    "generalOrderNote": "General Order Note"
+    "generalOrderNote": "General Order Note",
+    "late": "Late",
+    "minutesShort": "min"
   },
   "admin": {
     "title": "Admin Dashboard",

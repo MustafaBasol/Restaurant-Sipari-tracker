@@ -1,12 +1,27 @@
-import { Tenant, User, SubscriptionStatus, UserRole, TableStatus, OrderStatus } from '../types';
+import {
+  Tenant,
+  User,
+  SubscriptionStatus,
+  UserRole,
+  TableStatus,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  DiscountType,
+  AuditLog,
+  AuditAction,
+  AuditEntityType,
+} from '../types';
 import { Table } from '../../features/tables/types';
 import { MenuCategory, MenuItem } from '../../features/menu/types';
-import { Order, OrderItem } from '../../features/orders/types';
+import { Order, OrderItem, PaymentLine } from '../../features/orders/types';
 import { SummaryReport, TopItem } from '../../features/reports/types';
 
 const cloneOrder = (order: Order): Order => ({
   ...order,
   items: order.items.map((i) => ({ ...i })),
+  discount: order.discount ? { ...order.discount } : undefined,
+  payments: order.payments ? order.payments.map((p) => ({ ...p })) : undefined,
 });
 
 const cloneTable = (table: Table): Table => ({ ...table });
@@ -20,6 +35,7 @@ interface MockDB {
   menuCategories: MenuCategory[];
   menuItems: MenuItem[];
   orders: Order[];
+  auditLogs: AuditLog[];
 }
 
 const trialEndDate = new Date();
@@ -164,6 +180,7 @@ const seedData: MockDB = {
     },
   ],
   orders: [],
+  auditLogs: [],
 };
 
 let db: MockDB;
@@ -179,6 +196,18 @@ const initializeDB = () => {
         createdAt: new Date(o.createdAt),
         updatedAt: new Date(o.updatedAt),
         orderClosedAt: o.orderClosedAt ? new Date(o.orderClosedAt) : undefined,
+        discount: o.discount
+          ? {
+              ...o.discount,
+              updatedAt: o.discount.updatedAt ? new Date(o.discount.updatedAt) : new Date(),
+            }
+          : undefined,
+        payments: Array.isArray(o.payments)
+          ? o.payments.map((p: any) => ({
+              ...p,
+              createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+            }))
+          : undefined,
       }));
       parsed.tenants = parsed.tenants.map((t: any) => ({
         ...t,
@@ -186,6 +215,13 @@ const initializeDB = () => {
         trialStartAt: t.trialStartAt ? new Date(t.trialStartAt) : undefined,
         trialEndAt: t.trialEndAt ? new Date(t.trialEndAt) : undefined,
       }));
+
+      parsed.auditLogs = Array.isArray(parsed.auditLogs)
+        ? parsed.auditLogs.map((l: any) => ({
+            ...l,
+            createdAt: l.createdAt ? new Date(l.createdAt) : new Date(),
+          }))
+        : [];
       db = parsed;
     } catch (e) {
       console.error('Failed to parse DB, seeding new data.', e);
@@ -203,6 +239,163 @@ const saveDb = () => {
 initializeDB();
 
 const simulateDelay = (ms = 200) => new Promise((res) => setTimeout(res, ms));
+
+type Actor = { userId: string; role: UserRole };
+
+const writeAuditLog = (
+  tenantId: string,
+  actor: Actor,
+  action: AuditAction,
+  entityType: AuditEntityType,
+  entityId: string,
+  metadata?: Record<string, unknown>,
+) => {
+  const entry: AuditLog = {
+    id: `audit_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    tenantId,
+    actorUserId: actor.userId,
+    actorRole: actor.role,
+    action,
+    entityType,
+    entityId,
+    createdAt: new Date(),
+    metadata,
+  };
+  db.auditLogs.push(entry);
+};
+
+const calcOrderTotal = (order: Order): number => {
+  const subtotal = order.items
+    .filter((i) => i.status !== OrderStatus.CANCELED)
+    .reduce((sum, item) => {
+      if (item.isComplimentary) return sum;
+      const menuItem = db.menuItems.find((mi) => mi.id === item.menuItemId);
+      return sum + (menuItem ? menuItem.price * item.quantity : 0);
+    }, 0);
+
+  const discount = order.discount;
+  if (!discount) return subtotal;
+
+  if (!Number.isFinite(discount.value) || discount.value <= 0) return subtotal;
+
+  let discountAmount = 0;
+  if (discount.type === DiscountType.PERCENT) {
+    const pct = Math.max(0, Math.min(100, discount.value));
+    discountAmount = (subtotal * pct) / 100;
+  } else {
+    discountAmount = Math.max(0, discount.value);
+  }
+
+  const total = subtotal - Math.min(subtotal, discountAmount);
+  return total > 0 ? total : 0;
+};
+
+export const internalSetOrderDiscount = async (
+  orderId: string,
+  discountType: DiscountType,
+  value: number,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to update discount');
+  }
+
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || Number.isNaN(numericValue)) {
+    throw new Error('Invalid discount value');
+  }
+
+  if (numericValue <= 0) {
+    order.discount = undefined;
+  } else {
+    if (discountType === DiscountType.PERCENT && (numericValue < 0 || numericValue > 100)) {
+      throw new Error('Invalid discount percent');
+    }
+    order.discount = {
+      type: discountType,
+      value: numericValue,
+      updatedAt: new Date(),
+      updatedByUserId: actor.userId,
+    };
+  }
+
+  order.updatedAt = new Date();
+  updatePaymentStatus(order);
+
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.ORDER_DISCOUNT_UPDATED,
+    AuditEntityType.ORDER,
+    orderId,
+    { discountType, value: numericValue, removed: numericValue <= 0 },
+  );
+
+  saveDb();
+  return cloneOrder(order);
+};
+
+export const internalSetOrderItemComplimentary = async (
+  orderId: string,
+  itemId: string,
+  isComplimentary: boolean,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to update item');
+  }
+
+  const item = order.items.find((i) => i.id === itemId);
+  if (!item) return cloneOrder(order);
+  if (item.status === OrderStatus.CANCELED) return cloneOrder(order);
+
+  item.isComplimentary = Boolean(isComplimentary);
+  order.updatedAt = new Date();
+  updatePaymentStatus(order);
+
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.ORDER_ITEM_COMPLIMENTARY_UPDATED,
+    AuditEntityType.ORDER_ITEM,
+    itemId,
+    { orderId, isComplimentary: item.isComplimentary },
+  );
+
+  saveDb();
+  return cloneOrder(order);
+};
+
+const calcPaidTotal = (order: Order): number => {
+  return (order.payments ?? []).reduce((sum, p) => sum + p.amount, 0);
+};
+
+const updatePaymentStatus = (order: Order) => {
+  const total = calcOrderTotal(order);
+  const paid = calcPaidTotal(order);
+
+  if (total <= 0) {
+    order.paymentStatus = PaymentStatus.PAID;
+    return;
+  }
+
+  const remaining = total - paid;
+  if (remaining <= 0.00001) {
+    order.paymentStatus = PaymentStatus.PAID;
+  } else if (paid > 0) {
+    order.paymentStatus = PaymentStatus.PARTIALLY_PAID;
+  } else {
+    order.paymentStatus = PaymentStatus.UNPAID;
+  }
+};
 
 // --- "BACKEND" ONLY FUNCTIONS ---
 // In a real app, these would be private functions on your server.
@@ -360,6 +553,8 @@ export const internalCreateOrder = async (
         orderId,
         status: OrderStatus.NEW,
       })),
+      payments: [],
+      paymentStatus: PaymentStatus.UNPAID,
       createdAt: new Date(),
       updatedAt: new Date(),
       waiterId: waiter?.id,
@@ -368,6 +563,17 @@ export const internalCreateOrder = async (
     };
     db.orders.push(newOrder);
     order = newOrder;
+
+    if (waiter) {
+      writeAuditLog(
+        tenantId,
+        { userId: waiter.id, role: waiter.role },
+        AuditAction.ORDER_CREATED,
+        AuditEntityType.ORDER,
+        orderId,
+        { tableId, itemsCount: items.length },
+      );
+    }
   }
   const table = db.tables.find((t) => t.id === tableId);
   if (table && table.status === TableStatus.FREE) {
@@ -381,6 +587,7 @@ export const internalUpdateOrderItemStatus = async (
   orderId: string,
   itemId: string,
   status: OrderStatus,
+  actor?: Actor,
 ): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
@@ -396,6 +603,19 @@ export const internalUpdateOrderItemStatus = async (
       }
       if (order.items.every((i) => i.status === OrderStatus.SERVED)) {
         order.status = OrderStatus.SERVED;
+      }
+
+      updatePaymentStatus(order);
+
+      if (actor) {
+        writeAuditLog(
+          order.tenantId,
+          actor,
+          AuditAction.ORDER_ITEM_STATUS_UPDATED,
+          AuditEntityType.ORDER_ITEM,
+          itemId,
+          { orderId, newStatus: status },
+        );
       }
       saveDb();
     }
@@ -423,6 +643,7 @@ export const internalMarkOrderAsReady = async (orderId: string): Promise<Order |
 export const internalServeOrderItem = async (
   orderId: string,
   itemId: string,
+  actor?: Actor,
 ): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
@@ -439,6 +660,19 @@ export const internalServeOrderItem = async (
       ) {
         order.status = OrderStatus.SERVED;
       }
+
+      updatePaymentStatus(order);
+
+      if (actor) {
+        writeAuditLog(
+          order.tenantId,
+          actor,
+          AuditAction.ORDER_ITEM_STATUS_UPDATED,
+          AuditEntityType.ORDER_ITEM,
+          itemId,
+          { orderId, newStatus: OrderStatus.SERVED },
+        );
+      }
       saveDb();
     }
     return cloneOrder(order);
@@ -446,11 +680,58 @@ export const internalServeOrderItem = async (
   return undefined;
 };
 
-export const internalCloseOrder = async (orderId: string): Promise<Order | undefined> => {
+export const internalAddOrderPayment = async (
+  orderId: string,
+  method: PaymentMethod,
+  amount: number,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to add payment');
+  }
+
+  if (amount <= 0 || Number.isNaN(amount) || !Number.isFinite(amount)) {
+    throw new Error('Invalid amount');
+  }
+
+  const payment: PaymentLine = {
+    id: `pay_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    orderId,
+    method,
+    amount,
+    createdAt: new Date(),
+    createdByUserId: actor.userId,
+  };
+
+  if (!order.payments) order.payments = [];
+  order.payments.push(payment);
+  order.updatedAt = new Date();
+  updatePaymentStatus(order);
+
+  writeAuditLog(order.tenantId, actor, AuditAction.PAYMENT_ADDED, AuditEntityType.PAYMENT, payment.id, {
+    orderId,
+    method,
+    amount,
+  });
+
+  saveDb();
+  return cloneOrder(order);
+};
+
+export const internalCloseOrder = async (orderId: string, actor: Actor): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
-    if (order.status === OrderStatus.SERVED) {
+    if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+      throw new Error('Not authorized to close order');
+    }
+
+    updatePaymentStatus(order);
+    if (order.status === OrderStatus.SERVED && order.paymentStatus === PaymentStatus.PAID) {
       order.status = OrderStatus.CLOSED;
       order.orderClosedAt = new Date();
       order.updatedAt = new Date();
@@ -459,6 +740,15 @@ export const internalCloseOrder = async (orderId: string): Promise<Order | undef
       if (table) {
         table.status = TableStatus.FREE;
       }
+
+      writeAuditLog(
+        order.tenantId,
+        actor,
+        AuditAction.ORDER_CLOSED,
+        AuditEntityType.ORDER,
+        orderId,
+        { tableId: order.tableId },
+      );
       saveDb();
     }
     return cloneOrder(order);
@@ -483,12 +773,25 @@ export const internalUpdateTableStatus = async (
 export const internalUpdateOrderNote = async (
   orderId: string,
   note: string,
+  actor?: Actor,
 ): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
     order.note = note;
     order.updatedAt = new Date();
+
+    if (actor) {
+      writeAuditLog(
+        order.tenantId,
+        actor,
+        AuditAction.ORDER_NOTE_UPDATED,
+        AuditEntityType.ORDER,
+        orderId,
+        { hasNote: Boolean(note && note.trim().length > 0) },
+      );
+    }
+
     saveDb();
     return cloneOrder(order);
   }
