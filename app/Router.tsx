@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useMemo, useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useLanguage } from '../shared/hooks/useLanguage';
 import { UserRole } from '../shared/types';
@@ -22,15 +22,19 @@ const LoadingSpinner: React.FC = () => (
     </div>
 );
 
+const normalizeHash = (value: string | null | undefined) => value && value.trim().length > 0 ? value : '#/';
+
 const AppRoutes: React.FC = () => {
     const { authState, isLoading } = useAuth();
     const { lang, setLang } = useLanguage();
     
-    const [hash, setHash] = useState(window.location.hash || '#/');
+    const [hash, setHash] = useState(() => normalizeHash(window.location.hash));
+    const currentHash = hash || '#/';
+    const [redirectTo, setRedirectTo] = useState<string | null>(null);
     
     useEffect(() => {
         const handleHashChange = () => {
-            setHash(window.location.hash || '#/');
+            setHash(normalizeHash(window.location.hash));
         };
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
@@ -42,61 +46,94 @@ const AppRoutes: React.FC = () => {
         }
     }, [authState, lang, setLang]);
 
+    const canAccessLegalPage = useMemo(() => {
+        return currentHash === '#/privacy' || currentHash === '#/terms';
+    }, [currentHash]);
+
+    // Decide whether we should redirect. IMPORTANT: do not mutate location during render.
+    useEffect(() => {
+        if (isLoading) {
+            setRedirectTo(null);
+            return;
+        }
+
+        let next: string | null = null;
+
+        if (authState) {
+            const subscriptionIsActive = authState.user.role === UserRole.SUPER_ADMIN
+                || (authState.tenant ? isSubscriptionActive(authState.tenant) : false);
+
+            if (subscriptionIsActive) {
+                // Logged-in + active: allow legal pages; otherwise force /app
+                if (!canAccessLegalPage && !currentHash.startsWith('#/app')) {
+                    next = '#/app';
+                }
+            } else {
+                // Logged-in + inactive: allow only legal + subscription-ended + checkout
+                const allowed = canAccessLegalPage
+                    || currentHash === '#/subscription-ended'
+                    || currentHash === '#/checkout';
+
+                if (!allowed) {
+                    next = '#/subscription-ended';
+                }
+            }
+        } else {
+            // Logged-out: allow marketing + legal + auth routes. Any app-only route goes home.
+            const allowed = canAccessLegalPage
+                || currentHash === '#/'
+                || currentHash === '#/login'
+                || currentHash === '#/register';
+
+            if (!allowed) {
+                next = '#/';
+            }
+        }
+
+        setRedirectTo(next);
+    }, [authState, canAccessLegalPage, currentHash, isLoading]);
+
+    useEffect(() => {
+        if (redirectTo && redirectTo !== currentHash) {
+            window.location.hash = redirectTo;
+        }
+    }, [currentHash, redirectTo]);
+
     if (isLoading) {
+        return <LoadingSpinner />;
+    }
+
+    if (redirectTo && redirectTo !== currentHash) {
         return <LoadingSpinner />;
     }
 
     // --- Rerouted logic for robustness ---
 
     if (authState) {
-        // --- LOGGED-IN USER ---
-        const subscriptionIsActive = authState.user.role === UserRole.SUPER_ADMIN || (authState.tenant && isSubscriptionActive(authState.tenant));
+        const subscriptionIsActive = authState.user.role === UserRole.SUPER_ADMIN
+            || (authState.tenant ? isSubscriptionActive(authState.tenant) : false);
+
+        if (canAccessLegalPage) {
+            return currentHash === '#/privacy' ? <PrivacyPage /> : <TermsPage />;
+        }
 
         if (subscriptionIsActive) {
-            // --- ACTIVE subscription ---
-            // Legal pages are still accessible
-            if (hash === '#/privacy') return <PrivacyPage />;
-            if (hash === '#/terms') return <TermsPage />;
-            
-            // Redirect from marketing/auth/inactive pages to the app dashboard
-            if (['#/', '#/login', '#/register', '#/subscription-ended', '#/checkout'].includes(hash) || !hash.startsWith('#/app')) {
-                window.location.hash = '#/app';
-                return <LoadingSpinner />;
-            }
-            
-            // Render the correct dashboard
             return authState.user.role === UserRole.SUPER_ADMIN ? <SuperAdminDashboard /> : <MainDashboard />;
-            
-        } else {
-            // --- INACTIVE subscription ---
-            // User can ONLY see legal pages, subscription ended page, and checkout page.
-            if (hash === '#/privacy') return <PrivacyPage />;
-            if (hash === '#/terms') return <TermsPage />;
-            if (hash === '#/subscription-ended') return <SubscriptionEndedScreen />;
-            if (hash === '#/checkout') return <CheckoutPage />;
-
-            // For any other page, redirect to subscription-ended
-            window.location.hash = '#/subscription-ended';
-            return <LoadingSpinner />;
         }
 
-    } else {
-        // --- LOGGED-OUT USER ---
-        // Can see marketing and legal pages
-        if (hash === '#/privacy') return <PrivacyPage />;
-        if (hash === '#/terms') return <TermsPage />;
-        if (hash === '#/login') return <LoginScreen />;
-        if (hash === '#/register') return <RegisterScreen />;
-        
-        // For anything else (like a bookmark to /app), show the homepage
-        // This also handles the default case for '/'
-        if (hash.startsWith('#/app') || hash.startsWith('#/subscription-ended') || hash.startsWith('#/checkout')) {
-             window.location.hash = '#/';
-             return <LoadingSpinner/>
-        }
-       
-        return <HomePage />;
+        // Inactive subscription
+        if (currentHash === '#/subscription-ended') return <SubscriptionEndedScreen />;
+        if (currentHash === '#/checkout') return <CheckoutPage />;
+        return <LoadingSpinner />;
     }
+
+    // Logged-out
+    if (canAccessLegalPage) {
+        return currentHash === '#/privacy' ? <PrivacyPage /> : <TermsPage />;
+    }
+    if (currentHash === '#/login') return <LoginScreen />;
+    if (currentHash === '#/register') return <RegisterScreen />;
+    return <HomePage />;
 };
 
 

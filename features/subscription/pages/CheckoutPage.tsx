@@ -8,8 +8,8 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import CheckoutForm from '../components/CheckoutForm';
 import { Card } from '../../../shared/components/ui/Card';
 
-// IMPORTANT: Replace with your actual Stripe publishable key.
-const stripePromise = loadStripe('YOUR_STRIPE_PUBLISHABLE_KEY_HERE');
+const stripePublishableKey = (import.meta as any).env?.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 type CheckoutStatus = 'idle' | 'processing' | 'verifying' | 'activating' | 'error';
 
@@ -21,6 +21,12 @@ const CheckoutPage: React.FC = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
+        if (!stripePublishableKey) {
+            setStatus('error');
+            setMessage('Stripe yapılandırması eksik: VITE_STRIPE_PUBLISHABLE_KEY tanımlı değil.');
+            return;
+        }
+
         const fetchPaymentIntent = async () => {
             try {
                 const { clientSecret } = await api.createPaymentIntent();
@@ -100,8 +106,21 @@ const CheckoutPage: React.FC = () => {
                 </div>
                 <Card className="relative">
                     {status !== 'idle' && status !== 'error' && renderStatusOverlay()}
+
+                    {status === 'error' && (
+                        <div className="p-4">
+                            <h3 className="text-lg font-semibold text-text-primary">{t('general.error', 'Hata')}</h3>
+                            <p className="mt-2 text-text-secondary">{message || t('general.tryAgain', 'Lütfen tekrar deneyin.')}</p>
+                            {!stripePublishableKey && (
+                                <div className="mt-4 text-sm text-text-secondary">
+                                    <p className="font-medium text-text-primary">Gerekli ortam değişkeni:</p>
+                                    <p className="mt-1">VITE_STRIPE_PUBLISHABLE_KEY</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     
-                    {clientSecret ? (
+                    {status !== 'error' && clientSecret && stripePromise ? (
                         <Elements options={options} stripe={stripePromise}>
                             <CheckoutForm clientSecret={clientSecret} onSuccess={handleSuccess} />
                         </Elements>
