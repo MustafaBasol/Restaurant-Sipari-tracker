@@ -151,7 +151,19 @@
       "categoryName": "Nom de la Catégorie",
       "addItem": "Ajouter un Plat",
       "editItem": "Modifier le Plat",
-      "itemName": "Nom du Plat"
+      "itemName": "Nom du Plat",
+      "saveItem": "Enregistrer",
+      "cancelEdit": "Annuler",
+      "variants": "Variantes",
+      "addVariant": "Ajouter une variante",
+      "variantName": "Nom de la variante",
+      "variantPrice": "Prix de la variante",
+      "modifiers": "Suppléments",
+      "addModifier": "Ajouter un groupe",
+      "modifierName": "Nom du groupe",
+      "addOption": "Ajouter une option",
+      "optionName": "Nom de l'option",
+      "optionPriceDelta": "Différence de prix"
     },
     "users": {
       "add": "Ajouter un Utilisateur",

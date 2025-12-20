@@ -275,6 +275,19 @@
         "primary": "7 günlük denemeyi başlatın",
         "secondary": "Nasıl çalıştığını görün"
       },
+      "editItem": "Düzenle",
+      "saveItem": "Kaydet",
+      "cancelEdit": "İptal",
+      "variants": "Varyantlar",
+      "addVariant": "Varyant Ekle",
+      "variantName": "Varyant adı",
+      "variantPrice": "Varyant fiyatı",
+      "modifiers": "Ekstralar",
+      "addModifier": "Ekstra Grubu Ekle",
+      "modifierName": "Ekstra grubu adı",
+      "addOption": "Seçenek Ekle",
+      "optionName": "Seçenek adı",
+      "optionPriceDelta": "Fiyat farkı",
       "seeDemo": "Nasıl çalıştığını görün"
     },
     "benefits": {

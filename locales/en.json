@@ -275,6 +275,19 @@
         "primary": "Start 7-day free trial",
         "secondary": "See how it works"
       },
+      "editItem": "Edit",
+      "saveItem": "Save",
+      "cancelEdit": "Cancel",
+      "variants": "Variants",
+      "addVariant": "Add Variant",
+      "variantName": "Variant name",
+      "variantPrice": "Variant price",
+      "modifiers": "Modifiers",
+      "addModifier": "Add Modifier",
+      "modifierName": "Modifier name",
+      "addOption": "Add Option",
+      "optionName": "Option name",
+      "optionPriceDelta": "Price delta",
       "seeDemo": "See how it works"
     },
     "benefits": {
