@@ -115,3 +115,4 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ## Geliştirme / İyileştirme Takibi
 
 - Teknik borç ve ilerleme: `docs/IMPROVEMENTS.md`
+- Ürün / ihtiyaç analizi (restoran sahibi gözüyle): `docs/RESTAURANT_OWNER_REVIEW.md`
