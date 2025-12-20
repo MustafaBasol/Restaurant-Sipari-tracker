@@ -1,3 +1,5 @@
+import { PaymentMethod } from '../../shared/types';
+
 export interface TopItem {
   name: string;
   quantity: number;
@@ -12,6 +14,21 @@ export interface WaiterStat {
   averageTicket: number;
 }
 
+export interface PaymentMethodTotal {
+  method: PaymentMethod;
+  amount: number;
+}
+
+export interface EndOfDaySummary {
+  grossSales: number;
+  discountTotal: number;
+  complimentaryTotal: number;
+  netSales: number;
+  paymentsByMethod: PaymentMethodTotal[];
+  canceledItemsCount: number;
+  canceledItemsAmount: number;
+}
+
 export interface SummaryReport {
   startDate: string;
   endDate: string;
@@ -20,4 +37,5 @@ export interface SummaryReport {
   averageTicket: number;
   topItems: TopItem[];
   waiterStats: WaiterStat[];
+  endOfDay: EndOfDaySummary;
 }

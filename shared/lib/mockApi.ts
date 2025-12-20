@@ -16,7 +16,13 @@ import {
 import { Table } from '../../features/tables/types';
 import { MenuCategory, MenuItem } from '../../features/menu/types';
 import { Order, OrderItem, PaymentLine } from '../../features/orders/types';
-import { SummaryReport, TopItem, WaiterStat } from '../../features/reports/types';
+import {
+  EndOfDaySummary,
+  PaymentMethodTotal,
+  SummaryReport,
+  TopItem,
+  WaiterStat,
+} from '../../features/reports/types';
 
 const cloneOrder = (order: Order): Order => ({
   ...order,
@@ -1094,6 +1100,17 @@ export const internalGetSummaryReport = async (
   });
 
   let totalRevenue = 0;
+  let grossSales = 0;
+  let discountTotal = 0;
+  let complimentaryTotal = 0;
+  let canceledItemsCount = 0;
+  let canceledItemsAmount = 0;
+
+  const paymentAggregation: Record<PaymentMethod, number> = {
+    [PaymentMethod.CASH]: 0,
+    [PaymentMethod.CARD]: 0,
+    [PaymentMethod.MEAL_CARD]: 0,
+  };
   const itemAggregation: Record<string, { quantity: number; revenue: number }> = {};
   const waiterAggregation: Record<
     string,
@@ -1101,7 +1118,30 @@ export const internalGetSummaryReport = async (
   > = {};
 
   for (const order of closedOrders) {
-    totalRevenue += calcOrderTotal(order);
+    const orderNet = calcOrderTotal(order);
+
+    const orderSubtotal = order.items
+      .filter((i) => i.status !== OrderStatus.CANCELED)
+      .reduce((sum, item) => {
+        if (item.isComplimentary) return sum;
+        const unitPrice = calcOrderItemUnitPrice(item);
+        return sum + unitPrice * item.quantity;
+      }, 0);
+
+    const orderComplimentary = order.items
+      .filter((i) => i.status !== OrderStatus.CANCELED)
+      .reduce((sum, item) => {
+        if (!item.isComplimentary) return sum;
+        const unitPrice = calcOrderItemUnitPrice(item);
+        return sum + unitPrice * item.quantity;
+      }, 0);
+
+    const orderDiscount = Math.max(0, orderSubtotal - orderNet);
+
+    grossSales += orderSubtotal;
+    discountTotal += orderDiscount;
+    complimentaryTotal += orderComplimentary;
+    totalRevenue += orderNet;
 
     const waiterId = order.waiterId || 'unknown';
     const waiterName =
@@ -1110,7 +1150,26 @@ export const internalGetSummaryReport = async (
       waiterAggregation[waiterId] = { waiterName, totalOrders: 0, totalRevenue: 0 };
     }
     waiterAggregation[waiterId].totalOrders += 1;
-    waiterAggregation[waiterId].totalRevenue += calcOrderTotal(order);
+    waiterAggregation[waiterId].totalRevenue += orderNet;
+
+    for (const item of order.items) {
+      if (item.status !== OrderStatus.CANCELED) continue;
+      canceledItemsCount += item.quantity;
+      canceledItemsAmount += calcOrderItemUnitPrice(item) * item.quantity;
+    }
+
+    if (Array.isArray(order.payments)) {
+      for (const p of order.payments) {
+        if (!p?.method) continue;
+        const amount = Number(p.amount);
+        if (!Number.isFinite(amount) || amount <= 0) continue;
+
+        if ((paymentAggregation as any)[p.method] === undefined) {
+          (paymentAggregation as any)[p.method] = 0;
+        }
+        (paymentAggregation as any)[p.method] += amount;
+      }
+    }
 
     for (const item of order.items) {
       if (item.status === OrderStatus.CANCELED) continue;
@@ -1144,6 +1203,20 @@ export const internalGetSummaryReport = async (
   const totalOrders = closedOrders.length;
   const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
+  const paymentsByMethod: PaymentMethodTotal[] = Object.entries(paymentAggregation)
+    .map(([method, amount]) => ({ method: method as PaymentMethod, amount }))
+    .filter((x) => x.amount > 0);
+
+  const endOfDay: EndOfDaySummary = {
+    grossSales,
+    discountTotal,
+    complimentaryTotal,
+    netSales: totalRevenue,
+    paymentsByMethod,
+    canceledItemsCount,
+    canceledItemsAmount,
+  };
+
   const waiterStats: WaiterStat[] = Object.entries(waiterAggregation)
     .map(([waiterId, s]) => {
       const avg = s.totalOrders > 0 ? s.totalRevenue / s.totalOrders : 0;
@@ -1165,6 +1238,7 @@ export const internalGetSummaryReport = async (
     averageTicket,
     topItems,
     waiterStats,
+    endOfDay,
   };
 };
 

@@ -13,6 +13,7 @@ import {
 } from '../../../shared/components/ui/Table';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
+import { PaymentMethod } from '../../../shared/types';
 
 const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
   <Card className="text-center">
@@ -93,6 +94,21 @@ const DailySummary: React.FC = () => {
   const { authState } = useAuth();
   const currency = authState?.tenant?.currency || 'USD';
   const timezone = authState?.tenant?.timezone || 'UTC';
+
+  const isSingleDay = startDate === endDate;
+
+  const getPaymentMethodLabel = (method: PaymentMethod): string => {
+    switch (method) {
+      case PaymentMethod.CASH:
+        return t('waiter.paymentMethods.cash');
+      case PaymentMethod.CARD:
+        return t('waiter.paymentMethods.card');
+      case PaymentMethod.MEAL_CARD:
+        return t('waiter.paymentMethods.mealCard');
+      default:
+        return String(method);
+    }
+  };
 
   const formattedStartDate = formatDateTime(startDate + 'T00:00:00', timezone, {
     year: 'numeric',
@@ -213,6 +229,58 @@ const DailySummary: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+            </Card>
+          )}
+
+          {isSingleDay && data.endOfDay && (
+            <Card>
+              <h3 className="text-lg font-semibold mb-4">{t('reports.endOfDayTitle')}</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                <StatCard
+                  title={t('reports.grossSales')}
+                  value={formatCurrency(data.endOfDay.grossSales, currency)}
+                />
+                <StatCard
+                  title={t('reports.discountTotal')}
+                  value={formatCurrency(data.endOfDay.discountTotal, currency)}
+                />
+                <StatCard
+                  title={t('reports.complimentaryTotal')}
+                  value={formatCurrency(data.endOfDay.complimentaryTotal, currency)}
+                />
+                <StatCard
+                  title={t('reports.netSales')}
+                  value={formatCurrency(data.endOfDay.netSales, currency)}
+                />
+              </div>
+
+              {data.endOfDay.paymentsByMethod.length > 0 && (
+                <>
+                  <h4 className="text-sm font-semibold text-text-secondary mb-2">
+                    {t('reports.paymentsByMethod')}
+                  </h4>
+                  <Table>
+                    <TableHeader>
+                      <TableHeaderCell>{t('reports.headers.method')}</TableHeaderCell>
+                      <TableHeaderCell align="right">{t('reports.headers.amount')}</TableHeaderCell>
+                    </TableHeader>
+                    <TableBody>
+                      {data.endOfDay.paymentsByMethod.map((p) => (
+                        <TableRow key={p.method}>
+                          <TableCell>{getPaymentMethodLabel(p.method)}</TableCell>
+                          <TableCell align="right">{formatCurrency(p.amount, currency)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+
+              <div className="mt-4 text-sm text-text-secondary">
+                {t('reports.canceledItems')}: {data.endOfDay.canceledItemsCount} (
+                {formatCurrency(data.endOfDay.canceledItemsAmount, currency)})
+              </div>
             </Card>
           )}
         </>
