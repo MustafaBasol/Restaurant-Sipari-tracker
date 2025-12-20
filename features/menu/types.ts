@@ -1,3 +1,5 @@
+import { KitchenStation } from '../../shared/types';
+
 export interface MenuCategory {
   id: string;
   tenantId: string;
@@ -12,4 +14,5 @@ export interface MenuItem {
   description: string;
   price: number;
   isAvailable: boolean;
+  station?: KitchenStation;
 }

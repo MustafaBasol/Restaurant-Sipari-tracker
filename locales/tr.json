@@ -21,7 +21,8 @@
     "category": "Kategori",
     "availability": "Müsaitlik",
     "available": "Müsait",
-    "unavailable": "Müsait Değil"
+    "unavailable": "Müsait Değil",
+    "station": "İstasyon"
   },
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",
@@ -114,7 +115,15 @@
     "orderBy": "Siparişi Alan",
     "generalOrderNote": "Genel Sipariş Notu",
     "late": "Gecikti",
-    "minutesShort": "dk"
+    "minutesShort": "dk",
+    "station": "İstasyon",
+    "stations": {
+      "all": "Tümü",
+      "bar": "Bar",
+      "hot": "Sıcak",
+      "cold": "Soğuk",
+      "dessert": "Tatlı"
+    }
   },
   "admin": {
     "title": "Yönetici Paneli",

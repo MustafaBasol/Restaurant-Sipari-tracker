@@ -11,7 +11,7 @@ import {
   internalSetOrderItemComplimentary,
 } from '../../shared/lib/mockApi';
 import { Order, OrderItem } from './types';
-import { DiscountType, OrderStatus, PaymentMethod, UserRole } from '../../shared/types';
+import { DiscountType, KitchenStation, OrderStatus, PaymentMethod, UserRole } from '../../shared/types';
 
 type Actor = { userId: string; role: UserRole };
 
@@ -32,7 +32,8 @@ export const updateOrderItemStatus = (
   actor?: Actor,
 ) => internalUpdateOrderItemStatus(orderId, itemId, status, actor);
 
-export const markOrderAsReady = (orderId: string) => internalMarkOrderAsReady(orderId);
+export const markOrderAsReady = (orderId: string, station?: KitchenStation) =>
+  internalMarkOrderAsReady(orderId, station);
 
 export const serveOrderItem = (orderId: string, itemId: string, actor?: Actor) =>
   internalServeOrderItem(orderId, itemId, actor);

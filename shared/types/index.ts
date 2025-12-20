@@ -20,6 +20,13 @@ export enum OrderStatus {
   CLOSED = 'CLOSED',
 }
 
+export enum KitchenStation {
+  BAR = 'BAR',
+  HOT = 'HOT',
+  COLD = 'COLD',
+  DESSERT = 'DESSERT',
+}
+
 export enum SubscriptionStatus {
   TRIAL = 'TRIAL',
   ACTIVE = 'ACTIVE',

@@ -8,6 +8,7 @@ import { Select } from '../../../shared/components/ui/Select';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
+import { KitchenStation } from '../../../shared/types';
 
 const MenuManagement: React.FC = () => {
   const { menuCategories, menuItems, addCategory, addMenuItem, updateMenuItem } = useMenu();
@@ -21,6 +22,7 @@ const MenuManagement: React.FC = () => {
     price: 0,
     categoryId: '',
     isAvailable: true,
+    station: KitchenStation.HOT,
   });
 
   const handleAddCategory = async () => {
@@ -127,6 +129,23 @@ const MenuManagement: React.FC = () => {
               ))}
             </Select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              {t('general.station')}
+            </label>
+            <Select
+              value={newMenuItem.station || KitchenStation.HOT}
+              onChange={(e) =>
+                setNewMenuItem((p) => ({ ...p, station: e.target.value as KitchenStation }))
+              }
+            >
+              <option value={KitchenStation.BAR}>{t('kitchen.stations.bar')}</option>
+              <option value={KitchenStation.HOT}>{t('kitchen.stations.hot')}</option>
+              <option value={KitchenStation.COLD}>{t('kitchen.stations.cold')}</option>
+              <option value={KitchenStation.DESSERT}>{t('kitchen.stations.dessert')}</option>
+            </Select>
+          </div>
           <Button onClick={handleAddMenuItem} className="w-full py-2">
             {t('admin.menu.addItem')}
           </Button>
@@ -142,6 +161,11 @@ const MenuManagement: React.FC = () => {
                 <p className="text-text-secondary text-xs">
                   {item.description} - {formatCurrency(item.price, currency)}
                 </p>
+                {item.station && (
+                  <p className="text-text-secondary text-xs">
+                    {t('general.station')}: {t(`kitchen.stations.${item.station.toLowerCase()}`)}
+                  </p>
+                )}
               </div>
               <button onClick={() => handleAvailabilityToggle(item)}>
                 <Badge variant={item.isAvailable ? 'green' : 'red'}>

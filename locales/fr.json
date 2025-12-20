@@ -21,7 +21,8 @@
     "category": "Catégorie",
     "availability": "Disponibilité",
     "available": "Disponible",
-    "unavailable": "Indisponible"
+    "unavailable": "Indisponible",
+    "station": "Station"
   },
   "actions": {
     "markAsServed": "Marquer comme Servi",
@@ -114,7 +115,15 @@
     "orderBy": "Commande par",
     "generalOrderNote": "Note Générale de la Commande",
     "late": "En retard",
-    "minutesShort": "min"
+    "minutesShort": "min",
+    "station": "Station",
+    "stations": {
+      "all": "Toutes",
+      "bar": "Bar",
+      "hot": "Chaud",
+      "cold": "Froid",
+      "dessert": "Dessert"
+    }
   },
   "admin": {
     "title": "Panneau d'Administration",

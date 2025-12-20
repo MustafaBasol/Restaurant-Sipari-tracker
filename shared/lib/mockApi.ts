@@ -5,6 +5,7 @@ import {
   UserRole,
   TableStatus,
   OrderStatus,
+  KitchenStation,
   PaymentMethod,
   PaymentStatus,
   DiscountType,
@@ -111,6 +112,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat1',
       name: 'Bruschetta',
+      station: KitchenStation.HOT,
       description: 'Grilled bread with tomatoes, garlic, and basil.',
       price: 8.5,
       isAvailable: true,
@@ -120,6 +122,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat1',
       name: 'Calamari',
+      station: KitchenStation.HOT,
       description: 'Fried squid rings with dipping sauce.',
       price: 12.0,
       isAvailable: true,
@@ -129,6 +132,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat2',
       name: 'Spaghetti Carbonara',
+      station: KitchenStation.HOT,
       description: 'Pasta with eggs, cheese, pancetta, and pepper.',
       price: 16.0,
       isAvailable: true,
@@ -138,6 +142,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat2',
       name: 'Grilled Salmon',
+      station: KitchenStation.HOT,
       description: 'Served with asparagus and lemon.',
       price: 22.5,
       isAvailable: true,
@@ -147,6 +152,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat2',
       name: 'Margherita Pizza',
+      station: KitchenStation.HOT,
       description: 'Classic pizza with tomatoes, mozzarella, and basil.',
       price: 14.0,
       isAvailable: false,
@@ -156,6 +162,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat3',
       name: 'Tiramisu',
+      station: KitchenStation.DESSERT,
       description: 'Coffee-flavoured Italian dessert.',
       price: 9.0,
       isAvailable: true,
@@ -165,6 +172,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat4',
       name: 'Water',
+      station: KitchenStation.BAR,
       description: 'Still or sparkling water.',
       price: 2.0,
       isAvailable: true,
@@ -174,6 +182,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       categoryId: 'cat4',
       name: 'Cola',
+      station: KitchenStation.BAR,
       description: 'Classic soft drink.',
       price: 3.5,
       isAvailable: true,
@@ -182,7 +191,6 @@ const seedData: MockDB = {
   orders: [],
   auditLogs: [],
 };
-
 let db: MockDB;
 
 const initializeDB = () => {
@@ -237,6 +245,16 @@ const saveDb = () => {
 };
 
 initializeDB();
+
+const getMenuItemStation = (menuItemId: string): KitchenStation => {
+  const menuItem = db.menuItems.find((mi) => mi.id === menuItemId);
+  if (menuItem?.station) return menuItem.station;
+
+  // Fallback heuristic (for older data)
+  if (menuItem?.categoryId === 'cat4') return KitchenStation.BAR;
+  if (menuItem?.categoryId === 'cat3') return KitchenStation.DESSERT;
+  return KitchenStation.HOT;
+};
 
 const simulateDelay = (ms = 200) => new Promise((res) => setTimeout(res, ms));
 
@@ -624,16 +642,31 @@ export const internalUpdateOrderItemStatus = async (
   return undefined;
 };
 
-export const internalMarkOrderAsReady = async (orderId: string): Promise<Order | undefined> => {
+export const internalMarkOrderAsReady = async (
+  orderId: string,
+  station?: KitchenStation,
+): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
     order.items.forEach((item) => {
-      if (item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION)
+      const matchesStation = station ? getMenuItemStation(item.menuItemId) === station : true;
+      if (matchesStation && (item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION))
         item.status = OrderStatus.READY;
     });
-    order.status = OrderStatus.READY;
+
+    if (order.items.every((i) => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED)) {
+      order.status = OrderStatus.SERVED;
+    } else if (
+      order.items.every((i) =>
+        [OrderStatus.READY, OrderStatus.SERVED, OrderStatus.CANCELED].includes(i.status),
+      )
+    ) {
+      order.status = OrderStatus.READY;
+    }
+
     order.updatedAt = new Date();
+    updatePaymentStatus(order);
     saveDb();
     return cloneOrder(order);
   }

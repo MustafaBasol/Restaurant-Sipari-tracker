@@ -4,7 +4,7 @@ import { useTables } from '../../tables/hooks/useTables';
 import { useMenu } from '../../menu/hooks/useMenu';
 import { useOrders } from '../hooks/useOrders';
 import { Order, OrderItem } from '../types';
-import { OrderStatus } from '../../../shared/types';
+import { KitchenStation, OrderStatus } from '../../../shared/types';
 import { Card } from '../../../shared/components/ui/Card';
 import { NoteIcon } from '../../../shared/components/icons/Icons';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -13,7 +13,10 @@ import { formatDateTime } from '../../../shared/lib/utils';
 interface OrderListProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
+  stationFilter?: 'ALL' | KitchenStation;
 }
+
+const getStationKey = (station: KitchenStation): string => station.toLowerCase();
 
 const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, orderId }) => {
   const { menuItems } = useMenu();
@@ -62,13 +65,22 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
   );
 };
 
-const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFilter = 'ALL' }) => {
   const { tables } = useTables();
   const { t } = useLanguage();
   const { markOrderAsReady } = useOrders();
   const { authState } = useAuth();
   const timezone = authState?.tenant?.timezone || 'UTC';
   const LATE_THRESHOLD_MINUTES = 7;
+  const { menuItems } = useMenu();
+
+  const getItemStation = (menuItemId: string): KitchenStation => {
+    const menuItem = menuItems.find((mi) => mi.id === menuItemId);
+    if (menuItem?.station) return menuItem.station;
+    if (menuItem?.categoryId === 'cat4') return KitchenStation.BAR;
+    if (menuItem?.categoryId === 'cat3') return KitchenStation.DESSERT;
+    return KitchenStation.HOT;
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -79,12 +91,22 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
           Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000),
         );
         const isLate = ageMinutes >= LATE_THRESHOLD_MINUTES;
-        const activeItems = order.items.filter((item) =>
-          [OrderStatus.NEW, OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status),
-        );
-        const canMarkAllReady = order.items.some(
-          (item) => item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION,
-        );
+        const activeItems = order.items.filter((item) => {
+          const matchesStation =
+            stationFilter === 'ALL' ? true : getItemStation(item.menuItemId) === stationFilter;
+          return (
+            matchesStation &&
+            [OrderStatus.NEW, OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status)
+          );
+        });
+        const canMarkAllReady = order.items.some((item) => {
+          const matchesStation =
+            stationFilter === 'ALL' ? true : getItemStation(item.menuItemId) === stationFilter;
+          return (
+            matchesStation &&
+            (item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION)
+          );
+        });
 
         if (activeItems.length === 0) return null;
 
@@ -122,7 +144,10 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        markOrderAsReady(order.id);
+                        markOrderAsReady(
+                          order.id,
+                          stationFilter === 'ALL' ? undefined : stationFilter,
+                        );
                       }}
                       className="px-3 py-1 bg-accent text-white text-xs font-semibold rounded-full hover:bg-accent-hover transition-colors"
                     >
@@ -130,6 +155,11 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                     </button>
                   )}
                 </div>
+                {stationFilter === 'ALL' && (
+                  <p className="text-xs text-text-secondary mt-1">
+                    {t('general.station')}: {t('kitchen.stations.all')}
+                  </p>
+                )}
                 {order.note && (
                   <div className="flex items-start gap-2 text-sm text-amber-900 bg-amber-100 border border-amber-200 p-2 rounded-md mt-2">
                     <NoteIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -138,9 +168,19 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                 )}
               </div>
               <div className="p-4 space-y-3 flex-1">
-                {activeItems.map((item) => (
-                  <OrderItemCard key={item.id} item={item} orderId={order.id} />
-                ))}
+                {activeItems.map((item) => {
+                  const station = getItemStation(item.menuItemId);
+                  return (
+                    <div key={item.id} className="space-y-1">
+                      {stationFilter === 'ALL' && (
+                        <p className="text-xs text-text-secondary">
+                          {t('kitchen.station')}: {t(`kitchen.stations.${getStationKey(station)}`)}
+                        </p>
+                      )}
+                      <OrderItemCard item={item} orderId={order.id} />
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           </button>

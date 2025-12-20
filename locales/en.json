@@ -21,7 +21,8 @@
     "category": "Category",
     "availability": "Availability",
     "available": "Available",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "station": "Station"
   },
   "actions": {
     "markAsServed": "Mark as Served",
@@ -114,7 +115,15 @@
     "orderBy": "Order by",
     "generalOrderNote": "General Order Note",
     "late": "Late",
-    "minutesShort": "min"
+    "minutesShort": "min",
+    "station": "Station",
+    "stations": {
+      "all": "All",
+      "bar": "Bar",
+      "hot": "Hot",
+      "cold": "Cold",
+      "dessert": "Dessert"
+    }
   },
   "admin": {
     "title": "Admin Dashboard",

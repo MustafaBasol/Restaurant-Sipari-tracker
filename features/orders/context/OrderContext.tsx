@@ -9,7 +9,14 @@ import React, {
 import { useAuth } from '../../auth/hooks/useAuth';
 import * as api from '../api';
 import { Order, OrderItem } from '../types';
-import { DiscountType, OrderStatus, PaymentMethod, TableStatus, UserRole } from '../../../shared/types';
+import {
+  DiscountType,
+  KitchenStation,
+  OrderStatus,
+  PaymentMethod,
+  TableStatus,
+  UserRole,
+} from '../../../shared/types';
 import { useTableContext } from '../../tables/context/TableContext';
 
 interface OrderContextData {
@@ -22,7 +29,7 @@ interface OrderContextData {
     note?: string,
   ) => Promise<void>;
   updateOrderItemStatus: (orderId: string, itemId: string, status: OrderStatus) => Promise<void>;
-  markOrderAsReady: (orderId: string) => Promise<void>;
+  markOrderAsReady: (orderId: string, station?: KitchenStation) => Promise<void>;
   serveOrderItem: (orderId: string, itemId: string) => Promise<void>;
   closeOrder: (orderId: string) => Promise<void>;
   updateOrderNote: (orderId: string, note: string) => Promise<void>;
@@ -107,8 +114,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const updateOrderItemStatus = (orderId: string, itemId: string, status: OrderStatus) =>
     handleOrderMutation(() => api.updateOrderItemStatus(orderId, itemId, status, actor));
 
-  const markOrderAsReady = (orderId: string) =>
-    handleOrderMutation(() => api.markOrderAsReady(orderId));
+  const markOrderAsReady = (orderId: string, station?: KitchenStation) =>
+    handleOrderMutation(() => api.markOrderAsReady(orderId, station));
 
   const serveOrderItem = (orderId: string, itemId: string) =>
     handleOrderMutation(() => api.serveOrderItem(orderId, itemId, actor));
