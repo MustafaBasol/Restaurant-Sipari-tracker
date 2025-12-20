@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { fetchTranslations, resolve, Language } from '../lib/i18n';
+import { fetchTranslations, prefetchTranslations, resolve, Language } from '../lib/i18n';
 
 interface LanguageContextData {
     lang: Language;
@@ -13,10 +13,15 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [lang, setLang] = useState<Language>('en'); 
     const [translations, setTranslations] = useState<Record<string, any>>({});
 
+    const allLanguages: Language[] = ['en', 'tr', 'fr'];
+
     useEffect(() => {
         const load = async () => {
             const newTranslations = await fetchTranslations(lang);
             setTranslations(newTranslations);
+
+            // Warm the cache for quick language switching.
+            prefetchTranslations(allLanguages.filter(l => l !== lang));
         };
         load();
     }, [lang]);

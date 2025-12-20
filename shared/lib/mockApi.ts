@@ -5,6 +5,13 @@ import { MenuCategory, MenuItem } from '../../features/menu/types';
 import { Order, OrderItem } from '../../features/orders/types';
 import { SummaryReport, TopItem } from '../../features/reports/types';
 
+const cloneOrder = (order: Order): Order => ({
+    ...order,
+    items: order.items.map(i => ({ ...i })),
+});
+
+const cloneTable = (table: Table): Table => ({ ...table });
+
 
 // --- MOCK DATABASE ---
 
@@ -228,10 +235,10 @@ export const internalCreateOrder = async (tenantId: string, tableId: string, ite
         table.status = TableStatus.OCCUPIED;
     }
     saveDb();
-    return order;
+    return cloneOrder(order);
 };
 
-export const internalUpdateOrderItemStatus = async (orderId: string, itemId: string, status: OrderStatus): Promise<void> => {
+export const internalUpdateOrderItemStatus = async (orderId: string, itemId: string, status: OrderStatus): Promise<Order | undefined> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
     if (order) {
@@ -247,10 +254,12 @@ export const internalUpdateOrderItemStatus = async (orderId: string, itemId: str
             }
             saveDb();
         }
+        return cloneOrder(order);
     }
+    return undefined;
 };
 
-export const internalMarkOrderAsReady = async (orderId: string): Promise<void> => {
+export const internalMarkOrderAsReady = async (orderId: string): Promise<Order | undefined> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
     if (order) {
@@ -258,10 +267,12 @@ export const internalMarkOrderAsReady = async (orderId: string): Promise<void> =
         order.status = OrderStatus.READY;
         order.updatedAt = new Date();
         saveDb();
+        return cloneOrder(order);
     }
+    return undefined;
 };
 
-export const internalServeOrderItem = async (orderId: string, itemId: string): Promise<void> => {
+export const internalServeOrderItem = async (orderId: string, itemId: string): Promise<Order | undefined> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
     if(order) {
@@ -275,43 +286,53 @@ export const internalServeOrderItem = async (orderId: string, itemId: string): P
             }
             saveDb();
         }
+        return cloneOrder(order);
     }
+    return undefined;
 };
 
-export const internalCloseOrder = async (orderId: string): Promise<void> => {
+export const internalCloseOrder = async (orderId: string): Promise<Order | undefined> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
-    if(order && order.status === OrderStatus.SERVED) {
-        order.status = OrderStatus.CLOSED;
-        order.orderClosedAt = new Date();
-        order.updatedAt = new Date();
-        
-        const table = db.tables.find(t => t.id === order.tableId);
-        if(table) {
-            table.status = TableStatus.FREE;
+    if (order) {
+        if (order.status === OrderStatus.SERVED) {
+            order.status = OrderStatus.CLOSED;
+            order.orderClosedAt = new Date();
+            order.updatedAt = new Date();
+
+            const table = db.tables.find(t => t.id === order.tableId);
+            if (table) {
+                table.status = TableStatus.FREE;
+            }
+            saveDb();
         }
-        saveDb();
+        return cloneOrder(order);
     }
+    return undefined;
 };
 
 
-export const internalUpdateTableStatus = async (tableId: string, status: TableStatus): Promise<void> => {
+export const internalUpdateTableStatus = async (tableId: string, status: TableStatus): Promise<Table | undefined> => {
     await simulateDelay();
     const table = db.tables.find(t => t.id === tableId);
     if (table) {
         table.status = status;
         saveDb();
+        return cloneTable(table);
     }
+    return undefined;
 };
 
-export const internalUpdateOrderNote = async (orderId: string, note: string): Promise<void> => {
+export const internalUpdateOrderNote = async (orderId: string, note: string): Promise<Order | undefined> => {
     await simulateDelay();
     const order = db.orders.find(o => o.id === orderId);
     if (order) {
         order.note = note;
         order.updatedAt = new Date();
         saveDb();
+        return cloneOrder(order);
     }
+    return undefined;
 };
 
 export const internalGetSummaryReport = async (tenantId: string, startDate: string, endDate: string): Promise<SummaryReport> => {

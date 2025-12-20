@@ -9,6 +9,7 @@ interface TableContextData {
     addTable: (name: string) => Promise<void>;
     updateTable: (table: Table) => Promise<void>;
     updateTableStatus: (tableId: string, status: TableStatus) => Promise<void>;
+    setTableStatusInState: (tableId: string, status: TableStatus) => void;
     refetch: () => Promise<void>;
 }
 
@@ -40,17 +41,32 @@ export const TableProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         fetchTables();
     }, [fetchTables]);
 
-    const handleMutation = async (mutationFn: () => Promise<any>) => {
-        await mutationFn();
+    const setTableStatusInState = (tableId: string, status: TableStatus) => {
+        setTables(prev => prev.map(t => (t.id === tableId ? { ...t, status } : t)));
+    };
+
+    const addTable = async (name: string) => {
+        const created = await api.addTable(authState!.tenant!.id, name);
+        setTables(prev => [...prev, created]);
+    };
+
+    const updateTable = async (table: Table) => {
+        const updated = await api.updateTable(table);
+        setTables(prev => prev.map(t => (t.id === updated.id ? updated : t)));
+    };
+
+    const updateTableStatus = async (tableId: string, status: TableStatus) => {
+        const updated = await api.updateTableStatus(tableId, status);
+        if (updated) {
+            setTables(prev => prev.map(t => (t.id === updated.id ? updated : t)));
+            return;
+        }
+        // Fallback (should be rare): sync from source of truth.
         await fetchTables();
     };
 
-    const addTable = (name: string) => handleMutation(() => api.addTable(authState!.tenant!.id, name));
-    const updateTable = (table: Table) => handleMutation(() => api.updateTable(table));
-    const updateTableStatus = (tableId: string, status: TableStatus) => handleMutation(() => api.updateTableStatus(tableId, status));
-
     return (
-        <TableContext.Provider value={{ tables, isLoading, addTable, updateTable, updateTableStatus, refetch: fetchTables }}>
+        <TableContext.Provider value={{ tables, isLoading, addTable, updateTable, updateTableStatus, setTableStatusInState, refetch: fetchTables }}>
             {children}
         </TableContext.Provider>
     );

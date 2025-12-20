@@ -44,8 +44,13 @@ Bu doküman, repodaki eksikleri/yanlışları tespit edip düzeltirken ilerlemey
 
 ## P2 — Performans
 
-- ⏳ Mutasyon sonrası full refetch desenlerini azalt (Order/Table context). En azından gereksiz refetch’leri buda.
-- ⏳ i18n çeviri yüklemeyi cache’le / prefetch et.
+- ✅ Mutasyon sonrası full refetch desenlerini azalt (Order/Table context)
+	- Orders/Tables context’lerinde mutasyon sonrası listeyi komple yeniden çekmek yerine state patch yapılıyor.
+	- Nadiren beklenmeyen durumlarda “source of truth” için refetch fallback var.
+
+- ✅ i18n çeviri yüklemeyi cache’le / prefetch et
+	- Dil JSON fetch’i in-memory cache’lenir.
+	- Uygulama açılışında diğer diller prefetch edilerek dil değiştirme hızlandırılır.
 
 ---
 
