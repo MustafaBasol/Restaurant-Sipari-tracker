@@ -266,11 +266,15 @@
     "totalOrders": "Commandes Totales",
     "averageTicket": "Ticket Moyen",
     "topItems": "Meilleures Ventes",
+    "waiterPerformance": "Performance des serveurs",
     "noData": "Aucune donnée disponible pour cette plage de dates.",
     "headers": {
       "item": "Article",
       "quantity": "Quantité Vendue",
-      "revenue": "Revenu"
+      "revenue": "Revenu",
+      "waiter": "Serveur",
+      "orders": "Commandes",
+      "averageTicket": "Ticket Moyen"
     },
     "presets": {
       "today": "Aujourd'hui",

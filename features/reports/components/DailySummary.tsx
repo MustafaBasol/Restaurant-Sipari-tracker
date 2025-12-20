@@ -185,6 +185,36 @@ const DailySummary: React.FC = () => {
               </TableBody>
             </Table>
           </Card>
+
+          {data.waiterStats.length > 0 && (
+            <Card>
+              <h3 className="text-lg font-semibold mb-4">{t('reports.waiterPerformance')}</h3>
+              <Table>
+                <TableHeader>
+                  <TableHeaderCell>{t('reports.headers.waiter')}</TableHeaderCell>
+                  <TableHeaderCell align="right">{t('reports.headers.orders')}</TableHeaderCell>
+                  <TableHeaderCell align="right">{t('reports.totalRevenue')}</TableHeaderCell>
+                  <TableHeaderCell align="right">
+                    {t('reports.headers.averageTicket')}
+                  </TableHeaderCell>
+                </TableHeader>
+                <TableBody>
+                  {data.waiterStats.map((w) => (
+                    <TableRow key={w.waiterId}>
+                      <TableCell>{w.waiterName}</TableCell>
+                      <TableCell align="right">{w.totalOrders}</TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(w.totalRevenue, currency)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(w.averageTicket, currency)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
         </>
       )}
     </div>

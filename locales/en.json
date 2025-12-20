@@ -254,11 +254,15 @@
     "totalOrders": "Total Orders",
     "averageTicket": "Average Ticket",
     "topItems": "Top Selling Items",
+    "waiterPerformance": "Waiter Performance",
     "noData": "No data available for this date range.",
     "headers": {
       "item": "Item",
       "quantity": "Quantity Sold",
-      "revenue": "Revenue"
+      "revenue": "Revenue",
+      "waiter": "Waiter",
+      "orders": "Orders",
+      "averageTicket": "Average Ticket"
     },
     "presets": {
       "today": "Today",

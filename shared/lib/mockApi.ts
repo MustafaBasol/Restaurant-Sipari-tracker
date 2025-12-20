@@ -16,7 +16,7 @@ import {
 import { Table } from '../../features/tables/types';
 import { MenuCategory, MenuItem } from '../../features/menu/types';
 import { Order, OrderItem, PaymentLine } from '../../features/orders/types';
-import { SummaryReport, TopItem } from '../../features/reports/types';
+import { SummaryReport, TopItem, WaiterStat } from '../../features/reports/types';
 
 const cloneOrder = (order: Order): Order => ({
   ...order,
@@ -1094,32 +1094,48 @@ export const internalGetSummaryReport = async (
   });
 
   let totalRevenue = 0;
-  const itemAggregation: { [key: string]: { quantity: number; revenue: number } } = {};
+  const itemAggregation: Record<string, { quantity: number; revenue: number }> = {};
+  const waiterAggregation: Record<
+    string,
+    { waiterName: string; totalOrders: number; totalRevenue: number }
+  > = {};
 
-  closedOrders.forEach((order) => {
-    order.items.forEach((item) => {
-      if (item.status === OrderStatus.CANCELED) return;
+  for (const order of closedOrders) {
+    totalRevenue += calcOrderTotal(order);
+
+    const waiterId = order.waiterId || 'unknown';
+    const waiterName =
+      order.waiterName || db.users.find((u) => u.id === order.waiterId)?.fullName || 'Unknown';
+    if (!waiterAggregation[waiterId]) {
+      waiterAggregation[waiterId] = { waiterName, totalOrders: 0, totalRevenue: 0 };
+    }
+    waiterAggregation[waiterId].totalOrders += 1;
+    waiterAggregation[waiterId].totalRevenue += calcOrderTotal(order);
+
+    for (const item of order.items) {
+      if (item.status === OrderStatus.CANCELED) continue;
+      if (item.isComplimentary) continue;
+
       const menuItem = db.menuItems.find((mi) => mi.id === item.menuItemId);
-      if (menuItem) {
-        const itemRevenue = item.quantity * menuItem.price;
-        totalRevenue += itemRevenue;
+      const unit = calcOrderItemUnitPrice(item);
+      const itemRevenue = item.quantity * unit;
 
-        if (!itemAggregation[menuItem.id]) {
-          itemAggregation[menuItem.id] = { quantity: 0, revenue: 0 };
-        }
-        itemAggregation[menuItem.id].quantity += item.quantity;
-        itemAggregation[menuItem.id].revenue += itemRevenue;
+      const key = menuItem?.id ?? item.menuItemId;
+      if (!itemAggregation[key]) {
+        itemAggregation[key] = { quantity: 0, revenue: 0 };
       }
-    });
-  });
+      itemAggregation[key].quantity += item.quantity;
+      itemAggregation[key].revenue += itemRevenue;
+    }
+  }
 
   const topItems: TopItem[] = Object.keys(itemAggregation)
     .map((menuItemId) => {
       const menuItem = db.menuItems.find((mi) => mi.id === menuItemId);
       return {
         name: menuItem?.name || 'Unknown Item',
-        quantity: itemAggregation[menuItem.id].quantity,
-        revenue: itemAggregation[menuItem.id].revenue,
+        quantity: itemAggregation[menuItemId].quantity,
+        revenue: itemAggregation[menuItemId].revenue,
       };
     })
     .sort((a, b) => b.revenue - a.revenue)
@@ -1128,6 +1144,19 @@ export const internalGetSummaryReport = async (
   const totalOrders = closedOrders.length;
   const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
+  const waiterStats: WaiterStat[] = Object.entries(waiterAggregation)
+    .map(([waiterId, s]) => {
+      const avg = s.totalOrders > 0 ? s.totalRevenue / s.totalOrders : 0;
+      return {
+        waiterId,
+        waiterName: s.waiterName,
+        totalOrders: s.totalOrders,
+        totalRevenue: s.totalRevenue,
+        averageTicket: avg,
+      };
+    })
+    .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
   return {
     startDate,
     endDate,
@@ -1135,6 +1164,7 @@ export const internalGetSummaryReport = async (
     totalRevenue,
     averageTicket,
     topItems,
+    waiterStats,
   };
 };
 

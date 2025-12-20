@@ -254,11 +254,15 @@
     "totalOrders": "Toplam Sipariş",
     "averageTicket": "Ortalama Fiş",
     "topItems": "En Çok Satan Ürünler",
+    "waiterPerformance": "Garson Performansı",
     "noData": "Bu tarih aralığı için veri bulunamadı.",
     "headers": {
       "item": "Ürün",
       "quantity": "Satılan Adet",
-      "revenue": "Ciro"
+      "revenue": "Ciro",
+      "waiter": "Garson",
+      "orders": "Sipariş",
+      "averageTicket": "Ortalama Fiş"
     },
     "presets": {
       "today": "Bugün",

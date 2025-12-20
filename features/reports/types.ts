@@ -4,6 +4,14 @@ export interface TopItem {
   revenue: number;
 }
 
+export interface WaiterStat {
+  waiterId: string;
+  waiterName: string;
+  totalOrders: number;
+  totalRevenue: number;
+  averageTicket: number;
+}
+
 export interface SummaryReport {
   startDate: string;
   endDate: string;
@@ -11,4 +19,5 @@ export interface SummaryReport {
   totalRevenue: number;
   averageTicket: number;
   topItems: TopItem[];
+  waiterStats: WaiterStat[];
 }
