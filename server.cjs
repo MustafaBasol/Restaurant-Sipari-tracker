@@ -76,5 +76,68 @@ app.post('/stripe-webhook', express.raw({ type: 'application/json' }), (request,
   response.send();
 });
 
+// JSON endpoints (keep AFTER webhook to avoid breaking signature verification).
+app.use(express.json());
+
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const { tenantId, customerEmail, successUrl, cancelUrl } = req.body || {};
+
+    if (!process.env.STRIPE_PRICE_ID_MONTHLY) {
+      return res.status(500).json({ error: 'Missing STRIPE_PRICE_ID_MONTHLY' });
+    }
+    if (!successUrl || !cancelUrl) {
+      return res.status(400).json({ error: 'Missing successUrl/cancelUrl' });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: process.env.STRIPE_PRICE_ID_MONTHLY, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      customer_email: customerEmail,
+      client_reference_id: tenantId,
+      subscription_data: {
+        metadata: {
+          tenantId: tenantId || '',
+        },
+      },
+      metadata: {
+        tenantId: tenantId || '',
+      },
+      allow_promotion_codes: true,
+    });
+
+    // Prefer returning URL for simpler client redirect.
+    return res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('Failed to create checkout session', err);
+    return res.status(500).json({ error: err?.message || 'Unknown error' });
+  }
+});
+
+app.post('/create-portal-session', async (req, res) => {
+  try {
+    const { customerEmail, returnUrl } = req.body || {};
+    if (!customerEmail) return res.status(400).json({ error: 'Missing customerEmail' });
+    if (!returnUrl) return res.status(400).json({ error: 'Missing returnUrl' });
+
+    // Demo-friendly lookup. In a production app, store customerId in your DB.
+    const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+    const customer = customers.data?.[0];
+    if (!customer) return res.status(404).json({ error: 'Customer not found for email' });
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: returnUrl,
+    });
+
+    return res.json({ url: session.url });
+  } catch (err) {
+    console.error('Failed to create portal session', err);
+    return res.status(500).json({ error: err?.message || 'Unknown error' });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

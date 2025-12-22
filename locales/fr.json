@@ -423,29 +423,8 @@
       "all": "Tous"
     },
     "headers": {
-      "sessions": "Sessions",
       "tenant": "Restaurant",
       "adminEmail": "E-mail Admin",
-      "sessions": {
-        "title": "Sessions",
-        "help": "Gérez les sessions actives de votre compte.",
-        "logoutOthers": "Déconnecter les autres appareils",
-        "activeCount": "Sessions actives : {count}",
-        "device": "Appareil",
-        "createdAt": "Créée",
-        "lastSeenAt": "Dernière activité",
-        "status": "Statut",
-        "current": "actuelle",
-        "thisDevice": "Cet appareil",
-        "empty": "Aucune session trouvée.",
-        "loadFailed": "Impossible de charger les sessions.",
-        "actionFailed": "Action échouée.",
-        "statuses": {
-          "active": "Active",
-          "revoked": "Révoquée",
-          "expired": "Expirée"
-        }
-      },
       "users": "Utilisateurs",
       "trialInfo": "Infos Essai"
     },
@@ -635,6 +614,26 @@
       "t8_content": "En aucun cas, Kitchorify, ni ses administrateurs, employés, partenaires, agents, fournisseurs ou sociétés affiliées, ne pourront être tenus responsables de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris, sans limitation, la perte de profits, de données, d'utilisation, de clientèle ou d'autres pertes immatérielles. Votre utilisation du Service est à vos risques et périls. Le Service est fourni 'TEL QUEL' et 'TEL QUE DISPONIBLE' sans aucune garantie d'aucune sorte.",
       "t9_title": "9. Droit applicable",
       "t9_content": "Ces Conditions seront régies et interprétées conformément aux lois de l'Union européenne, sans égard à ses dispositions en matière de conflit de lois. Tout litige découlant de ces Conditions sera résolu par les tribunaux compétents de l'État membre où notre société est enregistrée."
+    },
+    "subscriptionTerms": {
+      "title": "Conditions d’abonnement",
+      "lastUpdated": "Dernière mise à jour : décembre 2025",
+      "disclaimerTitle": "Avis important",
+      "disclaimerContent": "Cette page est un modèle général de conditions d’abonnement fourni à titre informatif uniquement. Ce n’est pas un avis juridique. Veuillez faire valider et adapter ce contenu par votre conseil juridique.",
+      "trialTitle": "Essai gratuit",
+      "trialContent": "Nous proposons un essai gratuit de 7 jours. Aucune carte bancaire n’est requise pour démarrer l’essai. À la fin de l’essai, si vous ne passez pas à un abonnement payant, l’accès à l’application est désactivé jusqu’à l’activation d’un abonnement.",
+      "billingTitle": "Facturation et renouvellement",
+      "billingContent": "Les abonnements payants sont facturés mensuellement à l’avance. En démarrant un abonnement payant, vous autorisez des prélèvements récurrents jusqu’à annulation. L’abonnement se renouvelle automatiquement à la fin de chaque période, sauf annulation.",
+      "cancellationTitle": "Annulation (fin de période)",
+      "cancellationContent": "En cas de demande d’annulation, votre abonnement reste actif jusqu’à la fin de la période de facturation en cours. Vous ne serez pas facturé pour la période suivante une fois l’annulation effective.",
+      "refundsTitle": "Remboursements",
+      "refundsContent": "Sauf obligation légale, les frais du mois en cours ne sont pas remboursables. Si vous pensez avoir été facturé par erreur, contactez le support.",
+      "taxesTitle": "Taxes",
+      "taxesContent": "Les prix peuvent être affichés hors taxes. Des taxes (TVA, etc.) peuvent s’appliquer selon votre localisation et seront calculées lors du paiement le cas échéant.",
+      "changesTitle": "Modifications de ces conditions",
+      "changesContent": "Nous pouvons mettre à jour ces conditions d’abonnement. Les changements importants seront communiqués via l’application ou par e-mail. L’utilisation après la date d’entrée en vigueur vaut acceptation.",
+      "contactTitle": "Contact",
+      "contactContent": "Questions d’abonnement : billing@kitchorify.com"
     }
   },
   "subscription": {
@@ -642,11 +641,15 @@
     "trialEnded": "Votre essai gratuit est terminé.",
     "activateNeeded": "Pour continuer à utiliser Kitchorify, veuillez activer votre abonnement.",
     "activateButton": "Activer l’abonnement",
+    "upgradeButton": "Passer à l’abonnement payant",
     "status": "Statut de l'abonnement",
     "currentPlan": "Plan Actuel",
     "activeSubscription": "Abonnement Actif",
     "trialExpired": "Essai Expiré",
     "daysLeft": "{days} jours restants",
+    "perMonth": "mois",
+    "cancellationPeriodEndNotice": "En cas d’annulation, l’abonnement reste actif jusqu’à la fin de la période de facturation en cours.",
+    "viewTerms": "Voir les conditions d’abonnement",
     "checkout": {
       "title": "Activez votre abonnement",
       "subtitle": "Effectuez votre paiement pour la formule Tout-en-un.",
@@ -654,6 +657,19 @@
       "processing": "Traitement du paiement...",
       "success": "Paiement réussi !",
       "error": "Une erreur est survenue. Veuillez vérifier vos informations de paiement et réessayer.",
+      "missingStripeKey": "Configuration Stripe manquante : VITE_STRIPE_PUBLISHABLE_KEY n’est pas défini.",
+      "missingBackendUrl": "Backend Stripe non configuré : VITE_STRIPE_BACKEND_URL n’est pas défini.",
+      "authError": "Erreur d’authentification. Veuillez vous reconnecter.",
+      "activateFailed": "Paiement réussi mais activation échouée. Veuillez contacter le support.",
+      "canceled": "Le paiement a été annulé.",
+      "redirecting": "Redirection vers le paiement sécurisé...",
+      "startFailed": "Impossible de démarrer le paiement. Veuillez réessayer.",
+      "planLabel": "Formule",
+      "cancellationNote": "L’annulation prend effet à la fin de la période de facturation en cours.",
+      "termsPrefix": "J’ai lu et j’accepte les",
+      "termsLink": "conditions d’abonnement",
+      "mustAcceptTerms": "Vous devez accepter les conditions d’abonnement pour continuer.",
+      "startButton": "Continuer vers Stripe",
       "verifying": "Vérification du paiement, veuillez patienter...",
       "activating": "Paiement vérifié. Activation de votre compte..."
     }

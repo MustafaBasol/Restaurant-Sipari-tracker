@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { SubscriptionStatus } from '../../../shared/types';
@@ -6,10 +6,14 @@ import { getTrialDaysLeft, isSubscriptionActive } from '../../../shared/lib/util
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
+import { createBillingPortalSession } from '../api';
+
+const stripeBackendUrl = (import.meta as any).env?.VITE_STRIPE_BACKEND_URL as string | undefined;
 
 const SubscriptionManagement: React.FC = () => {
   const { authState } = useAuth();
   const { t } = useLanguage();
+  const [error, setError] = useState('');
 
   const tenant = authState?.tenant;
   if (!tenant) return null;
@@ -18,7 +22,34 @@ const SubscriptionManagement: React.FC = () => {
   const trialDaysLeft = getTrialDaysLeft(tenant);
 
   const handleActivate = () => {
+    setError('');
     window.location.hash = '#/checkout';
+  };
+
+  const handleManageSubscription = async () => {
+    setError('');
+    if (!stripeBackendUrl) {
+      setError(t('subscription.checkout.missingBackendUrl'));
+      return;
+    }
+    if (!authState?.user?.email) {
+      setError(t('subscription.checkout.authError'));
+      return;
+    }
+
+    try {
+      const baseUrl = `${window.location.origin}${window.location.pathname}`;
+      const returnUrl = `${baseUrl}#/app`;
+      const { url } = await createBillingPortalSession({
+        backendUrl: stripeBackendUrl,
+        customerEmail: authState.user.email,
+        returnUrl,
+      });
+      window.location.href = url;
+    } catch (e) {
+      console.error('Failed to open billing portal', e);
+      setError(t('subscription.checkout.startFailed'));
+    }
   };
 
   const renderStatus = () => {
@@ -64,13 +95,34 @@ const SubscriptionManagement: React.FC = () => {
           </div>
         </div>
 
-        {!subscriptionIsActive && (
+        <div className="text-sm text-text-secondary">
+          {t('subscription.cancellationPeriodEndNotice')}{' '}
+          <button
+            type="button"
+            className="text-accent hover:text-accent-hover font-medium"
+            onClick={() => (window.location.hash = '#/subscription-terms')}
+          >
+            {t('subscription.viewTerms')}
+          </button>
+        </div>
+
+        {(tenant.subscriptionStatus === SubscriptionStatus.TRIAL || !subscriptionIsActive) && (
           <div>
             <Button onClick={handleActivate} className="w-full">
-              {t('subscription.activateButton')}
+              {t('subscription.upgradeButton')}
             </Button>
           </div>
         )}
+
+        {subscriptionIsActive && tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
+          <div>
+            <Button variant="secondary" onClick={handleManageSubscription} className="w-full">
+              {t('subscription.manageButton')}
+            </Button>
+          </div>
+        )}
+
+        {error && <div className="text-sm text-red-600">{error}</div>}
       </div>
     </Card>
   );

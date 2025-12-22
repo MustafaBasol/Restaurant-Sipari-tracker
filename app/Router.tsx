@@ -14,6 +14,9 @@ const SuperAdminDashboard = React.lazy(
 const HomePage = React.lazy(() => import('../features/marketing/pages/HomePage'));
 const PrivacyPage = React.lazy(() => import('../features/marketing/pages/PrivacyPage'));
 const TermsPage = React.lazy(() => import('../features/marketing/pages/TermsPage'));
+const SubscriptionTermsPage = React.lazy(
+  () => import('../features/marketing/pages/SubscriptionTermsPage'),
+);
 const SubscriptionEndedScreen = React.lazy(
   () => import('../features/subscription/components/SubscriptionEndedScreen'),
 );
@@ -63,7 +66,18 @@ const AppRoutes: React.FC = () => {
   }, [authState?.tenant?.id, authState?.tenant?.defaultLanguage, setLang]);
 
   const canAccessLegalPage = useMemo(() => {
-    return currentHash === '#/privacy' || currentHash === '#/terms';
+    return (
+      currentHash === '#/privacy' ||
+      currentHash === '#/terms' ||
+      currentHash === '#/subscription-terms'
+    );
+  }, [currentHash]);
+
+  const legalPageType = useMemo<'privacy' | 'terms' | 'subscription-terms' | null>(() => {
+    if (currentHash === '#/privacy') return 'privacy';
+    if (currentHash === '#/terms') return 'terms';
+    if (currentHash === '#/subscription-terms') return 'subscription-terms';
+    return null;
   }, [currentHash]);
 
   // Decide whether we should redirect. IMPORTANT: do not mutate location during render.
@@ -90,7 +104,7 @@ const AppRoutes: React.FC = () => {
         const allowed =
           canAccessLegalPage ||
           currentHash === '#/subscription-ended' ||
-          currentHash === '#/checkout';
+          currentHash.startsWith('#/checkout');
 
         if (!allowed) {
           next = '#/subscription-ended';
@@ -134,7 +148,9 @@ const AppRoutes: React.FC = () => {
       (authState.tenant ? isSubscriptionActive(authState.tenant) : false);
 
     if (canAccessLegalPage) {
-      return currentHash === '#/privacy' ? <PrivacyPage /> : <TermsPage />;
+      if (legalPageType === 'privacy') return <PrivacyPage />;
+      if (legalPageType === 'terms') return <TermsPage />;
+      return <SubscriptionTermsPage />;
     }
 
     if (subscriptionIsActive) {
@@ -147,13 +163,15 @@ const AppRoutes: React.FC = () => {
 
     // Inactive subscription
     if (currentHash === '#/subscription-ended') return <SubscriptionEndedScreen />;
-    if (currentHash === '#/checkout') return <CheckoutPage />;
+    if (currentHash.startsWith('#/checkout')) return <CheckoutPage />;
     return <LoadingSpinner />;
   }
 
   // Logged-out
   if (canAccessLegalPage) {
-    return currentHash === '#/privacy' ? <PrivacyPage /> : <TermsPage />;
+    if (legalPageType === 'privacy') return <PrivacyPage />;
+    if (legalPageType === 'terms') return <TermsPage />;
+    return <SubscriptionTermsPage />;
   }
   if (currentHash === '#/login') return <LoginScreen />;
   if (currentHash === '#/register') return <RegisterScreen />;

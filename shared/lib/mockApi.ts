@@ -118,7 +118,7 @@ interface MockDB {
 }
 
 const trialEndDate = new Date();
-trialEndDate.setDate(trialEndDate.getDate() + 5); // Trial ends in 5 days
+trialEndDate.setDate(trialEndDate.getDate() + 7); // Trial ends in 7 days
 
 const seedData: MockDB = {
   tenants: [
