@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { useTables } from '../../tables/hooks/useTables';
 import { useMenu } from '../../menu/hooks/useMenu';
@@ -100,6 +100,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFil
   const timezone = authState?.tenant?.timezone || 'UTC';
   const LATE_THRESHOLD_MINUTES = 7;
   const { menuItems } = useMenu();
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowTs(Date.now()), 30_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const getItemStation = (menuItemId: string): KitchenStation => {
     const menuItem = menuItems.find((mi) => mi.id === menuItemId);
@@ -115,7 +121,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFil
         const table = tables.find((t) => t.id === order.tableId);
         const ageMinutes = Math.max(
           0,
-          Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000),
+          Math.floor((nowTs - new Date(order.createdAt).getTime()) / 60000),
         );
         const isLate = ageMinutes >= LATE_THRESHOLD_MINUTES;
         const activeItems = order.items.filter((item) => {
@@ -157,11 +163,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFil
                       <span>
                         {ageMinutes} {t('kitchen.minutesShort')}
                       </span>
-                      {isLate && (
-                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
-                          {t('kitchen.late')}
-                        </span>
-                      )}
+                      {isLate && <Badge variant="red">{t('kitchen.late')}</Badge>}
                     </div>
                     {order.waiterName && (
                       <p className="text-xs text-text-secondary">

@@ -154,7 +154,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 
 - [x] İstasyon (BAR/HOT/COLD/DESSERT) alanı + mutfakta istasyon filtresi
 - [x] İstasyon bazlı “hazır” işaretleme (station parametreli akış)
-- [ ] Hazırlama süresi & SLA: sipariş yaşı/ geciken sipariş göstergesi
+- [x] Hazırlama süresi & SLA: sipariş yaşı/ geciken sipariş göstergesi
 - [x] Fiş yazdırma (opsiyonel): tarayıcı yazdırma + opsiyonel print server desteği
 - [x] Ürün uygunluğu (temel): menü öğesinde `isAvailable` alanı
 - [x] “Tükendi” işaretinin garson/mutfak ekranına anlık ve operasyonel yansıması (bildirim + engelleme kuralları)
@@ -434,3 +434,23 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - “Anlık” davranış demo amaçlıdır: menü verisi periyodik polling (5s) + window focus’ta refetch ile güncellenir.
 - UI tarafında `isAvailable=false` ürünlerde ekleme aksiyonu kapatılır.
 - Mock backend tarafında da `internalCreateOrder` içinde `isAvailable=false` ürünler için hata döndürülerek **enforcement** sağlanır.
+
+### 8.10 P0 — Hazırlama süresi & SLA (sipariş yaşı + gecikme göstergesi)
+
+**Amaç**
+
+- Mutfakta, siparişlerin kaç dakikadır beklediğini net görmek.
+- Basit bir SLA eşiğinin üstüne çıkan siparişleri “Gecikti / Late” olarak işaretlemek.
+
+**Kullanım (Mutfak / KITCHEN)**
+
+- Mutfak dashboard’unda aktif sipariş kartının üst kısmında:
+  - Sipariş saati
+  - Sipariş yaşı (dakika)
+  - SLA eşiği aşıldığında **Gecikti / Late** etiketi
+    görünür.
+
+**Teknik not (demo)**
+
+- Sipariş yaşı `order.createdAt` üzerinden dakika bazında hesaplanır.
+- Demo için sabit bir eşik kullanılır (ör. 7 dk). Ekran, yaş bilgisini periyodik “tick” ile güncel tutar.
