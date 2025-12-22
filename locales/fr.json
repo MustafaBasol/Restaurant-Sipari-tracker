@@ -88,7 +88,28 @@
     "KITCHEN": "Cuisine"
   },
   "header": {
+    "sessions": "Sessions",
     "logout": "Déconnexion"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "help": "Gérez les sessions actives de votre compte.",
+    "logoutOthers": "Déconnecter les autres appareils",
+    "activeCount": "Sessions actives : {count}",
+    "device": "Appareil",
+    "createdAt": "Créée",
+    "lastSeenAt": "Dernière activité",
+    "status": "Statut",
+    "current": "actuelle",
+    "thisDevice": "Cet appareil",
+    "empty": "Aucune session trouvée.",
+    "loadFailed": "Impossible de charger les sessions.",
+    "actionFailed": "Action échouée.",
+    "statuses": {
+      "active": "Active",
+      "revoked": "Révoquée",
+      "expired": "Expirée"
+    }
   },
   "waiter": {
     "tableActions": "Actions de table",
@@ -239,6 +260,12 @@
       "deactivate": "Désactiver",
       "activate": "Activer",
       "changePassword": "Changer le mot de passe",
+      "sessions": "Sessions",
+      "sessionsTitle": "Sessions de {userName}",
+      "sessionsRevoke": "Révoquer",
+      "sessionsRevokeAll": "Tout révoquer",
+      "sessionsLoadFailed": "Impossible de charger les sessions.",
+      "sessionsActionFailed": "Action échouée.",
       "newPassword": "Nouveau mot de passe",
       "confirmPassword": "Confirmer le mot de passe",
       "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",

@@ -238,7 +238,17 @@
       "itemName": "Menu Item Name",
       "bundle": "Bundle / set menu",
       "bundleItems": "Bundle items",
-      "bundleSelectHint": "Select at least one item."
+      "bundleSelectHint": "Select at least one item.",
+      "variants": "Variants",
+      "addVariant": "Add variant",
+      "variantName": "Variant name",
+      "variantPrice": "Variant price",
+      "modifiers": "Modifiers",
+      "addModifier": "Add modifier group",
+      "modifierName": "Modifier group name",
+      "addOption": "Add option",
+      "optionName": "Option name",
+      "optionPriceDelta": "Price delta"
     },
     "users": {
       "add": "Add User",

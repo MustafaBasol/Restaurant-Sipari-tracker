@@ -244,7 +244,17 @@
       "itemName": "Menü Öğesi Adı",
       "bundle": "Menü seti",
       "bundleItems": "Set içeriği",
-      "bundleSelectHint": "En az bir ürün seçin."
+      "bundleSelectHint": "En az bir ürün seçin.",
+      "variants": "Varyantlar",
+      "addVariant": "Varyant ekle",
+      "variantName": "Varyant adı",
+      "variantPrice": "Varyant fiyatı",
+      "modifiers": "Ekstralar",
+      "addModifier": "Grup ekle",
+      "modifierName": "Grup adı",
+      "addOption": "Seçenek ekle",
+      "optionName": "Seçenek adı",
+      "optionPriceDelta": "Fiyat farkı"
     },
     "users": {
       "add": "Kullanıcı Ekle",
