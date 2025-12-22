@@ -55,6 +55,29 @@ export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchMenuData();
   }, [fetchMenuData]);
 
+  useEffect(() => {
+    if (!authState?.tenant?.id) return;
+
+    const onFocus = () => {
+      fetchMenuData().catch(() => {
+        // ignore
+      });
+    };
+
+    const interval = window.setInterval(() => {
+      fetchMenuData().catch(() => {
+        // ignore
+      });
+    }, 5000);
+
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [authState?.tenant?.id, fetchMenuData]);
+
   const handleMutation = async (mutationFn: () => Promise<any>) => {
     await mutationFn();
     await fetchMenuData();

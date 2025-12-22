@@ -108,6 +108,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   );
 
   const [currentOrderItems, setCurrentOrderItems] = useState<TempOrderItem[]>([]);
+  const [sendToKitchenError, setSendToKitchenError] = useState<string>('');
   const [customerName, setCustomerName] = useState(table.customerName || '');
   const [tableNote, setTableNote] = useState(table.note || '');
   const [orderNote, setOrderNote] = useState('');
@@ -170,6 +171,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   };
 
   const handleAddItem = (menuItem: MenuItem) => {
+    if (menuItem.isAvailable === false) {
+      return;
+    }
     const variants = Array.isArray((menuItem as any).variants) ? (menuItem as any).variants : [];
     const defaultVariantId = variants.length > 0 ? variants[0]?.id : undefined;
     const newEntry: TempOrderItem = {
@@ -209,8 +213,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   const handleSendToKitchen = async () => {
     if (currentOrderItems.length > 0 && authState?.user.id) {
       const payload = currentOrderItems.map(({ tempId: _tempId, ...rest }) => rest);
-      await createOrder(table.id, payload, authState.user.id, orderNote);
-      setCurrentOrderItems([]);
+      setSendToKitchenError('');
+      try {
+        await createOrder(table.id, payload, authState.user.id, orderNote);
+        setCurrentOrderItems([]);
+      } catch {
+        setSendToKitchenError(t('waiter.sendToKitchenFailedUnavailable'));
+      }
     }
   };
 
@@ -751,6 +760,11 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
             )}
           </div>
           <div className="p-4 border-t border-border-color space-y-2">
+            {sendToKitchenError && (
+              <div className="p-3 bg-red-100 text-red-800 rounded-lg text-sm">
+                {sendToKitchenError}
+              </div>
+            )}
             {currentOrderItems.length > 0 && canAddItems && (
               <Button onClick={handleSendToKitchen} className="w-full">
                 {t('waiter.sendToKitchen')}

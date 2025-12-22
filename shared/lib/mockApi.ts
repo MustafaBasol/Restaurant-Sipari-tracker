@@ -1038,6 +1038,16 @@ export const internalCreateOrder = async (
   await simulateDelay();
   const waiter = db.users.find((u) => u.id === waiterId);
 
+  for (const item of items) {
+    const menuItem = db.menuItems.find((mi) => mi.id === item.menuItemId);
+    if (!menuItem) {
+      throw new Error('Menu item not found');
+    }
+    if (menuItem.isAvailable === false) {
+      throw new Error('Menu item is out of stock');
+    }
+  }
+
   const isOrderForTable = (o: Order, tId: string): boolean =>
     o.tableId === tId || (Array.isArray(o.linkedTableIds) && o.linkedTableIds.includes(tId));
 

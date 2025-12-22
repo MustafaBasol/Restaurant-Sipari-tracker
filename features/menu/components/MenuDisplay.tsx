@@ -3,6 +3,7 @@ import { useMenu } from '../hooks/useMenu';
 import { MenuItem } from '../types';
 import { PlusIcon } from '../../../shared/components/icons/Icons';
 import { Card } from '../../../shared/components/ui/Card';
+import { Badge } from '../../../shared/components/ui/Badge';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
@@ -26,9 +27,7 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
     }
   }, [menuCategories, activeCategoryId]);
 
-  const filteredItems = menuItems.filter(
-    (item) => item.categoryId === activeCategoryId && item.isAvailable,
-  );
+  const filteredItems = menuItems.filter((item) => item.categoryId === activeCategoryId);
 
   return (
     <div className="p-4">
@@ -54,7 +53,10 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
         {filteredItems.map((item) => (
           <Card key={item.id} className="flex flex-col">
             <div className="flex-grow">
-              <h3 className="font-semibold text-text-primary">{item.name}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold text-text-primary">{item.name}</h3>
+                {!item.isAvailable && <Badge variant="red">{t('general.outOfStock')}</Badge>}
+              </div>
               <p className="text-xs text-text-secondary mt-1">{item.description}</p>
               {Array.isArray(item.allergens) && item.allergens.length > 0 && (
                 <p className="text-xs text-text-secondary mt-1">
@@ -68,7 +70,8 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
               </span>
               <button
                 onClick={() => onAddItem(item)}
-                className="bg-accent/10 text-accent p-2 rounded-full hover:bg-accent/20"
+                disabled={!item.isAvailable}
+                className="bg-accent/10 text-accent p-2 rounded-full hover:bg-accent/20 disabled:opacity-50 disabled:pointer-events-none"
               >
                 <PlusIcon />
               </button>

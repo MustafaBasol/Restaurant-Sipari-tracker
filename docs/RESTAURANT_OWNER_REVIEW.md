@@ -157,7 +157,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [ ] Hazırlama süresi & SLA: sipariş yaşı/ geciken sipariş göstergesi
 - [x] Fiş yazdırma (opsiyonel): tarayıcı yazdırma + opsiyonel print server desteği
 - [x] Ürün uygunluğu (temel): menü öğesinde `isAvailable` alanı
-- [ ] “Tükendi” işaretinin garson/mutfak ekranına anlık ve operasyonel yansıması (bildirim + engelleme kuralları)
+- [x] “Tükendi” işaretinin garson/mutfak ekranına anlık ve operasyonel yansıması (bildirim + engelleme kuralları)
 
 **Yetki / denetim**
 
@@ -408,3 +408,29 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - Mock DB’de `sessions` tablosu tutulur.
 - Auth state artık cihaz bazlıdır (sessionStorage’daki device id ile anahtarlandığı için aynı tarayıcıda çoklu sekme demo edilir).
 - Oturumlar TTL + revoke ile yönetilir; revoke edilen/expire olan oturumlar UI’da periyodik kontrolle çıkışa düşer.
+
+### 8.9 P0 — “Tükendi” işaretinin anlık yansıması + engelleme
+
+**Amaç**
+
+- Bir ürün “Tükendi / unavailable” yapıldığında garson ve mutfak ekranlarında hızlıca görünür olması.
+- Operasyonel hata önleme: tükendi ürünü siparişe eklemeyi ve mutfağa göndermeyi engellemek.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → Menü yönetiminden ilgili ürünü **Indisponible / Unavailable** yap.
+
+**Etkisi (Garson / WAITER)**
+
+- Menü ekranında ürün “Tükendi” etiketiyle görünür ve **ekleme butonu pasif** olur.
+- Eğer ürün sonradan tükendiyse ve siparişte kaldıysa, **mutfağa gönder** sırasında backend hata verir ve UI kullanıcıya hata mesajı gösterir.
+
+**Etkisi (Mutfak / KITCHEN)**
+
+- Sipariş detaylarında, artık tükendi olan ürün kalemleri “Tükendi” etiketiyle görünür.
+
+**Teknik not (demo)**
+
+- “Anlık” davranış demo amaçlıdır: menü verisi periyodik polling (5s) + window focus’ta refetch ile güncellenir.
+- UI tarafında `isAvailable=false` ürünlerde ekleme aksiyonu kapatılır.
+- Mock backend tarafında da `internalCreateOrder` içinde `isAvailable=false` ürünler için hata döndürülerek **enforcement** sağlanır.

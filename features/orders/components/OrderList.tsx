@@ -7,6 +7,7 @@ import { Order, OrderItem } from '../types';
 import { KitchenStation, OrderStatus } from '../../../shared/types';
 import { Card } from '../../../shared/components/ui/Card';
 import { NoteIcon } from '../../../shared/components/icons/Icons';
+import { Badge } from '../../../shared/components/ui/Badge';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatDateTime } from '../../../shared/lib/utils';
 
@@ -49,9 +50,12 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
   return (
     <div className="bg-light-bg p-3 rounded-lg flex items-start justify-between gap-4">
       <div>
-        <p className="font-semibold">
-          {item.quantity}x {menuItem.name}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="font-semibold">
+            {item.quantity}x {menuItem.name}
+          </p>
+          {!menuItem.isAvailable && <Badge variant="red">{t('general.outOfStock')}</Badge>}
+        </div>
         {(variantName || modifierOptionNames.length > 0) && (
           <p className="text-xs text-text-secondary">
             {variantName ? variantName : null}
