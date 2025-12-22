@@ -660,6 +660,8 @@
     "paymentHistoryTitle": "Payment history",
     "paymentHistoryEmpty": "No invoices found.",
     "paymentHistoryLoadFailed": "Failed to load invoices.",
+    "paymentHistoryBackendOutdated": "Stripe backend needs to be up to date for payment history. Restart the backend and make sure VITE_STRIPE_BACKEND_URL points to it.",
+    "paymentHistoryBackendUrlLooksWrong": "Stripe backend URL likely looks wrong (it matches the frontend origin). In Codespaces, VITE_STRIPE_BACKEND_URL should usually point to port 4242.",
     "paymentHistoryTroubleshoot": "Invoices are looked up by your login email: {email}. Make sure the Stripe account (Test/Live) and the email used match.",
     "invoiceOpen": "Open",
     "invoiceDownload": "Download PDF",

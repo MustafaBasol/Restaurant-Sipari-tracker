@@ -656,6 +656,8 @@
     "paymentHistoryTitle": "Historique des paiements",
     "paymentHistoryEmpty": "Aucune facture trouvée.",
     "paymentHistoryLoadFailed": "Impossible de charger les factures.",
+    "paymentHistoryBackendOutdated": "Le backend Stripe doit être à jour pour l’historique de paiement. Redémarrez le backend et vérifiez que VITE_STRIPE_BACKEND_URL pointe dessus.",
+    "paymentHistoryBackendUrlLooksWrong": "L’URL du backend Stripe semble incorrecte (elle correspond à l’origine frontend). Dans Codespaces, VITE_STRIPE_BACKEND_URL doit généralement pointer vers le port 4242.",
     "paymentHistoryTroubleshoot": "Les factures sont recherchées via votre e-mail de connexion : {email}. Vérifiez que le compte Stripe (Test/Live) et l’e-mail utilisé correspondent.",
     "invoiceOpen": "Ouvrir",
     "invoiceDownload": "Télécharger le PDF",

@@ -666,6 +666,8 @@
     "paymentHistoryTitle": "Ödeme geçmişi",
     "paymentHistoryEmpty": "Fatura bulunamadı.",
     "paymentHistoryLoadFailed": "Faturalar yüklenemedi.",
+    "paymentHistoryBackendOutdated": "Fatura geçmişi için Stripe backend’in güncel olması gerekir. Backend’i yeniden başlatın ve VITE_STRIPE_BACKEND_URL doğru porta baktığından emin olun.",
+    "paymentHistoryBackendUrlLooksWrong": "Stripe backend URL’i muhtemelen yanlış (frontend URL’i ile aynı görünüyor). Codespaces’te VITE_STRIPE_BACKEND_URL genelde 4242 portuna işaret etmelidir.",
     "paymentHistoryTroubleshoot": "Faturalar, giriş e-postanıza göre aranır: {email}. Stripe hesabı (Test/Live) ve kullanılan e-posta aynı olmalı.",
     "invoiceOpen": "Aç",
     "invoiceDownload": "PDF indir",

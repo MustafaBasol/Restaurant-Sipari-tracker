@@ -98,7 +98,8 @@ export const createSubscriptionCheckoutSession = async (
 export const listInvoices = async (
   params: ListInvoicesParams,
 ): Promise<{ invoices: StripeInvoiceSummary[] }> => {
-  const res = await fetch(`${params.backendUrl.replace(/\/$/, '')}/list-invoices`, {
+  const endpoint = `${params.backendUrl.replace(/\/$/, '')}/list-invoices`;
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -109,6 +110,9 @@ export const listInvoices = async (
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
+    if (res.status === 404) {
+      throw new Error(`ENDPOINT_NOT_FOUND:list-invoices:${text}`);
+    }
     throw new Error(`Failed to list invoices (${res.status}): ${text}`);
   }
 
@@ -119,7 +123,8 @@ export const listInvoices = async (
 export const getSubscriptionStatus = async (
   params: GetSubscriptionStatusParams,
 ): Promise<{ subscription: StripeSubscriptionStatusSummary | null }> => {
-  const res = await fetch(`${params.backendUrl.replace(/\/$/, '')}/get-subscription-status`, {
+  const endpoint = `${params.backendUrl.replace(/\/$/, '')}/get-subscription-status`;
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -129,6 +134,9 @@ export const getSubscriptionStatus = async (
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
+    if (res.status === 404) {
+      throw new Error(`ENDPOINT_NOT_FOUND:get-subscription-status:${text}`);
+    }
     throw new Error(`Failed to get subscription status (${res.status}): ${text}`);
   }
 

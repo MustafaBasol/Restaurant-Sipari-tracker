@@ -16,6 +16,11 @@ import { formatCurrency } from '../../../shared/lib/utils';
 
 const stripeBackendUrl = (import.meta as any).env?.VITE_STRIPE_BACKEND_URL as string | undefined;
 
+const getErrorMessage = (e: unknown): string => {
+  if (e instanceof Error) return e.message;
+  return String(e);
+};
+
 const SubscriptionManagement: React.FC = () => {
   const { authState, updateTenantInState } = useAuth();
   const { t } = useLanguage();
@@ -57,7 +62,12 @@ const SubscriptionManagement: React.FC = () => {
         setInvoices(invoices);
       } catch (e) {
         console.error('Failed to load invoices', e);
-        setInvoicesError(t('subscription.paymentHistoryLoadFailed'));
+        const msg = getErrorMessage(e);
+        if (msg.includes('ENDPOINT_NOT_FOUND:list-invoices')) {
+          setInvoicesError(t('subscription.paymentHistoryBackendOutdated'));
+        } else {
+          setInvoicesError(t('subscription.paymentHistoryLoadFailed'));
+        }
       } finally {
         setInvoicesLoading(false);
       }
@@ -111,6 +121,10 @@ const SubscriptionManagement: React.FC = () => {
         }
       } catch (e) {
         // Don't block the page on Stripe sync failures.
+        const msg = getErrorMessage(e);
+        if (msg.includes('ENDPOINT_NOT_FOUND:get-subscription-status')) {
+          return;
+        }
         console.error('Failed to sync Stripe subscription status', e);
       }
     };
@@ -244,6 +258,12 @@ const SubscriptionManagement: React.FC = () => {
             {!stripeBackendUrl && (
               <div className="text-sm text-text-secondary">
                 {t('subscription.checkout.missingBackendUrl')}
+              </div>
+            )}
+
+            {stripeBackendUrl && stripeBackendUrl.startsWith(window.location.origin) && (
+              <div className="text-sm text-text-secondary">
+                {t('subscription.paymentHistoryBackendUrlLooksWrong')}
               </div>
             )}
 
