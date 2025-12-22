@@ -48,7 +48,22 @@
     "email": "E-posta (opsiyonel)",
     "validation": {
       "fullNameRequired": "Ad Soyad zorunludur.",
+      "loadFailed": "Müşteriler yüklenemedi.",
+      "updateFailed": "Müşteri güncellenemedi.",
       "createFailed": "Müşteri oluşturulamadı."
+    },
+    "detailsTitle": "Müşteri detayları",
+    "historyTitle": "Sipariş geçmişi",
+    "noOrders": "Sipariş bulunamadı.",
+    "unknownTable": "Bilinmeyen masa",
+    "orderTotal": "Toplam",
+    "orderNote": "Sipariş notu",
+    "headers": {
+      "fullName": "Ad Soyad",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "createdAt": "Kayıt tarihi",
+      "lastOrderAt": "Son sipariş"
     }
   },
   "actions": {
@@ -233,6 +248,7 @@
       "tables": "Masa Yönetimi",
       "menu": "Menü Yönetimi",
       "users": "Kullanıcı Yönetimi",
+      "customers": "Müşteriler",
       "orderHistory": "Sipariş Geçmişi",
       "reports": "Raporlar",
       "auditLogs": "Denetim Kaydı",

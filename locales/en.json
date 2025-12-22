@@ -42,7 +42,22 @@
     "email": "Email (optional)",
     "validation": {
       "fullNameRequired": "Full name is required.",
+      "loadFailed": "Failed to load customers.",
+      "updateFailed": "Failed to update customer.",
       "createFailed": "Failed to create customer."
+    },
+    "detailsTitle": "Customer details",
+    "historyTitle": "Order history",
+    "noOrders": "No orders found.",
+    "unknownTable": "Unknown table",
+    "orderTotal": "Total",
+    "orderNote": "Order note",
+    "headers": {
+      "fullName": "Full name",
+      "phone": "Phone",
+      "email": "Email",
+      "createdAt": "Created",
+      "lastOrderAt": "Last order"
     }
   },
   "actions": {
@@ -227,6 +242,7 @@
       "tables": "Tables Management",
       "menu": "Menu Management",
       "users": "Users Management",
+      "customers": "Customers",
       "orderHistory": "Order History",
       "reports": "Reports",
       "auditLogs": "Audit Log",

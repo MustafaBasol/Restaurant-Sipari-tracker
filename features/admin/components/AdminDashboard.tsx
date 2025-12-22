@@ -3,6 +3,7 @@ import { useLanguage } from '../../../shared/hooks/useLanguage';
 import TablesManagement from '../../tables/components/TablesManagement';
 import MenuManagement from '../../menu/components/MenuManagement';
 import UsersManagement from '../../users/components/UsersManagement';
+import CustomersManagement from '../../customers/components/CustomersManagement';
 import {
   TableIcon,
   MenuIcon,
@@ -26,6 +27,7 @@ type AdminTab =
   | 'tables'
   | 'menu'
   | 'users'
+  | 'customers'
   | 'history'
   | 'reports'
   | 'auditLogs'
@@ -40,6 +42,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'tables', labelKey: 'admin.tabs.tables', icon: <TableIcon /> },
     { id: 'menu', labelKey: 'admin.tabs.menu', icon: <MenuIcon /> },
     { id: 'users', labelKey: 'admin.tabs.users', icon: <UsersIcon /> },
+    { id: 'customers', labelKey: 'admin.tabs.customers', icon: <UsersIcon /> },
     { id: 'history', labelKey: 'admin.tabs.orderHistory', icon: <HistoryIcon /> },
     { id: 'reports', labelKey: 'admin.tabs.reports', icon: <ChartBarIcon /> },
     { id: 'auditLogs', labelKey: 'admin.tabs.auditLogs', icon: <HistoryIcon /> },
@@ -55,6 +58,8 @@ const AdminDashboard: React.FC = () => {
         return <MenuManagement />;
       case 'users':
         return <UsersManagement />;
+      case 'customers':
+        return <CustomersManagement />;
       case 'history':
         return <OrderHistory />;
       case 'reports':

@@ -42,7 +42,22 @@
     "email": "E-mail (facultatif)",
     "validation": {
       "fullNameRequired": "Le nom complet est obligatoire.",
+      "loadFailed": "Impossible de charger les clients.",
+      "updateFailed": "Impossible de mettre à jour le client.",
       "createFailed": "Impossible de créer le client."
+    },
+    "detailsTitle": "Détails du client",
+    "historyTitle": "Historique des commandes",
+    "noOrders": "Aucune commande trouvée.",
+    "unknownTable": "Table inconnue",
+    "orderTotal": "Total",
+    "orderNote": "Note de commande",
+    "headers": {
+      "fullName": "Nom complet",
+      "phone": "Téléphone",
+      "email": "E-mail",
+      "createdAt": "Créé",
+      "lastOrderAt": "Dernière commande"
     }
   },
   "actions": {
@@ -227,6 +242,7 @@
       "tables": "Gestion des Tables",
       "menu": "Gestion du Menu",
       "users": "Gestion des Utilisateurs",
+      "customers": "Clients",
       "orderHistory": "Historique des Commandes",
       "reports": "Rapports",
       "auditLogs": "Journal d'audit",

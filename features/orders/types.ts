@@ -39,6 +39,8 @@ export interface Order {
   tenantId: string;
   tableId: string;
   linkedTableIds?: string[];
+  customerId?: string;
+  customerName?: string;
   status: OrderStatus;
   items: OrderItem[];
   discount?: OrderDiscount;

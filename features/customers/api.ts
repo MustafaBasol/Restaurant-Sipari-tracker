@@ -1,4 +1,4 @@
-import { addData, getDataByTenant } from '../../shared/lib/mockApi';
+import { addData, getDataByTenant, updateData } from '../../shared/lib/mockApi';
 import { Customer } from './types';
 
 export const getCustomers = (tenantId: string) => getDataByTenant<Customer>('customers', tenantId);
@@ -18,4 +18,14 @@ export const createCustomer = async (
     createdAt: new Date(),
   };
   return addData('customers', customer);
+};
+
+export const updateCustomer = async (customer: Customer) => {
+  const normalized: Customer = {
+    ...customer,
+    fullName: customer.fullName.trim(),
+    phone: customer.phone?.trim() ? customer.phone.trim() : undefined,
+    email: customer.email?.trim() ? customer.email.trim() : undefined,
+  };
+  return updateData('customers', normalized);
 };

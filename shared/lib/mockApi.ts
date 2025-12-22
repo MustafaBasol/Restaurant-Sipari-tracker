@@ -1121,6 +1121,10 @@ export const internalCreateOrder = async (
 
   let order = db.orders.find((o) => isOrderForTable(o, tableId) && o.status !== OrderStatus.CLOSED);
 
+  const table = db.tables.find((t) => t.id === tableId);
+  const tableCustomerId = table?.customerId;
+  const tableCustomerName = table?.customerName;
+
   if (order) {
     if (order.status === OrderStatus.CLOSED) throw new Error('Cannot add items to a closed order.');
     const newItems: OrderItem[] = items.map((item, index) => ({
@@ -1135,12 +1139,22 @@ export const internalCreateOrder = async (
     if (note) {
       order.note = note;
     }
+
+    // Backfill snapshot for older/open orders.
+    if (!order.customerId && tableCustomerId) {
+      (order as any).customerId = tableCustomerId;
+    }
+    if (!order.customerName && tableCustomerName) {
+      (order as any).customerName = tableCustomerName;
+    }
   } else {
     const orderId = `ord${Date.now()}`;
     const newOrder: Order = {
       id: orderId,
       tenantId,
       tableId,
+      customerId: tableCustomerId,
+      customerName: tableCustomerName,
       status: OrderStatus.NEW,
       items: items.map((item, index) => ({
         ...item,
@@ -1172,7 +1186,6 @@ export const internalCreateOrder = async (
       );
     }
   }
-  const table = db.tables.find((t) => t.id === tableId);
   if (table && table.status === TableStatus.FREE) {
     table.status = TableStatus.OCCUPIED;
   }
