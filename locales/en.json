@@ -24,7 +24,9 @@
     "unavailable": "Unavailable",
     "station": "Station",
     "allergens": "Allergens",
-    "allergensPlaceholder": "e.g. gluten, dairy, egg"
+    "allergensPlaceholder": "e.g. gluten, dairy, egg",
+    "all": "All",
+    "loading": "Loading..."
   },
   "actions": {
     "markAsServed": "Mark as Served",
@@ -41,6 +43,22 @@
     "removeComplimentary": "Remove Complimentary",
     "fillSelected": "Fill Selected Amount",
     "clearSelection": "Clear Selection"
+  },
+  "audit": {
+    "actions": {
+      "ORDER_CREATED": "Order created",
+      "ORDER_ITEM_STATUS_UPDATED": "Item status updated",
+      "ORDER_NOTE_UPDATED": "Order note updated",
+      "PAYMENT_ADDED": "Payment added",
+      "ORDER_DISCOUNT_UPDATED": "Discount updated",
+      "ORDER_ITEM_COMPLIMENTARY_UPDATED": "Complimentary updated",
+      "ORDER_BILL_REQUESTED": "Bill requested",
+      "ORDER_PAYMENT_CONFIRMED": "Payment confirmed",
+      "ORDER_CLOSED": "Order closed",
+      "ORDER_MOVED": "Order moved",
+      "ORDER_TABLE_MERGED": "Tables merged",
+      "ORDER_TABLE_UNMERGED": "Table unmerged"
+    }
   },
   "auth": {
     "signIn": "Sign In",
@@ -163,8 +181,21 @@
       "users": "Users Management",
       "orderHistory": "Order History",
       "reports": "Reports",
+      "auditLogs": "Audit Log",
       "settings": "Settings",
       "subscription": "Subscription"
+    },
+    "auditLogs": {
+      "title": "Audit Log",
+      "count": "Records",
+      "time": "Time",
+      "actor": "Actor",
+      "action": "Action",
+      "entity": "Entity",
+      "details": "Details",
+      "search": "Search",
+      "searchPlaceholder": "Search by user, action, entity, id...",
+      "empty": "No audit logs found."
     },
     "tables": {
       "add": "Add Table",

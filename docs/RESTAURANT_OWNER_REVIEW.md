@@ -163,7 +163,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 
 - [x] Rol bazlı kısıtlar (ör. ödeme ekleme/indirim/kapatma gibi aksiyonlarda backend kontrolü)
 - [x] Audit log yazımı (kısmi): sipariş oluşturma, kalem durum, not, ödeme, indirim, ikram, taşıma/birleştirme/ayırma, kapatma
-- [ ] Audit log ekranı (UI’dan görüntüleme/filtreleme)
+- [x] Audit log ekranı (UI’dan görüntüleme/filtreleme)
 - [ ] Yetkilendirme matrisi (konfigüre edilebilir izinler)
 - [ ] Cihaz yönetimi / oturum sonlandırma
 
@@ -345,3 +345,21 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 
 - Tenant seviyesinde 3 yeni ayar kullanılır: `taxRatePercent`, `serviceChargePercent`, `roundingIncrement`.
 - Hesaplama akışı `shared/lib/billing.ts` içindeki `calcOrderPricing()` ile tek noktada tutulur ve hem UI toplamlarında hem fiş çıktısında kullanılır.
+
+### 8.6 P0 — Audit log ekranı (UI’dan görüntüleme/filtreleme)
+
+**Amaç**
+
+- Admin’in, yapılan kritik işlemleri (iptal/indirim/ödeme/taşıma/birleştirme/kapatma vb.) UI’dan görmesi ve hızlıca arayabilmesi.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin panelinde **Denetim Kaydı** sekmesine gir.
+- Basit filtreler:
+  - **Aksiyon** seçimi (tümü veya tek aksiyon)
+  - **Arama** (kullanıcı adı/rol, aksiyon, entity, id ve metadata içinde)
+
+**Teknik not (demo)**
+
+- Audit log kayıtları mock DB’de `auditLogs` tablosuna yazılır.
+- Ekran, tenant bazlı `getDataByTenant('auditLogs', tenantId)` ile listeyi çeker.

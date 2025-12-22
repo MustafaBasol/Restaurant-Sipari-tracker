@@ -24,7 +24,9 @@
     "unavailable": "Indisponible",
     "station": "Station",
     "allergens": "Allergènes",
-    "allergensPlaceholder": "ex. gluten, lait, œuf"
+    "allergensPlaceholder": "ex. gluten, lait, œuf",
+    "all": "Tous",
+    "loading": "Chargement..."
   },
   "actions": {
     "markAsServed": "Marquer comme Servi",
@@ -41,6 +43,22 @@
     "removeComplimentary": "Retirer l'Offert",
     "fillSelected": "Remplir le montant sélectionné",
     "clearSelection": "Effacer la sélection"
+  },
+  "audit": {
+    "actions": {
+      "ORDER_CREATED": "Commande créée",
+      "ORDER_ITEM_STATUS_UPDATED": "Statut de l'article mis à jour",
+      "ORDER_NOTE_UPDATED": "Note de commande mise à jour",
+      "PAYMENT_ADDED": "Paiement ajouté",
+      "ORDER_DISCOUNT_UPDATED": "Remise mise à jour",
+      "ORDER_ITEM_COMPLIMENTARY_UPDATED": "Offert mis à jour",
+      "ORDER_BILL_REQUESTED": "Addition demandée",
+      "ORDER_PAYMENT_CONFIRMED": "Paiement confirmé",
+      "ORDER_CLOSED": "Commande clôturée",
+      "ORDER_MOVED": "Commande déplacée",
+      "ORDER_TABLE_MERGED": "Tables fusionnées",
+      "ORDER_TABLE_UNMERGED": "Table séparée"
+    }
   },
   "auth": {
     "signIn": "Se connecter",
@@ -163,8 +181,21 @@
       "users": "Gestion des Utilisateurs",
       "orderHistory": "Historique des Commandes",
       "reports": "Rapports",
+      "auditLogs": "Journal d'audit",
       "settings": "Paramètres",
       "subscription": "Abonnement"
+    },
+    "auditLogs": {
+      "title": "Journal d'audit",
+      "count": "Enregistrements",
+      "time": "Heure",
+      "actor": "Utilisateur",
+      "action": "Action",
+      "entity": "Entité",
+      "details": "Détails",
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher par utilisateur, action, entité, id...",
+      "empty": "Aucun audit trouvé."
     },
     "tables": {
       "add": "Ajouter une Table",

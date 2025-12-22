@@ -24,7 +24,9 @@
     "unavailable": "Müsait Değil",
     "station": "İstasyon",
     "allergens": "Alerjenler",
-    "allergensPlaceholder": "örn. gluten, süt, yumurta"
+    "allergensPlaceholder": "örn. gluten, süt, yumurta",
+    "all": "Tümü",
+    "loading": "Yükleniyor..."
   },
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",
@@ -41,6 +43,22 @@
     "removeComplimentary": "İkramı Kaldır",
     "fillSelected": "Seçilen Tutarı Doldur",
     "clearSelection": "Seçimi Temizle"
+  },
+  "audit": {
+    "actions": {
+      "ORDER_CREATED": "Sipariş oluşturuldu",
+      "ORDER_ITEM_STATUS_UPDATED": "Kalem durumu güncellendi",
+      "ORDER_NOTE_UPDATED": "Sipariş notu güncellendi",
+      "PAYMENT_ADDED": "Ödeme eklendi",
+      "ORDER_DISCOUNT_UPDATED": "İndirim güncellendi",
+      "ORDER_ITEM_COMPLIMENTARY_UPDATED": "İkram durumu güncellendi",
+      "ORDER_BILL_REQUESTED": "Hesap istendi",
+      "ORDER_PAYMENT_CONFIRMED": "Ödeme onaylandı",
+      "ORDER_CLOSED": "Sipariş kapatıldı",
+      "ORDER_MOVED": "Sipariş taşındı",
+      "ORDER_TABLE_MERGED": "Masa birleştirildi",
+      "ORDER_TABLE_UNMERGED": "Masa ayrıldı"
+    }
   },
   "auth": {
     "signIn": "Giriş Yap",
@@ -163,8 +181,21 @@
       "users": "Kullanıcı Yönetimi",
       "orderHistory": "Sipariş Geçmişi",
       "reports": "Raporlar",
+      "auditLogs": "Denetim Kaydı",
       "settings": "Ayarlar",
       "subscription": "Abonelik"
+    },
+    "auditLogs": {
+      "title": "Denetim Kaydı",
+      "count": "Kayıt",
+      "time": "Zaman",
+      "actor": "Kullanıcı",
+      "action": "Aksiyon",
+      "entity": "Varlık",
+      "details": "Detay",
+      "search": "Arama",
+      "searchPlaceholder": "Kullanıcı, aksiyon, varlık, id ile ara...",
+      "empty": "Denetim kaydı bulunamadı."
     },
     "tables": {
       "add": "Masa Ekle",

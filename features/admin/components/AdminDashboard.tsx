@@ -17,11 +17,20 @@ import OrderHistory from '../../orders/components/OrderHistory';
 import DailySummary from '../../reports/components/DailySummary';
 
 const SettingsManagement = React.lazy(() => import('./SettingsManagement'));
+const AuditLogsManagement = React.lazy(() => import('./AuditLogsManagement'));
 const SubscriptionManagement = React.lazy(
   () => import('../../subscription/components/SubscriptionManagement'),
 );
 
-type AdminTab = 'tables' | 'menu' | 'users' | 'history' | 'reports' | 'settings' | 'subscription';
+type AdminTab =
+  | 'tables'
+  | 'menu'
+  | 'users'
+  | 'history'
+  | 'reports'
+  | 'auditLogs'
+  | 'settings'
+  | 'subscription';
 
 const AdminDashboard: React.FC = () => {
   const { t } = useLanguage();
@@ -33,6 +42,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'users', labelKey: 'admin.tabs.users', icon: <UsersIcon /> },
     { id: 'history', labelKey: 'admin.tabs.orderHistory', icon: <HistoryIcon /> },
     { id: 'reports', labelKey: 'admin.tabs.reports', icon: <ChartBarIcon /> },
+    { id: 'auditLogs', labelKey: 'admin.tabs.auditLogs', icon: <HistoryIcon /> },
     { id: 'settings', labelKey: 'admin.tabs.settings', icon: <CogIcon /> },
     { id: 'subscription', labelKey: 'admin.tabs.subscription', icon: <CreditCardIcon /> },
   ];
@@ -49,6 +59,8 @@ const AdminDashboard: React.FC = () => {
         return <OrderHistory />;
       case 'reports':
         return <DailySummary />;
+      case 'auditLogs':
+        return <AuditLogsManagement />;
       case 'settings':
         return <SettingsManagement />;
       case 'subscription':
