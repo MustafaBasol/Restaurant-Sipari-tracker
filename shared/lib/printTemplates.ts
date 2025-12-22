@@ -13,6 +13,9 @@ type ReceiptItemLine = {
 type ReceiptTotals = {
   subtotal: number;
   discountAmount: number;
+  serviceChargeAmount?: number;
+  taxAmount?: number;
+  roundingAdjustment?: number;
   total: number;
   paid: number;
   remaining: number;
@@ -72,6 +75,25 @@ export const buildReceiptText = (
   lines.push(formatLine('Ara toplam', money(totals.subtotal, meta.currencySymbol)));
   if (totals.discountAmount > 0) {
     lines.push(formatLine('İndirim', `-${money(totals.discountAmount, meta.currencySymbol)}`));
+  }
+  const serviceChargeAmount = Number.isFinite(totals.serviceChargeAmount)
+    ? (totals.serviceChargeAmount as number)
+    : 0;
+  if (serviceChargeAmount > 0.00001) {
+    lines.push(formatLine('Servis', money(serviceChargeAmount, meta.currencySymbol)));
+  }
+
+  const taxAmount = Number.isFinite(totals.taxAmount) ? (totals.taxAmount as number) : 0;
+  if (taxAmount > 0.00001) {
+    lines.push(formatLine('KDV/Vergi', money(taxAmount, meta.currencySymbol)));
+  }
+
+  const roundingAdjustment = Number.isFinite(totals.roundingAdjustment)
+    ? (totals.roundingAdjustment as number)
+    : 0;
+  if (Math.abs(roundingAdjustment) > 0.00001) {
+    const sign = roundingAdjustment > 0 ? '+' : '';
+    lines.push(formatLine('Yuvarlama', `${sign}${money(roundingAdjustment, meta.currencySymbol)}`));
   }
   lines.push(formatLine('Genel toplam', money(totals.total, meta.currencySymbol)));
   lines.push(formatLine('Ödenen', money(totals.paid, meta.currencySymbol)));

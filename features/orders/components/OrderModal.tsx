@@ -21,10 +21,10 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useMenu } from '../../menu/hooks/useMenu';
 import { Select } from '../../../shared/components/ui/Select';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
+import { calcOrderPricing } from '../../../shared/lib/billing';
 import {
   buildKitchenTicketText,
   buildReceiptText,
-  calcDiscountAmount,
   isPrintableOrderItem,
 } from '../../../shared/lib/printTemplates';
 import { openPrintWindow } from '../../../shared/lib/print';
@@ -103,6 +103,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const currency = authState?.tenant?.currency || 'USD';
   const timezone = authState?.tenant?.timezone || 'UTC';
+  const taxRatePercent = authState?.tenant?.taxRatePercent ?? 0;
+  const serviceChargePercent = authState?.tenant?.serviceChargePercent ?? 0;
+  const roundingIncrement = authState?.tenant?.roundingIncrement ?? 0;
 
   const table = useMemo(
     () => tables.find((t) => t.id === initialTable.id) || initialTable,
@@ -232,8 +235,16 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const billingStatus = activeOrder?.billingStatus ?? BillingStatus.OPEN;
 
-  const orderTotal = useMemo(() => {
-    if (!activeOrder) return 0;
+  const orderPricing = useMemo(() => {
+    if (!activeOrder) {
+      return calcOrderPricing({
+        subtotal: 0,
+        taxRatePercent,
+        serviceChargePercent,
+        roundingIncrement,
+      });
+    }
+
     const subtotal = activeOrder.items
       .filter((i) => i.status !== OrderStatus.CANCELED)
       .reduce((sum, item) => {
@@ -247,15 +258,16 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
         return sum + unit * item.quantity;
       }, 0);
 
-    const discount = activeOrder.discount;
-    if (!discount || !Number.isFinite(discount.value) || discount.value <= 0) return subtotal;
-    const discountAmount =
-      discount.type === DiscountType.PERCENT
-        ? (subtotal * Math.max(0, Math.min(100, discount.value))) / 100
-        : Math.max(0, discount.value);
-    const total = subtotal - Math.min(subtotal, discountAmount);
-    return total > 0 ? total : 0;
-  }, [activeOrder, menuItems]);
+    return calcOrderPricing({
+      subtotal,
+      discount: activeOrder.discount,
+      taxRatePercent,
+      serviceChargePercent,
+      roundingIncrement,
+    });
+  }, [activeOrder, menuItems, taxRatePercent, serviceChargePercent, roundingIncrement]);
+
+  const orderTotal = orderPricing.total;
 
   const paidTotal = useMemo(() => {
     if (!activeOrder?.payments) return 0;
@@ -330,11 +342,17 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
       if (it.isComplimentary) return sum;
       return sum + (Number.isFinite(it.lineTotal as number) ? (it.lineTotal as number) : 0);
     }, 0);
-    const discountAmount = calcDiscountAmount(subtotal, activeOrder.discount);
-    const total = Math.max(0, subtotal - discountAmount);
+
+    const pricing = calcOrderPricing({
+      subtotal,
+      discount: activeOrder.discount,
+      taxRatePercent,
+      serviceChargePercent,
+      roundingIncrement,
+    });
 
     const paid = paidTotal;
-    const remaining = Math.max(0, total - paid);
+    const remaining = Math.max(0, pricing.total - paid);
 
     return buildReceiptText(
       {
@@ -345,7 +363,16 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
         currencySymbol,
       },
       items,
-      { subtotal, discountAmount, total, paid, remaining },
+      {
+        subtotal: pricing.subtotal,
+        discountAmount: pricing.discountAmount,
+        serviceChargeAmount: pricing.serviceChargeAmount,
+        taxAmount: pricing.taxAmount,
+        roundingAdjustment: pricing.roundingAdjustment,
+        total: pricing.total,
+        paid,
+        remaining,
+      },
     );
   };
 
@@ -513,25 +540,51 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const selectedItemSplitTotal = useMemo(() => {
     if (!activeOrder) return 0;
-    const subtotal = selectedItemSplitSubtotal;
-    if (subtotal <= 0) return 0;
+    const selectedSubtotal = selectedItemSplitSubtotal;
+    if (selectedSubtotal <= 0) return 0;
 
+    // First compute selected discounted subtotal (same logic as before), then scale the full grand total.
     const discount = activeOrder.discount;
-    if (!discount || !Number.isFinite(discount.value) || discount.value <= 0) return subtotal;
+    let selectedDiscountedSubtotal = selectedSubtotal;
 
-    if (discount.type === DiscountType.PERCENT) {
-      const pct = Math.max(0, Math.min(100, discount.value));
-      return Math.max(0, subtotal - (subtotal * pct) / 100);
+    if (discount && Number.isFinite(discount.value) && discount.value > 0) {
+      if (discount.type === DiscountType.PERCENT) {
+        const pct = Math.max(0, Math.min(100, discount.value));
+        selectedDiscountedSubtotal = Math.max(0, selectedSubtotal - (selectedSubtotal * pct) / 100);
+      } else {
+        // Amount discount is distributed proportionally across billable subtotal.
+        const fullSubtotal = Math.max(0, fullBillableSubtotal);
+        if (fullSubtotal > 0) {
+          const ratio = Math.max(0, Math.min(1, selectedSubtotal / fullSubtotal));
+          const fullDiscountAmount = Math.max(0, discount.value);
+          const allocated = Math.min(selectedSubtotal, fullDiscountAmount * ratio);
+          selectedDiscountedSubtotal = Math.max(0, selectedSubtotal - allocated);
+        }
+      }
     }
 
-    // Amount discount is distributed proportionally across billable subtotal.
-    const fullSubtotal = Math.max(0, fullBillableSubtotal);
-    if (fullSubtotal <= 0) return subtotal;
-    const ratio = Math.max(0, Math.min(1, subtotal / fullSubtotal));
-    const fullDiscountAmount = Math.max(0, discount.value);
-    const allocated = Math.min(subtotal, fullDiscountAmount * ratio);
-    return Math.max(0, subtotal - allocated);
-  }, [activeOrder, selectedItemSplitSubtotal, fullBillableSubtotal]);
+    const fullPricing = calcOrderPricing({
+      subtotal: fullBillableSubtotal,
+      discount: activeOrder.discount,
+      taxRatePercent,
+      serviceChargePercent,
+      roundingIncrement,
+    });
+
+    const base = Math.max(0, fullPricing.discountedSubtotal);
+    if (base <= 0) return 0;
+    const ratio = Math.max(0, Math.min(1, selectedDiscountedSubtotal / base));
+
+    // Minimal approach: allocate the order grand total proportionally.
+    return Math.max(0, fullPricing.total * ratio);
+  }, [
+    activeOrder,
+    selectedItemSplitSubtotal,
+    fullBillableSubtotal,
+    taxRatePercent,
+    serviceChargePercent,
+    roundingIncrement,
+  ]);
 
   const perPersonAmount = useMemo(() => {
     const count = Math.max(1, Math.floor(splitPeopleCount || 1));
@@ -799,6 +852,46 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                     {formatCurrency(orderTotal, authState?.tenant?.currency || 'USD')}
                   </span>
                 </div>
+
+                {(orderPricing.serviceChargeAmount > 0.00001 ||
+                  orderPricing.taxAmount > 0.00001 ||
+                  Math.abs(orderPricing.roundingAdjustment) > 0.00001) && (
+                  <div className="space-y-1">
+                    {orderPricing.serviceChargeAmount > 0.00001 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-text-secondary">{t('waiter.serviceCharge')}</span>
+                        <span className="font-medium text-text-primary">
+                          {formatCurrency(
+                            orderPricing.serviceChargeAmount,
+                            authState?.tenant?.currency || 'USD',
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {orderPricing.taxAmount > 0.00001 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-text-secondary">{t('waiter.tax')}</span>
+                        <span className="font-medium text-text-primary">
+                          {formatCurrency(
+                            orderPricing.taxAmount,
+                            authState?.tenant?.currency || 'USD',
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {Math.abs(orderPricing.roundingAdjustment) > 0.00001 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-text-secondary">{t('waiter.rounding')}</span>
+                        <span className="font-medium text-text-primary">
+                          {formatCurrency(
+                            orderPricing.roundingAdjustment,
+                            authState?.tenant?.currency || 'USD',
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-secondary">{t('waiter.paid')}</span>
                   <span className="font-medium text-text-primary">

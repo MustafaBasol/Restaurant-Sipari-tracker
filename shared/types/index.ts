@@ -107,6 +107,9 @@ export interface Tenant {
   trialStartAt?: Date;
   trialEndAt?: Date;
   printConfig?: TenantPrintConfig;
+  taxRatePercent?: number;
+  serviceChargePercent?: number;
+  roundingIncrement?: number;
 }
 
 export interface User {

@@ -99,6 +99,9 @@
     "customerName": "Customer Name",
     "tableNote": "Table Note",
     "payment": "Payment",
+    "serviceCharge": "Service",
+    "tax": "Tax",
+    "rounding": "Rounding",
     "billingFlow": "Billing Flow",
     "billingStatuses": {
       "open": "Open",
@@ -222,6 +225,11 @@
       },
       "printServerUrl": "Print Server URL",
       "printServerUrlHelp": "Example: http://localhost:4243 (leave empty to use browser print)",
+      "pricing": "Pricing",
+      "taxRatePercent": "Tax rate (%)",
+      "serviceChargePercent": "Service charge (%)",
+      "roundingIncrement": "Rounding increment",
+      "roundingIncrementHelp": "0 = no rounding. Examples: 0.05 (to nearest 5 cents), 0.1, 1",
       "saveSuccess": "Settings updated successfully!"
     }
   },

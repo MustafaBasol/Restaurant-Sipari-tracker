@@ -141,7 +141,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [x] Split bill (kalem bazlı bölme + kısmi/karma ödeme)
   - Not: “Kalem Bazlı Bölme” ile seçilen kalemlerin tutarı hesaplanıp ödeme alanına doldurulabiliyor.
   - Not: kişi sayısı girip “kişi başı tutar” hesaplayan yardımcı alan da mevcut.
-- [ ] Vergi/KDV/servis bedeli/yuvarlama kuralları
+- [x] Vergi/KDV/servis bedeli/yuvarlama kuralları
 
 **Menü modeli (ürün seçenekleri)**
 
@@ -314,3 +314,34 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 **Teknik not (demo)**
 
 - Bu adım, ödeme satırlarını kalemlere “kilitleyen” bir allocation modeli değil; hızlı ödeme alma için **hesaplama + doldurma** kolaylığı sağlar.
+
+### 8.5 P0 — Vergi/KDV/servis bedeli/yuvarlama kuralları
+
+**Amaç**
+
+- Restoranın işletme gerçeklerine göre; indirim sonrası tutara **servis bedeli**, servis dahil tutara **KDV/Vergi** ekleyebilmesi.
+- Toplamı belirli bir adımda **yuvarlama** (örn. 0.05) yapabilmesi.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → Ayarlar ekranında **Fiyatlandırma** bölümünde:
+  - **KDV/Vergi oranı (%)**
+  - **Servis bedeli (%)**
+  - **Yuvarlama adımı** (0 = kapalı; örnek: 0.05)
+    değerlerini belirle.
+
+**Kullanım (Garson / WAITER)**
+
+- Sipariş ekranında toplam hesaplama artık şu sırayı izler:
+  1. Ara toplam (ikram ve iptal hariç)
+  2. İndirim
+  3. Servis bedeli
+  4. KDV/Vergi
+  5. Yuvarlama
+- Ödeme panelinde (varsa) servis/KDV/yuvarlama kırılımı gösterilir.
+- Fiş/adisyon çıktısında servis/KDV/yuvarlama satırları (varsa) görünür.
+
+**Teknik not (demo)**
+
+- Tenant seviyesinde 3 yeni ayar kullanılır: `taxRatePercent`, `serviceChargePercent`, `roundingIncrement`.
+- Hesaplama akışı `shared/lib/billing.ts` içindeki `calcOrderPricing()` ile tek noktada tutulur ve hem UI toplamlarında hem fiş çıktısında kullanılır.

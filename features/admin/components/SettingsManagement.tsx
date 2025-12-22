@@ -29,6 +29,14 @@ const SettingsManagement: React.FC = () => {
     }
   }, [authState?.tenant]);
 
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const parsed = value === '' ? undefined : Number(value);
+    setSettings((prev) =>
+      prev ? { ...prev, [name]: Number.isFinite(parsed) ? parsed : undefined } : null,
+    );
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSettings((prev) => (prev ? { ...prev, [name]: value } : null));
@@ -86,6 +94,9 @@ const SettingsManagement: React.FC = () => {
 
   const printMode = settings.printConfig?.mode ?? 'browser';
   const printServerUrl = settings.printConfig?.serverUrl ?? '';
+  const taxRatePercent = settings.taxRatePercent ?? 0;
+  const serviceChargePercent = settings.serviceChargePercent ?? 0;
+  const roundingIncrement = settings.roundingIncrement ?? 0;
 
   return (
     <Card>
@@ -157,6 +168,53 @@ const SettingsManagement: React.FC = () => {
               </p>
             </div>
           )}
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-text-primary mb-3">
+            {t('admin.settings.pricing')}
+          </h3>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                {t('admin.settings.taxRatePercent')}
+              </label>
+              <Input
+                name="taxRatePercent"
+                value={String(taxRatePercent)}
+                onChange={handleNumberChange}
+                inputMode="decimal"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                {t('admin.settings.serviceChargePercent')}
+              </label>
+              <Input
+                name="serviceChargePercent"
+                value={String(serviceChargePercent)}
+                onChange={handleNumberChange}
+                inputMode="decimal"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                {t('admin.settings.roundingIncrement')}
+              </label>
+              <Input
+                name="roundingIncrement"
+                value={String(roundingIncrement)}
+                onChange={handleNumberChange}
+                inputMode="decimal"
+              />
+              <p className="text-xs text-text-secondary mt-2">
+                {t('admin.settings.roundingIncrementHelp')}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

@@ -99,6 +99,9 @@
     "customerName": "Nom du Client",
     "tableNote": "Note de Table",
     "payment": "Paiement",
+    "serviceCharge": "Service",
+    "tax": "Taxe",
+    "rounding": "Arrondi",
     "billingFlow": "Flux de facturation",
     "billingStatuses": {
       "open": "Ouvert",
@@ -234,6 +237,11 @@
       },
       "printServerUrl": "URL du serveur d'impression",
       "printServerUrlHelp": "Exemple : http://localhost:4243 (laisser vide pour utiliser l'impression navigateur)",
+      "pricing": "Tarification",
+      "taxRatePercent": "Taux de taxe (%)",
+      "serviceChargePercent": "Frais de service (%)",
+      "roundingIncrement": "Incrément d'arrondi",
+      "roundingIncrementHelp": "0 = pas d'arrondi. Exemples : 0,05 (au 5 centimes), 0,1, 1",
       "saveSuccess": "Paramètres mis à jour avec succès !"
     }
   },

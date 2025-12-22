@@ -99,6 +99,9 @@
     "customerName": "Müşteri Adı",
     "tableNote": "Masa Notu",
     "payment": "Ödeme",
+    "serviceCharge": "Servis",
+    "tax": "KDV/Vergi",
+    "rounding": "Yuvarlama",
     "billingFlow": "Adisyon Akışı",
     "billingStatuses": {
       "open": "Açık",
@@ -222,6 +225,11 @@
       },
       "printServerUrl": "Print Server URL",
       "printServerUrlHelp": "Örn: http://localhost:4243 (boş bırakılırsa tarayıcı yazdırma kullanılır)",
+      "pricing": "Fiyatlandırma",
+      "taxRatePercent": "KDV/Vergi oranı (%)",
+      "serviceChargePercent": "Servis bedeli (%)",
+      "roundingIncrement": "Yuvarlama adımı",
+      "roundingIncrementHelp": "0 = yuvarlama yok. Örnekler: 0.05 (en yakın 5 kuruş), 0.1, 1",
       "saveSuccess": "Ayarlar başarıyla güncellendi!"
     }
   },
