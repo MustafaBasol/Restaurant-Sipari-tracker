@@ -32,6 +32,8 @@ export interface MenuItem {
   description: string;
   price: number;
   isAvailable: boolean;
+  /** If set, this menu item represents a bundle / set menu composed of other menu items. */
+  bundleItemIds?: string[];
   station?: KitchenStation;
   variants?: MenuItemVariant[];
   modifiers?: MenuItemModifier[];

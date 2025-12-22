@@ -148,7 +148,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [x] Modifier/opsiyon: ürün opsiyonları + fiyat farkı
 - [x] Porsiyon/variant: variant seçimi + variant fiyatı
 - [x] Alerjen bilgisi: menüde gösterim
-- [ ] Kampanya/menü seti (bundle) modeli
+- [x] Kampanya/menü seti (bundle) modeli
 
 **Mutfak operasyonu**
 
@@ -454,3 +454,27 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 
 - Sipariş yaşı `order.createdAt` üzerinden dakika bazında hesaplanır.
 - Demo için sabit bir eşik kullanılır (ör. 7 dk). Ekran, yaş bilgisini periyodik “tick” ile güncel tutar.
+
+### 8.11 P0 — Kampanya/menü seti (bundle) modeli
+
+**Amaç**
+
+- Birden fazla ürünü “set menü / bundle” olarak tek bir menü öğesi gibi satabilmek.
+- Garsonun tek kalem ekleyerek set menüyü siparişe alabilmesi.
+- Operasyonel kural: set menü içeriğinde tükendi ürün varsa siparişe eklenememesi.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → Menü yönetiminde bir ürünü **Menü seti (bundle)** olarak işaretle.
+- “Set içeriği” bölümünden set menünün içine girecek ürünleri seç.
+
+**Kullanım (Garson / WAITER)**
+
+- Menüde set menüler “Bundle/Menü seti” etiketiyle görünür.
+- Set içeriğindeki ürünlerden biri tükendiyse, set menü **eklenemez**.
+
+**Teknik not (demo)**
+
+- Menü öğesinde `bundleItemIds?: string[]` tutulur.
+- UI tarafında set menü siparişe eklenirken, bundle içeriğindeki ürünlerin uygunluğu kontrol edilir.
+- Mock backend tarafında da sipariş oluşturma sırasında aynı kontrol yapılır (UI bypass edilse bile).

@@ -23,6 +23,7 @@
     "available": "Available",
     "unavailable": "Unavailable",
     "outOfStock": "Out of stock",
+    "bundle": "Bundle",
     "station": "Station",
     "allergens": "Allergens",
     "allergensPlaceholder": "e.g. gluten, dairy, egg",
@@ -233,7 +234,10 @@
       "categoryName": "Category Name",
       "addItem": "Add Menu Item",
       "editItem": "Edit Menu Item",
-      "itemName": "Menu Item Name"
+      "itemName": "Menu Item Name",
+      "bundle": "Bundle / set menu",
+      "bundleItems": "Bundle items",
+      "bundleSelectHint": "Select at least one item."
     },
     "users": {
       "add": "Add User",

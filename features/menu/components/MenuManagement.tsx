@@ -307,6 +307,7 @@ const MenuManagement: React.FC = () => {
     price: 0,
     categoryId: '',
     isAvailable: true,
+    bundleItemIds: undefined,
     station: KitchenStation.HOT,
     variants: [],
     modifiers: [],
@@ -352,6 +353,7 @@ const MenuManagement: React.FC = () => {
         price: 0,
         categoryId: '',
         isAvailable: true,
+        bundleItemIds: undefined,
         station: KitchenStation.HOT,
         variants: [],
         modifiers: [],
@@ -504,6 +506,63 @@ const MenuManagement: React.FC = () => {
             />
           </div>
 
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+              <input
+                type="checkbox"
+                checked={newMenuItem.bundleItemIds !== undefined}
+                onChange={(e) =>
+                  setNewMenuItem((p) => ({
+                    ...p,
+                    bundleItemIds: e.target.checked ? [] : undefined,
+                  }))
+                }
+              />
+              {t('admin.menu.bundle')}
+            </label>
+            {newMenuItem.bundleItemIds !== undefined && (
+              <div className="bg-gray-100 p-3 rounded-lg space-y-2">
+                <p className="text-sm font-medium text-text-secondary">
+                  {t('admin.menu.bundleItems')}
+                </p>
+                <div className="max-h-40 overflow-auto space-y-1">
+                  {menuItems
+                    .filter((mi) => mi.bundleItemIds === undefined)
+                    .map((mi) => {
+                      const checked = (newMenuItem.bundleItemIds ?? []).includes(mi.id);
+                      return (
+                        <label key={mi.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const nextChecked = e.target.checked;
+                              setNewMenuItem((p) => {
+                                const current = Array.isArray(p.bundleItemIds)
+                                  ? p.bundleItemIds
+                                  : [];
+                                const next = nextChecked
+                                  ? Array.from(new Set([...current, mi.id]))
+                                  : current.filter((id) => id !== mi.id);
+                                return { ...p, bundleItemIds: next };
+                              });
+                            }}
+                          />
+                          <span className="text-text-primary">{mi.name}</span>
+                          <span className="text-xs text-text-secondary">
+                            ({formatCurrency(mi.price, currency)})
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+                {(newMenuItem.bundleItemIds ?? []).length === 0 && (
+                  <p className="text-xs text-text-secondary">{t('admin.menu.bundleSelectHint')}</p>
+                )}
+              </div>
+            )}
+          </div>
+
           <VariantsEditor
             variants={normalizeVariants(newMenuItem.variants)}
             currency={currency}
@@ -530,6 +589,17 @@ const MenuManagement: React.FC = () => {
                   <p className="text-text-secondary text-xs">
                     {item.description} - {formatCurrency(item.price, currency)}
                   </p>
+                  {item.bundleItemIds !== undefined && (
+                    <p className="text-text-secondary text-xs">
+                      <span className="font-medium">{t('general.bundle')}</span>
+                      {Array.isArray(item.bundleItemIds) && item.bundleItemIds.length > 0
+                        ? ` • ${item.bundleItemIds
+                            .map((id) => menuItems.find((mi) => mi.id === id)?.name)
+                            .filter(Boolean)
+                            .join(', ')}`
+                        : ''}
+                    </p>
+                  )}
                   {item.station && (
                     <p className="text-text-secondary text-xs">
                       {t('general.station')}: {t(`kitchen.stations.${item.station.toLowerCase()}`)}
@@ -656,6 +726,67 @@ const MenuManagement: React.FC = () => {
                         placeholder={t('general.allergensPlaceholder')}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={editDraft.bundleItemIds !== undefined}
+                        onChange={(e) =>
+                          setEditDraft((p) =>
+                            p ? { ...p, bundleItemIds: e.target.checked ? [] : undefined } : p,
+                          )
+                        }
+                      />
+                      {t('admin.menu.bundle')}
+                    </label>
+                    {editDraft.bundleItemIds !== undefined && (
+                      <div className="bg-gray-100 p-3 rounded-lg space-y-2">
+                        <p className="text-sm font-medium text-text-secondary">
+                          {t('admin.menu.bundleItems')}
+                        </p>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                          {menuItems
+                            .filter(
+                              (mi) => mi.id !== editDraft.id && mi.bundleItemIds === undefined,
+                            )
+                            .map((mi) => {
+                              const checked = (editDraft.bundleItemIds ?? []).includes(mi.id);
+                              return (
+                                <label key={mi.id} className="flex items-center gap-2 text-sm">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const nextChecked = e.target.checked;
+                                      setEditDraft((p) => {
+                                        if (!p) return p;
+                                        const current = Array.isArray(p.bundleItemIds)
+                                          ? p.bundleItemIds
+                                          : [];
+                                        const next = nextChecked
+                                          ? Array.from(new Set([...current, mi.id]))
+                                          : current.filter((id) => id !== mi.id);
+                                        return { ...p, bundleItemIds: next };
+                                      });
+                                    }}
+                                  />
+                                  <span className="text-text-primary">{mi.name}</span>
+                                  <span className="text-xs text-text-secondary">
+                                    ({formatCurrency(mi.price, currency)})
+                                  </span>
+                                </label>
+                              );
+                            })}
+                        </div>
+                        {(editDraft.bundleItemIds ?? []).length === 0 && (
+                          <p className="text-xs text-text-secondary">
+                            {t('admin.menu.bundleSelectHint')}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <VariantsEditor

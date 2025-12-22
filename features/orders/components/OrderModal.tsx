@@ -171,9 +171,19 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   };
 
   const handleAddItem = (menuItem: MenuItem) => {
-    if (menuItem.isAvailable === false) {
-      return;
-    }
+    const bundleItemIds = Array.isArray((menuItem as any).bundleItemIds)
+      ? ((menuItem as any).bundleItemIds as string[])
+      : undefined;
+    const isBundle = (menuItem as any).bundleItemIds !== undefined;
+    const bundleItems = bundleItemIds
+      ? bundleItemIds.map((id) => menuItems.find((mi) => mi.id === id)).filter(Boolean)
+      : [];
+    const isOrderable =
+      menuItem.isAvailable !== false &&
+      (!isBundle ||
+        (bundleItems.length > 0 && bundleItems.every((mi) => mi!.isAvailable !== false)));
+    if (!isOrderable) return;
+
     const variants = Array.isArray((menuItem as any).variants) ? (menuItem as any).variants : [];
     const defaultVariantId = variants.length > 0 ? variants[0]?.id : undefined;
     const newEntry: TempOrderItem = {

@@ -29,6 +29,7 @@
     "available": "Müsait",
     "unavailable": "Müsait Değil",
     "outOfStock": "Tükendi",
+    "bundle": "Menü seti",
     "station": "İstasyon",
     "allergens": "Alerjenler",
     "allergensPlaceholder": "örn. gluten, süt, yumurta",
@@ -239,7 +240,10 @@
       "categoryName": "Kategori Adı",
       "addItem": "Menü Öğesi Ekle",
       "editItem": "Menü Öğesini Düzenle",
-      "itemName": "Menü Öğesi Adı"
+      "itemName": "Menü Öğesi Adı",
+      "bundle": "Menü seti",
+      "bundleItems": "Set içeriği",
+      "bundleSelectHint": "En az bir ürün seçin."
     },
     "users": {
       "add": "Kullanıcı Ekle",

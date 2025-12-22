@@ -283,6 +283,17 @@ const seedData: MockDB = {
       ],
     },
     {
+      id: 'item_bundle1',
+      tenantId: 't1',
+      categoryId: 'cat2',
+      name: 'Lunch Set',
+      station: KitchenStation.HOT,
+      description: 'A simple set menu (bundle).',
+      price: 25.0,
+      isAvailable: true,
+      bundleItemIds: ['item1', 'item4'],
+    },
+    {
       id: 'item6',
       tenantId: 't1',
       categoryId: 'cat3',
@@ -1043,7 +1054,21 @@ export const internalCreateOrder = async (
     if (!menuItem) {
       throw new Error('Menu item not found');
     }
-    if (menuItem.isAvailable === false) {
+
+    const isBundle = (menuItem as any).bundleItemIds !== undefined;
+    const bundleItemIds = Array.isArray((menuItem as any).bundleItemIds)
+      ? ((menuItem as any).bundleItemIds as string[])
+      : undefined;
+    const bundleItems = bundleItemIds
+      ? bundleItemIds.map((id) => db.menuItems.find((mi) => mi.id === id)).filter(Boolean)
+      : [];
+
+    const isOrderable =
+      menuItem.isAvailable !== false &&
+      (!isBundle ||
+        (bundleItems.length > 0 && bundleItems.every((mi) => mi!.isAvailable !== false)));
+
+    if (!isOrderable) {
       throw new Error('Menu item is out of stock');
     }
   }
