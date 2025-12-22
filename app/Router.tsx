@@ -95,8 +95,12 @@ const AppRoutes: React.FC = () => {
         (authState.tenant ? isSubscriptionActive(authState.tenant) : false);
 
       if (subscriptionIsActive) {
-        // Logged-in + active: allow legal pages; otherwise force /app
-        if (!canAccessLegalPage && !currentHash.startsWith('#/app')) {
+        // Logged-in + active: allow legal pages and checkout; otherwise force /app
+        if (
+          !canAccessLegalPage &&
+          !currentHash.startsWith('#/app') &&
+          !currentHash.startsWith('#/checkout')
+        ) {
           next = '#/app';
         }
       } else {
@@ -154,6 +158,7 @@ const AppRoutes: React.FC = () => {
     }
 
     if (subscriptionIsActive) {
+      if (currentHash.startsWith('#/checkout')) return <CheckoutPage />;
       return authState.user.role === UserRole.SUPER_ADMIN ? (
         <SuperAdminDashboard />
       ) : (
