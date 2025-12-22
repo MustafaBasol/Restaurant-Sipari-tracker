@@ -64,7 +64,14 @@
       "email": "E-posta",
       "createdAt": "Kayıt tarihi",
       "lastOrderAt": "Son sipariş"
-    }
+    },
+    "waiter": "Garson",
+    "closedAt": "Kapanış",
+    "billingStatus": "Hesap",
+    "subtotal": "Ara toplam",
+    "paymentsTitle": "Ödemeler",
+    "paidLabel": "Ödenen",
+    "remainingLabel": "Kalan"
   },
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",

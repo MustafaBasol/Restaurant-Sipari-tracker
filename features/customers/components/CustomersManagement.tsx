@@ -173,7 +173,21 @@ const CustomersManagement: React.FC = () => {
           isOpen={true}
           onClose={() => setSelectedCustomer(null)}
           customer={selectedCustomer}
-          orders={(ordersByCustomerId.get(selectedCustomer.id) as any[]) ?? []}
+          orders={(() => {
+            const byId = (ordersByCustomerId.get(selectedCustomer.id) as any[]) ?? [];
+            const legacy = (orders ?? []).filter(
+              (o: any) => o.customerName && o.customerName === selectedCustomer.fullName,
+            );
+
+            const seen = new Set<string>();
+            const combined: any[] = [];
+            for (const o of [...byId, ...legacy]) {
+              if (!o?.id || seen.has(o.id)) continue;
+              seen.add(o.id);
+              combined.push(o);
+            }
+            return combined;
+          })()}
           onUpdateCustomer={async (updates) => {
             const updated = await updateCustomer({
               ...selectedCustomer,
