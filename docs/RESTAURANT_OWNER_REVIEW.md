@@ -137,7 +137,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [x] İndirim: yüzde/tutar indirim mevcut
 - [x] İkram: kalem bazlı ikram (complimentary) mevcut
 - [x] Kapatma kuralı: adisyon kapatma **SERVED** + **ödeme PAID** şartına bağlı
-- [ ] “Hesabı al / ödeme alındı” gibi ayrı bir adım/durum akışı (UI state machine)
+- [x] “Hesabı al / ödeme alındı” gibi ayrı bir adım/durum akışı (UI state machine)
 - [ ] Split bill (kalem bazlı bölme / kişi bazlı gerçek paylaşım / kısmi kapama)
   - Not: kişi sayısı girip “kişi başı tutar” hesaplayan bir yardımcı alan var; ancak kalem bazlı bölme yok.
 - [ ] Vergi/KDV/servis bedeli/yuvarlama kuralları
@@ -274,3 +274,25 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - Client cache, son bildiği server sayacını saklar.
 - Online dönüşte sayaç değişmişse “server offline sürede değişti” olarak işaretlenir ve outbox **LWW (last-write-wins) replay** ile uygulanır.
 - Bu durumlar `kitchorify-sync-conflicts:<deviceId>` listesine yazılır (demo amaçlı).
+
+### 8.3 P0 — Adisyon akışı (Hesabı al → Ödeme alındı → Kapat)
+
+**Amaç**
+
+- Masayı kapatmadan önce işletme gerçeklerine uygun şekilde “hesabı al” ve “ödeme alındı” adımlarını ayrı bir durum akışı olarak yönetmek.
+
+**Kullanım (Garson / ADMIN)**
+
+- Sipariş ekranında **“Adisyon Akışı”** kutusunda:
+  - **Hesabı Al**: adisyonu “hesap istendi” durumuna alır.
+  - **Ödeme Alındı**: yalnızca ödeme toplamı adisyon toplamını karşıladığında aktifleşir; bu aksiyon sonrası “ödeme onaylandı” durumuna geçer.
+- **Masayı Kapat** butonu, artık sadece:
+  - tüm kalemler **SERVED/CANCELED** ve
+  - ödeme matematiksel olarak **tam** ve
+  - adisyon durumu **PAID (Ödeme onaylandı)**
+    şartları sağlandığında aktif olur.
+
+**Teknik not (demo)**
+
+- `Order.billingStatus` ile kaba bir state machine eklendi: `OPEN` → `BILL_REQUESTED` → `PAID`.
+- Aksiyonlar audit log’a yazılır: `ORDER_BILL_REQUESTED`, `ORDER_PAYMENT_CONFIRMED`.

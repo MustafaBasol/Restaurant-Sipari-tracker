@@ -29,6 +29,8 @@
   "actions": {
     "markAsServed": "Mark as Served",
     "closeTable": "Close Table",
+    "requestBill": "Request Bill",
+    "confirmPayment": "Payment Received",
     "cancelItem": "Cancel Item",
     "addPayment": "Add Payment",
     "printReceipt": "Print Receipt",
@@ -95,6 +97,12 @@
     "customerName": "Customer Name",
     "tableNote": "Table Note",
     "payment": "Payment",
+    "billingFlow": "Billing Flow",
+    "billingStatuses": {
+      "open": "Open",
+      "billRequested": "Bill Requested",
+      "paid": "Payment Confirmed"
+    },
     "paid": "Paid",
     "remaining": "Remaining",
     "paymentMethod": "Payment method",

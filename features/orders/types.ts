@@ -1,4 +1,10 @@
-import { DiscountType, OrderStatus, PaymentMethod, PaymentStatus } from '../../shared/types';
+import {
+  BillingStatus,
+  DiscountType,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+} from '../../shared/types';
 
 export interface PaymentLine {
   id: string;
@@ -38,6 +44,11 @@ export interface Order {
   discount?: OrderDiscount;
   payments?: PaymentLine[];
   paymentStatus?: PaymentStatus;
+  billingStatus?: BillingStatus;
+  billRequestedAt?: Date;
+  billRequestedByUserId?: string;
+  paymentConfirmedAt?: Date;
+  paymentConfirmedByUserId?: string;
   createdAt: Date;
   updatedAt: Date;
   note?: string;

@@ -29,6 +29,8 @@
   "actions": {
     "markAsServed": "Marquer comme Servi",
     "closeTable": "Fermer la Table",
+    "requestBill": "Demander l’addition",
+    "confirmPayment": "Paiement reçu",
     "cancelItem": "Annuler l'article",
     "addPayment": "Ajouter un Paiement",
     "printReceipt": "Imprimer l'addition",
@@ -95,6 +97,12 @@
     "customerName": "Nom du Client",
     "tableNote": "Note de Table",
     "payment": "Paiement",
+    "billingFlow": "Flux de facturation",
+    "billingStatuses": {
+      "open": "Ouvert",
+      "billRequested": "Addition demandée",
+      "paid": "Paiement confirmé"
+    },
     "paid": "Payé",
     "remaining": "Restant",
     "paymentMethod": "Méthode de paiement",

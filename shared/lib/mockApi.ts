@@ -8,6 +8,7 @@ import {
   KitchenStation,
   PaymentMethod,
   PaymentStatus,
+  BillingStatus,
   DiscountType,
   AuditLog,
   AuditAction,
@@ -59,6 +60,8 @@ type OutboxItem = {
     | 'internalCloseOrder'
     | 'internalUpdateOrderNote'
     | 'internalAddOrderPayment'
+    | 'internalRequestOrderBill'
+    | 'internalConfirmOrderPayment'
     | 'internalSetOrderDiscount'
     | 'internalSetOrderItemComplimentary'
     | 'internalMoveOrderToTable'
@@ -382,6 +385,8 @@ const initializeDB = () => {
         createdAt: new Date(o.createdAt),
         updatedAt: new Date(o.updatedAt),
         orderClosedAt: o.orderClosedAt ? new Date(o.orderClosedAt) : undefined,
+        billRequestedAt: o.billRequestedAt ? new Date(o.billRequestedAt) : undefined,
+        paymentConfirmedAt: o.paymentConfirmedAt ? new Date(o.paymentConfirmedAt) : undefined,
         discount: o.discount
           ? {
               ...o.discount,
@@ -874,6 +879,7 @@ export const internalCreateOrder = async (
       })),
       payments: [],
       paymentStatus: PaymentStatus.UNPAID,
+      billingStatus: BillingStatus.OPEN,
       createdAt: new Date(),
       updatedAt: new Date(),
       waiterId: waiter?.id,
@@ -910,6 +916,104 @@ export const internalCreateOrder = async (
       createdAt: new Date().toISOString(),
       op: 'internalCreateOrder',
       args: [tenantId, tableId, items, waiterId, note],
+    });
+  }
+  return cloneOrder(order);
+};
+
+export const internalRequestOrderBill = async (
+  orderId: string,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to request bill');
+  }
+
+  // Default for older orders
+  if (!order.billingStatus) order.billingStatus = BillingStatus.OPEN;
+  if (order.status === OrderStatus.CLOSED)
+    throw new Error('Cannot request bill for a closed order');
+
+  order.billingStatus = BillingStatus.BILL_REQUESTED;
+  order.billRequestedAt = new Date();
+  order.billRequestedByUserId = actor.userId;
+  order.updatedAt = new Date();
+
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.ORDER_BILL_REQUESTED,
+    AuditEntityType.ORDER,
+    orderId,
+    { tableId: order.tableId },
+  );
+
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+  saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalRequestOrderBill',
+      args: [orderId, actor],
+    });
+  }
+  return cloneOrder(order);
+};
+
+export const internalConfirmOrderPayment = async (
+  orderId: string,
+  actor: Actor,
+): Promise<Order | undefined> => {
+  await simulateDelay();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return undefined;
+
+  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
+    throw new Error('Not authorized to confirm payment');
+  }
+
+  if (!order.billingStatus) order.billingStatus = BillingStatus.OPEN;
+  if (order.status === OrderStatus.CLOSED)
+    throw new Error('Cannot confirm payment for a closed order');
+
+  updatePaymentStatus(order);
+  if (order.paymentStatus !== PaymentStatus.PAID) {
+    throw new Error('Cannot confirm payment when payment is not complete');
+  }
+
+  order.billingStatus = BillingStatus.PAID;
+  order.paymentConfirmedAt = new Date();
+  order.paymentConfirmedByUserId = actor.userId;
+  order.updatedAt = new Date();
+
+  writeAuditLog(
+    order.tenantId,
+    actor,
+    AuditAction.ORDER_PAYMENT_CONFIRMED,
+    AuditEntityType.ORDER,
+    orderId,
+    { tableId: order.tableId },
+  );
+
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+  saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalConfirmOrderPayment',
+      args: [orderId, actor],
     });
   }
   return cloneOrder(order);
@@ -1332,7 +1436,13 @@ export const internalCloseOrder = async (
     }
 
     updatePaymentStatus(order);
-    if (order.status === OrderStatus.SERVED && order.paymentStatus === PaymentStatus.PAID) {
+    if (!order.billingStatus) order.billingStatus = BillingStatus.OPEN;
+
+    if (
+      order.status === OrderStatus.SERVED &&
+      order.paymentStatus === PaymentStatus.PAID &&
+      order.billingStatus === BillingStatus.PAID
+    ) {
       order.status = OrderStatus.CLOSED;
       order.orderClosedAt = new Date();
       order.updatedAt = new Date();
@@ -1745,6 +1855,16 @@ export const flushOutbox = async (): Promise<{
             item.args[2] as number,
             item.args[3] as any,
           );
+          break;
+        }
+
+        case 'internalRequestOrderBill': {
+          await internalRequestOrderBill(item.args[0] as string, item.args[1] as any);
+          break;
+        }
+
+        case 'internalConfirmOrderPayment': {
+          await internalConfirmOrderPayment(item.args[0] as string, item.args[1] as any);
           break;
         }
         case 'internalSetOrderDiscount': {

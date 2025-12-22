@@ -29,6 +29,8 @@
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",
     "closeTable": "Masayı Kapat",
+    "requestBill": "Hesabı Al",
+    "confirmPayment": "Ödeme Alındı",
     "cancelItem": "Ürünü İptal Et",
     "addPayment": "Ödeme Ekle",
     "printReceipt": "Adisyon Yazdır",
@@ -95,6 +97,12 @@
     "customerName": "Müşteri Adı",
     "tableNote": "Masa Notu",
     "payment": "Ödeme",
+    "billingFlow": "Adisyon Akışı",
+    "billingStatuses": {
+      "open": "Açık",
+      "billRequested": "Hesap İstendi",
+      "paid": "Ödeme Onaylandı"
+    },
     "paid": "Ödendi",
     "remaining": "Kalan",
     "paymentMethod": "Ödeme yöntemi",

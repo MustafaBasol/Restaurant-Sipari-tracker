@@ -1,6 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
-import { DiscountType, OrderStatus, PaymentMethod, UserRole } from '../../../shared/types';
+import {
+  BillingStatus,
+  DiscountType,
+  OrderStatus,
+  PaymentMethod,
+  UserRole,
+} from '../../../shared/types';
 import { Table } from '../../tables/types';
 import { useTables } from '../../tables/hooks/useTables';
 import { MenuItem } from '../../menu/types';
@@ -84,6 +90,8 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     closeOrder,
     updateOrderNote,
     addOrderPayment,
+    requestOrderBill,
+    confirmOrderPayment,
     setOrderDiscount,
     moveOrderToTable,
     mergeOrderWithTable,
@@ -221,6 +229,8 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     activeOrder.items.every(
       (i) => i.status === OrderStatus.SERVED || i.status === OrderStatus.CANCELED,
     );
+
+  const billingStatus = activeOrder?.billingStatus ?? BillingStatus.OPEN;
 
   const orderTotal = useMemo(() => {
     if (!activeOrder) return 0;
@@ -448,6 +458,8 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     return remainingTotal <= 0.00001;
   }, [remainingTotal]);
 
+  const isBillingPaid = billingStatus === BillingStatus.PAID;
+
   const canManagePayment =
     authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
 
@@ -479,6 +491,16 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     if (!Number.isFinite(amount) || amount <= 0) return;
     await addOrderPayment(activeOrder.id, paymentMethod, amount);
     setPaymentAmount('');
+  };
+
+  const handleRequestBill = async () => {
+    if (!activeOrder || !canManagePayment) return;
+    await requestOrderBill(activeOrder.id);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!activeOrder || !canManagePayment) return;
+    await confirmOrderPayment(activeOrder.id);
   };
 
   const handleApplyDiscount = async () => {
@@ -784,6 +806,39 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                     <div className="rounded-lg border border-border-color p-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-medium text-text-secondary">
+                          {t('waiter.billingFlow')}
+                        </span>
+                        <span className="text-xs text-text-secondary">
+                          {billingStatus === BillingStatus.OPEN
+                            ? t('waiter.billingStatuses.open')
+                            : billingStatus === BillingStatus.BILL_REQUESTED
+                              ? t('waiter.billingStatuses.billRequested')
+                              : t('waiter.billingStatuses.paid')}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          onClick={handleRequestBill}
+                          className="px-4"
+                          variant="secondary"
+                          disabled={!activeOrder || billingStatus === BillingStatus.PAID}
+                        >
+                          {t('actions.requestBill')}
+                        </Button>
+                        <Button
+                          onClick={handleConfirmPayment}
+                          className="px-4"
+                          disabled={!activeOrder || !isPaymentComplete || isBillingPaid}
+                        >
+                          {t('actions.confirmPayment')}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border-color p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-text-secondary">
                           {t('waiter.splitBill')}
                         </span>
                         <div className="flex items-center gap-2">
@@ -861,7 +916,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
               <Button
                 onClick={handleCloseTable}
                 className="w-full bg-status-closed hover:opacity-90"
-                disabled={!isPaymentComplete || !canManagePayment}
+                disabled={!isPaymentComplete || !isBillingPaid || !canManagePayment}
               >
                 {t('actions.closeTable')}
               </Button>

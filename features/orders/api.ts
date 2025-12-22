@@ -7,6 +7,8 @@ import {
   internalCloseOrder,
   internalUpdateOrderNote,
   internalAddOrderPayment,
+  internalRequestOrderBill,
+  internalConfirmOrderPayment,
   internalSetOrderDiscount,
   internalSetOrderItemComplimentary,
   internalMoveOrderToTable,
@@ -58,6 +60,12 @@ export const addOrderPayment = (
   amount: number,
   actor: Actor,
 ) => internalAddOrderPayment(orderId, method, amount, actor);
+
+export const requestOrderBill = (orderId: string, actor: Actor) =>
+  internalRequestOrderBill(orderId, actor);
+
+export const confirmOrderPayment = (orderId: string, actor: Actor) =>
+  internalConfirmOrderPayment(orderId, actor);
 
 export const setOrderDiscount = (
   orderId: string,

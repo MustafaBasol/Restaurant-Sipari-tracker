@@ -37,6 +37,8 @@ interface OrderContextData {
   closeOrder: (orderId: string) => Promise<void>;
   updateOrderNote: (orderId: string, note: string) => Promise<void>;
   addOrderPayment: (orderId: string, method: PaymentMethod, amount: number) => Promise<void>;
+  requestOrderBill: (orderId: string) => Promise<void>;
+  confirmOrderPayment: (orderId: string) => Promise<void>;
   setOrderDiscount: (orderId: string, type: DiscountType, value: number) => Promise<void>;
   setOrderItemComplimentary: (
     orderId: string,
@@ -156,6 +158,16 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return handleOrderMutation(() => api.addOrderPayment(orderId, method, amount, actor));
   };
 
+  const requestOrderBill = (orderId: string) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(() => api.requestOrderBill(orderId, actor));
+  };
+
+  const confirmOrderPayment = (orderId: string) => {
+    if (!actor) return Promise.resolve();
+    return handleOrderMutation(() => api.confirmOrderPayment(orderId, actor));
+  };
+
   const setOrderDiscount = (orderId: string, type: DiscountType, value: number) => {
     if (!actor) return Promise.resolve();
     return handleOrderMutation(() => api.setOrderDiscount(orderId, type, value, actor));
@@ -214,6 +226,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         closeOrder,
         updateOrderNote,
         addOrderPayment,
+        requestOrderBill,
+        confirmOrderPayment,
         setOrderDiscount,
         setOrderItemComplimentary,
         moveOrderToTable,
