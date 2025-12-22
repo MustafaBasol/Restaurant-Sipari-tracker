@@ -38,7 +38,9 @@
     "applyDiscount": "İndirimi Uygula",
     "removeDiscount": "İndirimi Kaldır",
     "makeComplimentary": "İkram",
-    "removeComplimentary": "İkramı Kaldır"
+    "removeComplimentary": "İkramı Kaldır",
+    "fillSelected": "Seçilen Tutarı Doldur",
+    "clearSelection": "Seçimi Temizle"
   },
   "auth": {
     "signIn": "Giriş Yap",
@@ -103,6 +105,9 @@
       "billRequested": "Hesap İstendi",
       "paid": "Ödeme Onaylandı"
     },
+    "itemSplitTitle": "Kalem Bazlı Bölme",
+    "itemSplitQty": "Adet",
+    "itemSplitEmpty": "Bölünecek bir kalem yok.",
     "paid": "Ödendi",
     "remaining": "Kalan",
     "paymentMethod": "Ödeme yöntemi",

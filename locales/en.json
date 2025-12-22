@@ -38,7 +38,9 @@
     "applyDiscount": "Apply Discount",
     "removeDiscount": "Remove Discount",
     "makeComplimentary": "Complimentary",
-    "removeComplimentary": "Remove Complimentary"
+    "removeComplimentary": "Remove Complimentary",
+    "fillSelected": "Fill Selected Amount",
+    "clearSelection": "Clear Selection"
   },
   "auth": {
     "signIn": "Sign In",
@@ -103,6 +105,9 @@
       "billRequested": "Bill Requested",
       "paid": "Payment Confirmed"
     },
+    "itemSplitTitle": "Item-based Split",
+    "itemSplitQty": "Qty",
+    "itemSplitEmpty": "No items to split.",
     "paid": "Paid",
     "remaining": "Remaining",
     "paymentMethod": "Payment method",

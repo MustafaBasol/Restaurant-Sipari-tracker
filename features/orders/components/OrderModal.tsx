@@ -470,6 +470,69 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const [splitPeopleCount, setSplitPeopleCount] = useState<number>(2);
 
+  const [itemSplitQtyById, setItemSplitQtyById] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    // Reset selection when switching tables/orders
+    setItemSplitQtyById({});
+  }, [activeOrder?.id]);
+
+  const billableOrderItems = useMemo(() => {
+    if (!activeOrder) return [];
+    return activeOrder.items
+      .filter((i) => i.status !== OrderStatus.CANCELED)
+      .filter((i) => i.isComplimentary !== true)
+      .map((i) => {
+        const menuItem = menuItems.find((mi) => mi.id === i.menuItemId);
+        const unitPrice = menuItem
+          ? getUnitPrice(menuItem, {
+              variantId: i.variantId,
+              modifierOptionIds: i.modifierOptionIds,
+            })
+          : 0;
+        return {
+          id: i.id,
+          menuItemId: i.menuItemId,
+          name: menuItem?.name ?? 'Unknown Item',
+          quantity: i.quantity,
+          unitPrice,
+        };
+      });
+  }, [activeOrder, menuItems]);
+
+  const fullBillableSubtotal = useMemo(() => {
+    return billableOrderItems.reduce((sum, it) => sum + it.unitPrice * it.quantity, 0);
+  }, [billableOrderItems]);
+
+  const selectedItemSplitSubtotal = useMemo(() => {
+    return billableOrderItems.reduce((sum, it) => {
+      const selectedQty = Math.max(0, Math.min(it.quantity, itemSplitQtyById[it.id] ?? 0));
+      return sum + it.unitPrice * selectedQty;
+    }, 0);
+  }, [billableOrderItems, itemSplitQtyById]);
+
+  const selectedItemSplitTotal = useMemo(() => {
+    if (!activeOrder) return 0;
+    const subtotal = selectedItemSplitSubtotal;
+    if (subtotal <= 0) return 0;
+
+    const discount = activeOrder.discount;
+    if (!discount || !Number.isFinite(discount.value) || discount.value <= 0) return subtotal;
+
+    if (discount.type === DiscountType.PERCENT) {
+      const pct = Math.max(0, Math.min(100, discount.value));
+      return Math.max(0, subtotal - (subtotal * pct) / 100);
+    }
+
+    // Amount discount is distributed proportionally across billable subtotal.
+    const fullSubtotal = Math.max(0, fullBillableSubtotal);
+    if (fullSubtotal <= 0) return subtotal;
+    const ratio = Math.max(0, Math.min(1, subtotal / fullSubtotal));
+    const fullDiscountAmount = Math.max(0, discount.value);
+    const allocated = Math.min(subtotal, fullDiscountAmount * ratio);
+    return Math.max(0, subtotal - allocated);
+  }, [activeOrder, selectedItemSplitSubtotal, fullBillableSubtotal]);
+
   const perPersonAmount = useMemo(() => {
     const count = Math.max(1, Math.floor(splitPeopleCount || 1));
     if (remainingTotal <= 0) return 0;
@@ -834,6 +897,93 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                           {t('actions.confirmPayment')}
                         </Button>
                       </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border-color p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-text-secondary">
+                          {t('waiter.itemSplitTitle')}
+                        </span>
+                        <span className="text-xs text-text-secondary">
+                          {formatCurrency(
+                            selectedItemSplitTotal,
+                            authState?.tenant?.currency || 'USD',
+                          )}
+                        </span>
+                      </div>
+
+                      {billableOrderItems.length > 0 ? (
+                        <div className="mt-2 space-y-2">
+                          {billableOrderItems.map((it) => {
+                            const selectedQty = Math.max(
+                              0,
+                              Math.min(it.quantity, itemSplitQtyById[it.id] ?? 0),
+                            );
+                            return (
+                              <div key={it.id} className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="text-sm text-text-primary truncate">
+                                    {it.name}
+                                  </div>
+                                  <div className="text-xs text-text-secondary">
+                                    {formatCurrency(
+                                      it.unitPrice,
+                                      authState?.tenant?.currency || 'USD',
+                                    )}{' '}
+                                    × {it.quantity}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-text-secondary">
+                                    {t('waiter.itemSplitQty')}
+                                  </span>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    max={String(it.quantity)}
+                                    value={String(selectedQty)}
+                                    onChange={(e) => {
+                                      const next = Number(e.target.value);
+                                      const clamped = Number.isFinite(next)
+                                        ? Math.max(0, Math.min(it.quantity, Math.floor(next)))
+                                        : 0;
+                                      setItemSplitQtyById((prev) => ({
+                                        ...prev,
+                                        [it.id]: clamped,
+                                      }));
+                                    }}
+                                    className="py-1 w-20"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              onClick={() => setPaymentAmount(String(selectedItemSplitTotal))}
+                              className="px-3 py-2"
+                              variant="secondary"
+                              disabled={selectedItemSplitTotal <= 0}
+                            >
+                              {t('actions.fillSelected')}
+                            </Button>
+                            <Button
+                              onClick={() => setItemSplitQtyById({})}
+                              className="px-3 py-2"
+                              variant="secondary"
+                              disabled={Object.values(itemSplitQtyById).every((v) => !v)}
+                            >
+                              {t('actions.clearSelection')}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-sm text-text-secondary">
+                          {t('waiter.itemSplitEmpty')}
+                        </div>
+                      )}
                     </div>
 
                     <div className="rounded-lg border border-border-color p-2">

@@ -138,8 +138,9 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [x] İkram: kalem bazlı ikram (complimentary) mevcut
 - [x] Kapatma kuralı: adisyon kapatma **SERVED** + **ödeme PAID** şartına bağlı
 - [x] “Hesabı al / ödeme alındı” gibi ayrı bir adım/durum akışı (UI state machine)
-- [ ] Split bill (kalem bazlı bölme / kişi bazlı gerçek paylaşım / kısmi kapama)
-  - Not: kişi sayısı girip “kişi başı tutar” hesaplayan bir yardımcı alan var; ancak kalem bazlı bölme yok.
+- [x] Split bill (kalem bazlı bölme + kısmi/karma ödeme)
+  - Not: “Kalem Bazlı Bölme” ile seçilen kalemlerin tutarı hesaplanıp ödeme alanına doldurulabiliyor.
+  - Not: kişi sayısı girip “kişi başı tutar” hesaplayan yardımcı alan da mevcut.
 - [ ] Vergi/KDV/servis bedeli/yuvarlama kuralları
 
 **Menü modeli (ürün seçenekleri)**
@@ -296,3 +297,20 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 
 - `Order.billingStatus` ile kaba bir state machine eklendi: `OPEN` → `BILL_REQUESTED` → `PAID`.
 - Aksiyonlar audit log’a yazılır: `ORDER_BILL_REQUESTED`, `ORDER_PAYMENT_CONFIRMED`.
+
+### 8.4 P0 — Split bill (kalem bazlı bölme + kısmi/karma ödeme)
+
+**Amaç**
+
+- Aynı masada farklı kişilerin/ödeyicilerin, adisyonu **kalem bazında** paylaşıp ödeme alabilmesi.
+
+**Kullanım (Garson / ADMIN)**
+
+- Sipariş ekranında ödeme alanında:
+  - **Kalem Bazlı Bölme**: her kalem için “adet” seçip seçilen toplamı gör.
+  - **Seçilen Tutarı Doldur**: hesaplanan tutarı ödeme tutarı alanına otomatik yaz.
+  - İstersen farklı ödeme yöntemleriyle birden fazla ödeme satırı ekleyerek **kısmi/karma ödeme** al.
+
+**Teknik not (demo)**
+
+- Bu adım, ödeme satırlarını kalemlere “kilitleyen” bir allocation modeli değil; hızlı ödeme alma için **hesaplama + doldurma** kolaylığı sağlar.

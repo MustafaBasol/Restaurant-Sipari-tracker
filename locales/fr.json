@@ -38,7 +38,9 @@
     "applyDiscount": "Appliquer une Remise",
     "removeDiscount": "Retirer la Remise",
     "makeComplimentary": "Offert",
-    "removeComplimentary": "Retirer l'Offert"
+    "removeComplimentary": "Retirer l'Offert",
+    "fillSelected": "Remplir le montant sélectionné",
+    "clearSelection": "Effacer la sélection"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -103,6 +105,9 @@
       "billRequested": "Addition demandée",
       "paid": "Paiement confirmé"
     },
+    "itemSplitTitle": "Partage par article",
+    "itemSplitQty": "Qté",
+    "itemSplitEmpty": "Aucun article à partager.",
     "paid": "Payé",
     "remaining": "Restant",
     "paymentMethod": "Méthode de paiement",
