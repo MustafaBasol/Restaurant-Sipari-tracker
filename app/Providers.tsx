@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
+import { initOfflineSync } from '../shared/lib/offlineSync';
 import { AuthProvider } from '../features/auth/context/AuthContext';
 import { LanguageProvider } from '../shared/contexts/LanguageContext';
 import { TableProvider } from '../features/tables/context/TableContext';
@@ -8,6 +9,10 @@ import { OrderProvider } from '../features/orders/context/OrderContext';
 import { NotificationProvider } from '../features/notifications/context/NotificationContext';
 
 const Providers: React.FC<{ children: ReactNode }> = ({ children }) => {
+  useEffect(() => {
+    initOfflineSync();
+  }, []);
+
   return (
     <LanguageProvider>
       <AuthProvider>

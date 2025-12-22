@@ -196,3 +196,26 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - Mock backend (localStorage) tarafında taşıma/birleştirme/ayırma için özel mutation’lar eklendi.
 - UI + lookup tarafında `tableId` eşleşmesine ek olarak `linkedTableIds.includes(tableId)` kontrolü yapılıyor.
 - Repo doğrulama komutu: `npm run check` (format+lint+typecheck+build). `npm test` script’i tanımlı değil.
+
+### 8.2 P2 — Offline mod + senkron/çatışma çözümü (demo)
+
+**Amaç**
+
+- Tarayıcı offline olduğunda da kullanıcı aksiyonlarını (sipariş, masa durumu vb.) çalıştırmak.
+- Online olunca, offline iken biriken değişiklikleri **outbox** üzerinden otomatik **replay/senkron** etmek.
+- Offline sürede “server” tarafında (başka tab/cihaz) değişiklik olduysa **çatışma ihtimalini** tespit edip basit bir politika ile ilerlemek.
+
+**Uygulama (POC yaklaşımı)**
+
+- Mock DB iki katmanlı çalışır:
+  - **Server DB**: `kitchorify-db`
+  - **Client cache (tab bazlı)**: `kitchorify-db-client:<deviceId>`
+- Offline iken mutation’lar client cache’e uygulanır ve ayrıca `kitchorify-outbox:<deviceId>` kuyruğuna yazılır.
+- Online olunca `flushOutbox()` çalışır ve outbox server DB’ye sırasıyla uygulanır.
+
+**Çatışma tespiti / çözüm**
+
+- Server DB’de kaba-granüler bir `mutationCounter` tutulur.
+- Client cache, son bildiği server sayacını saklar.
+- Online dönüşte sayaç değişmişse “server offline sürede değişti” olarak işaretlenir ve outbox **LWW (last-write-wins) replay** ile uygulanır.
+- Bu durumlar `kitchorify-sync-conflicts:<deviceId>` listesine yazılır (demo amaçlı).

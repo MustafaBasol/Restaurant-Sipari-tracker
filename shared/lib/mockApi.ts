@@ -34,6 +34,79 @@ const cloneOrder = (order: Order): Order => ({
 
 const cloneTable = (table: Table): Table => ({ ...table });
 
+type DbMeta = {
+  // Global revision counter for the persisted DB.
+  // Used for coarse conflict detection on reconnect.
+  mutationCounter: number;
+};
+
+type ClientMeta = {
+  // Snapshot of the server mutation counter at the time the client cache was last refreshed.
+  lastKnownServerMutationCounter: number;
+};
+
+type OutboxItem = {
+  id: string;
+  createdAt: string;
+  op:
+    | 'addData'
+    | 'updateData'
+    | 'internalUpdateTableStatus'
+    | 'internalCreateOrder'
+    | 'internalUpdateOrderItemStatus'
+    | 'internalMarkOrderAsReady'
+    | 'internalServeOrderItem'
+    | 'internalCloseOrder'
+    | 'internalUpdateOrderNote'
+    | 'internalAddOrderPayment'
+    | 'internalSetOrderDiscount'
+    | 'internalSetOrderItemComplimentary'
+    | 'internalMoveOrderToTable'
+    | 'internalMergeOrderWithTable'
+    | 'internalUnmergeOrderFromTable'
+    | 'internalChangeUserPassword'
+    | 'simulateWebhookPaymentSucceeded'
+    | 'createPaymentIntent';
+  // JSON-serializable args only.
+  args: unknown[];
+};
+
+type SyncConflict = {
+  id: string;
+  occurredAt: string;
+  reason: string;
+  serverMutationCounter: number;
+  clientLastKnownServerMutationCounter: number;
+  appliedOutboxCount: number;
+};
+
+const DB_SERVER_KEY = 'kitchorify-db';
+const DB_CLIENT_KEY_PREFIX = 'kitchorify-db-client:';
+const OUTBOX_KEY_PREFIX = 'kitchorify-outbox:';
+const CONFLICTS_KEY_PREFIX = 'kitchorify-sync-conflicts:';
+const DEVICE_ID_SESSION_KEY = 'kitchorify-device-id';
+
+const isBrowser = () => typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+
+const getDeviceId = (): string => {
+  if (!isBrowser()) return 'server';
+  const existing = sessionStorage.getItem(DEVICE_ID_SESSION_KEY);
+  if (existing) return existing;
+  const created = `dev_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  sessionStorage.setItem(DEVICE_ID_SESSION_KEY, created);
+  return created;
+};
+
+const getClientDbKey = (): string => `${DB_CLIENT_KEY_PREFIX}${getDeviceId()}`;
+const getOutboxKey = (): string => `${OUTBOX_KEY_PREFIX}${getDeviceId()}`;
+const getConflictsKey = (): string => `${CONFLICTS_KEY_PREFIX}${getDeviceId()}`;
+
+const getIsOnline = (): boolean => {
+  if (!isBrowser()) return true;
+  // navigator.onLine is best-effort; still useful for our demo.
+  return navigator.onLine;
+};
+
 // --- MOCK DATABASE ---
 
 interface MockDB {
@@ -44,6 +117,8 @@ interface MockDB {
   menuItems: MenuItem[];
   orders: Order[];
   auditLogs: AuditLog[];
+  __meta: DbMeta;
+  __clientMeta?: ClientMeta;
 }
 
 const trialEndDate = new Date();
@@ -227,11 +302,77 @@ const seedData: MockDB = {
   ],
   orders: [],
   auditLogs: [],
+  __meta: { mutationCounter: 0 },
 };
 let db: MockDB;
 
+let activeDbKey: string | null = null;
+let forcedDbKey: string | null = null;
+let isFlushingOutbox = false;
+
+const getActiveDbKey = (): string => {
+  if (forcedDbKey) return forcedDbKey;
+  if (!getIsOnline()) return getClientDbKey();
+  return DB_SERVER_KEY;
+};
+
+const readJson = <T>(key: string): T | null => {
+  if (!isBrowser()) return null;
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+};
+
+const writeJson = (key: string, value: unknown) => {
+  if (!isBrowser()) return;
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+const getOutbox = (): OutboxItem[] => {
+  const items = readJson<OutboxItem[]>(getOutboxKey());
+  return Array.isArray(items) ? items : [];
+};
+
+const setOutbox = (items: OutboxItem[]) => {
+  writeJson(getOutboxKey(), items);
+};
+
+const appendOutbox = (item: OutboxItem) => {
+  const items = getOutbox();
+  items.push(item);
+  setOutbox(items);
+};
+
+const getConflicts = (): SyncConflict[] => {
+  const items = readJson<SyncConflict[]>(getConflictsKey());
+  return Array.isArray(items) ? items : [];
+};
+
+const appendConflict = (conflict: SyncConflict) => {
+  const items = getConflicts();
+  items.push(conflict);
+  writeJson(getConflictsKey(), items);
+};
+
+const ensureDbLoadedForActiveKey = () => {
+  const key = getActiveDbKey();
+  if (activeDbKey === key && db) return;
+  activeDbKey = key;
+  initializeDB();
+};
+
 const initializeDB = () => {
-  const savedDb = localStorage.getItem('kitchorify-db');
+  if (!isBrowser()) {
+    db = JSON.parse(JSON.stringify(seedData));
+    return;
+  }
+
+  const key = activeDbKey ?? getActiveDbKey();
+  const savedDb = localStorage.getItem(key);
   if (savedDb) {
     try {
       const parsed = JSON.parse(savedDb);
@@ -267,20 +408,53 @@ const initializeDB = () => {
             createdAt: l.createdAt ? new Date(l.createdAt) : new Date(),
           }))
         : [];
+
+      parsed.__meta = parsed.__meta && typeof parsed.__meta === 'object' ? parsed.__meta : {};
+      if (typeof parsed.__meta.mutationCounter !== 'number') {
+        parsed.__meta.mutationCounter = 0;
+      }
+
+      // Client cache meta defaults.
+      if (!parsed.__clientMeta || typeof parsed.__clientMeta !== 'object') {
+        parsed.__clientMeta = undefined;
+      }
       db = parsed;
     } catch (e) {
       console.error('Failed to parse DB, seeding new data.', e);
       db = JSON.parse(JSON.stringify(seedData));
     }
   } else {
+    // If we're offline and don't have a client cache yet, seed from server snapshot if it exists.
+    // This simulates having a last-known cache before losing connectivity.
+    if (!getIsOnline() && key.startsWith(DB_CLIENT_KEY_PREFIX)) {
+      const serverSnapshot = readJson<MockDB>(DB_SERVER_KEY);
+      if (serverSnapshot) {
+        const seeded = JSON.parse(JSON.stringify(serverSnapshot));
+        if (!seeded.__clientMeta) {
+          seeded.__clientMeta = {
+            lastKnownServerMutationCounter:
+              typeof seeded.__meta?.mutationCounter === 'number'
+                ? seeded.__meta.mutationCounter
+                : 0,
+          };
+        }
+        db = seeded;
+        writeJson(key, db);
+        return;
+      }
+    }
+
     db = JSON.parse(JSON.stringify(seedData));
   }
 };
 
 const saveDb = () => {
-  localStorage.setItem('kitchorify-db', JSON.stringify(db));
+  if (!isBrowser()) return;
+  const key = activeDbKey ?? getActiveDbKey();
+  localStorage.setItem(key, JSON.stringify(db));
 };
 
+activeDbKey = getActiveDbKey();
 initializeDB();
 
 const getMenuItemStation = (menuItemId: string): KitchenStation => {
@@ -293,7 +467,10 @@ const getMenuItemStation = (menuItemId: string): KitchenStation => {
   return KitchenStation.HOT;
 };
 
-const simulateDelay = (ms = 200) => new Promise((res) => setTimeout(res, ms));
+const simulateDelay = async (ms = 200) => {
+  ensureDbLoadedForActiveKey();
+  return new Promise((res) => setTimeout(res, ms));
+};
 
 type Actor = { userId: string; role: UserRole };
 
@@ -421,7 +598,19 @@ export const internalSetOrderDiscount = async (
     { discountType, value: numericValue, removed: numericValue <= 0 },
   );
 
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalSetOrderDiscount',
+      args: [orderId, discountType, value, actor],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -456,7 +645,19 @@ export const internalSetOrderItemComplimentary = async (
     { orderId, isComplimentary: item.isComplimentary },
   );
 
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalSetOrderItemComplimentary',
+      args: [orderId, itemId, isComplimentary, actor],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -582,7 +783,20 @@ export const getAllData = async <T>(dataType: keyof MockDB): Promise<T[]> => {
 export const addData = async <T>(dataType: keyof MockDB, item: T): Promise<T> => {
   await simulateDelay();
   (db[dataType] as T[]).push(item);
+
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'addData',
+      args: [dataType, item],
+    });
+  }
   return item;
 };
 
@@ -595,7 +809,20 @@ export const updateData = async <T extends { id: string }>(
   const index = table.findIndex((i) => i.id === updatedItem.id);
   if (index > -1) {
     table[index] = updatedItem;
+
+    if (db.__meta) {
+      db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+    }
     saveDb();
+
+    if (!getIsOnline() && !isFlushingOutbox) {
+      appendOutbox({
+        id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        createdAt: new Date().toISOString(),
+        op: 'updateData',
+        args: [dataType, updatedItem],
+      });
+    }
     return updatedItem;
   }
   throw new Error('Item not found');
@@ -671,7 +898,20 @@ export const internalCreateOrder = async (
   if (table && table.status === TableStatus.FREE) {
     table.status = TableStatus.OCCUPIED;
   }
+
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalCreateOrder',
+      args: [tenantId, tableId, items, waiterId, note],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -725,7 +965,20 @@ export const internalMoveOrderToTable = async (
     toTableId,
   });
 
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalMoveOrderToTable',
+      args: [orderId, toTableId, actor],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -776,7 +1029,20 @@ export const internalMergeOrderWithTable = async (
     { primaryTableId: order.tableId, secondaryTableId },
   );
 
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalMergeOrderWithTable',
+      args: [orderId, secondaryTableId, actor],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -819,7 +1085,20 @@ export const internalUnmergeOrderFromTable = async (
     { primaryTableId: order.tableId, detachedTableId: tableIdToDetach },
   );
 
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalUnmergeOrderFromTable',
+      args: [orderId, tableIdToDetach, actor],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -857,7 +1136,20 @@ export const internalUpdateOrderItemStatus = async (
           { orderId, newStatus: status },
         );
       }
+
+      if (db.__meta) {
+        db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+      }
       saveDb();
+
+      if (!getIsOnline() && !isFlushingOutbox) {
+        appendOutbox({
+          id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          op: 'internalUpdateOrderItemStatus',
+          args: [orderId, itemId, status, actor],
+        });
+      }
     }
     return cloneOrder(order);
   }
@@ -894,7 +1186,20 @@ export const internalMarkOrderAsReady = async (
 
     order.updatedAt = new Date();
     updatePaymentStatus(order);
+
+    if (db.__meta) {
+      db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+    }
     saveDb();
+
+    if (!getIsOnline() && !isFlushingOutbox) {
+      appendOutbox({
+        id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        createdAt: new Date().toISOString(),
+        op: 'internalMarkOrderAsReady',
+        args: [orderId, station],
+      });
+    }
     return cloneOrder(order);
   }
   return undefined;
@@ -933,7 +1238,20 @@ export const internalServeOrderItem = async (
           { orderId, newStatus: OrderStatus.SERVED },
         );
       }
+
+      if (db.__meta) {
+        db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+      }
       saveDb();
+
+      if (!getIsOnline() && !isFlushingOutbox) {
+        appendOutbox({
+          id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          op: 'internalServeOrderItem',
+          args: [orderId, itemId, actor],
+        });
+      }
     }
     return cloneOrder(order);
   }
@@ -985,7 +1303,20 @@ export const internalAddOrderPayment = async (
     },
   );
 
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+
   saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'internalAddOrderPayment',
+      args: [orderId, method, amount, actor],
+    });
+  }
   return cloneOrder(order);
 };
 
@@ -1026,7 +1357,20 @@ export const internalCloseOrder = async (
         orderId,
         { tableId: order.tableId },
       );
+
+      if (db.__meta) {
+        db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+      }
       saveDb();
+
+      if (!getIsOnline() && !isFlushingOutbox) {
+        appendOutbox({
+          id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          op: 'internalCloseOrder',
+          args: [orderId, actor],
+        });
+      }
     }
     return cloneOrder(order);
   }
@@ -1041,7 +1385,20 @@ export const internalUpdateTableStatus = async (
   const table = db.tables.find((t) => t.id === tableId);
   if (table) {
     table.status = status;
+
+    if (db.__meta) {
+      db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+    }
     saveDb();
+
+    if (!getIsOnline() && !isFlushingOutbox) {
+      appendOutbox({
+        id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        createdAt: new Date().toISOString(),
+        op: 'internalUpdateTableStatus',
+        args: [tableId, status],
+      });
+    }
     return cloneTable(table);
   }
   return undefined;
@@ -1069,7 +1426,20 @@ export const internalUpdateOrderNote = async (
       );
     }
 
+    if (db.__meta) {
+      db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+    }
+
     saveDb();
+
+    if (!getIsOnline() && !isFlushingOutbox) {
+      appendOutbox({
+        id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        createdAt: new Date().toISOString(),
+        op: 'internalUpdateOrderNote',
+        args: [orderId, note, actor],
+      });
+    }
     return cloneOrder(order);
   }
   return undefined;
@@ -1251,9 +1621,221 @@ export const internalChangeUserPassword = async (
   if (user) {
     // In a real app, you would hash this password
     user.passwordHash = newPassword;
+
+    if (db.__meta) {
+      db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+    }
     saveDb();
+
+    if (!getIsOnline() && !isFlushingOutbox) {
+      appendOutbox({
+        id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        createdAt: new Date().toISOString(),
+        op: 'internalChangeUserPassword',
+        args: [userId, newPassword],
+      });
+    }
   } else {
     throw new Error('User not found');
+  }
+};
+
+export const flushOutbox = async (): Promise<{
+  applied: number;
+  conflicts: number;
+  remaining: number;
+}> => {
+  if (!isBrowser()) return { applied: 0, conflicts: 0, remaining: 0 };
+
+  // Only makes sense when we are online.
+  if (!getIsOnline()) {
+    return { applied: 0, conflicts: 0, remaining: getOutbox().length };
+  }
+
+  const clientKey = getClientDbKey();
+  const clientSnapshot = readJson<MockDB>(clientKey);
+  const outbox = getOutbox();
+  if (!clientSnapshot || outbox.length === 0) {
+    return { applied: 0, conflicts: 0, remaining: outbox.length };
+  }
+
+  const serverSnapshot = readJson<MockDB>(DB_SERVER_KEY);
+  const serverCounter = Number(serverSnapshot?.__meta?.mutationCounter ?? 0);
+  const clientCounter = Number(clientSnapshot.__clientMeta?.lastKnownServerMutationCounter ?? 0);
+
+  const hasPotentialConflict = serverCounter !== clientCounter;
+  if (hasPotentialConflict) {
+    appendConflict({
+      id: `conf_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      occurredAt: new Date().toISOString(),
+      reason: 'Server changed while offline; applying LWW replay',
+      serverMutationCounter: serverCounter,
+      clientLastKnownServerMutationCounter: clientCounter,
+      appliedOutboxCount: outbox.length,
+    });
+  }
+
+  // Replay operations onto the server DB.
+  isFlushingOutbox = true;
+  const prevForced = forcedDbKey;
+  forcedDbKey = DB_SERVER_KEY;
+  try {
+    let applied = 0;
+    for (const item of outbox) {
+      switch (item.op) {
+        case 'addData': {
+          await addData(item.args[0] as any, item.args[1] as any);
+          break;
+        }
+        case 'updateData': {
+          await updateData(item.args[0] as any, item.args[1] as any);
+          break;
+        }
+        case 'internalUpdateTableStatus': {
+          await internalUpdateTableStatus(item.args[0] as string, item.args[1] as TableStatus);
+          break;
+        }
+        case 'internalCreateOrder': {
+          await internalCreateOrder(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as any,
+            item.args[3] as string,
+            item.args[4] as any,
+          );
+          break;
+        }
+        case 'internalUpdateOrderItemStatus': {
+          await internalUpdateOrderItemStatus(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as OrderStatus,
+            item.args[3] as any,
+          );
+          break;
+        }
+        case 'internalMarkOrderAsReady': {
+          await internalMarkOrderAsReady(item.args[0] as string, item.args[1] as any);
+          break;
+        }
+        case 'internalServeOrderItem': {
+          await internalServeOrderItem(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as any,
+          );
+          break;
+        }
+        case 'internalCloseOrder': {
+          await internalCloseOrder(item.args[0] as string, item.args[1] as any);
+          break;
+        }
+        case 'internalUpdateOrderNote': {
+          await internalUpdateOrderNote(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as any,
+          );
+          break;
+        }
+        case 'internalAddOrderPayment': {
+          await internalAddOrderPayment(
+            item.args[0] as string,
+            item.args[1] as PaymentMethod,
+            item.args[2] as number,
+            item.args[3] as any,
+          );
+          break;
+        }
+        case 'internalSetOrderDiscount': {
+          await internalSetOrderDiscount(
+            item.args[0] as string,
+            item.args[1] as DiscountType,
+            item.args[2] as number,
+            item.args[3] as any,
+          );
+          break;
+        }
+        case 'internalSetOrderItemComplimentary': {
+          await internalSetOrderItemComplimentary(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as boolean,
+            item.args[3] as any,
+          );
+          break;
+        }
+        case 'internalMoveOrderToTable': {
+          await internalMoveOrderToTable(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as any,
+          );
+          break;
+        }
+        case 'internalMergeOrderWithTable': {
+          await internalMergeOrderWithTable(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as any,
+          );
+          break;
+        }
+        case 'internalUnmergeOrderFromTable': {
+          await internalUnmergeOrderFromTable(
+            item.args[0] as string,
+            item.args[1] as string,
+            item.args[2] as any,
+          );
+          break;
+        }
+        case 'internalChangeUserPassword': {
+          await internalChangeUserPassword(item.args[0] as string, item.args[1] as string);
+          break;
+        }
+        case 'createPaymentIntent': {
+          await createPaymentIntent(item.args[0] as any, item.args[1] as any);
+          break;
+        }
+        case 'simulateWebhookPaymentSucceeded': {
+          await simulateWebhookPaymentSucceeded(item.args[0] as string);
+          break;
+        }
+        default: {
+          // Exhaustive guard
+          const _never: never = item.op;
+          throw new Error(`Unsupported outbox op: ${_never}`);
+        }
+      }
+      applied += 1;
+    }
+
+    // Clear outbox.
+    setOutbox([]);
+
+    // Refresh the client cache from the server snapshot after replay.
+    const latestServer = readJson<MockDB>(DB_SERVER_KEY);
+    const nextClient: MockDB = latestServer
+      ? {
+          ...latestServer,
+          __clientMeta: {
+            lastKnownServerMutationCounter: Number(latestServer.__meta?.mutationCounter ?? 0),
+          },
+        }
+      : {
+          ...JSON.parse(JSON.stringify(seedData)),
+          __clientMeta: { lastKnownServerMutationCounter: 0 },
+        };
+
+    writeJson(clientKey, nextClient);
+
+    // If we were previously running on client DB, reload so UI sees newest.
+    ensureDbLoadedForActiveKey();
+
+    return { applied, conflicts: hasPotentialConflict ? 1 : 0, remaining: 0 };
+  } finally {
+    forcedDbKey = prevForced;
+    isFlushingOutbox = false;
   }
 };
 
