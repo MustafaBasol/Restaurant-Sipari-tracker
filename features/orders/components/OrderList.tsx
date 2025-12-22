@@ -119,6 +119,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFil
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {orders.map((order) => {
         const table = tables.find((t) => t.id === order.tableId);
+        const isOnlineOrder = /\bonl_\d+\b/i.test(order.note ?? '');
         const ageMinutes = Math.max(
           0,
           Math.floor((nowTs - new Date(order.createdAt).getTime()) / 60000),
@@ -163,6 +164,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, stationFil
                       <span>
                         {ageMinutes} {t('kitchen.minutesShort')}
                       </span>
+                      {isOnlineOrder && <Badge variant="blue">{t('kitchen.onlineOrder')}</Badge>}
                       {isLate && <Badge variant="red">{t('kitchen.late')}</Badge>}
                     </div>
                     {order.waiterName && (
