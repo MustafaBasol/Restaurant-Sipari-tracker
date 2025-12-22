@@ -124,6 +124,61 @@ Kabul kriteri örneği:
 
 ---
 
+## 5.1 Repo durum özeti (işaretleme)
+
+Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** hızlıca işaretler.
+
+### P0 / MVP durumu
+
+**Ödeme & adisyon**
+
+- [x] Ödeme türleri: Nakit / Kart / Yemek kartı (tek tek ödeme ekleme)
+- [x] Kısmi ödeme + karma ödeme: aynı adisyona birden fazla ödeme satırı eklenebiliyor (payment lines)
+- [x] İndirim: yüzde/tutar indirim mevcut
+- [x] İkram: kalem bazlı ikram (complimentary) mevcut
+- [x] Kapatma kuralı: adisyon kapatma **SERVED** + **ödeme PAID** şartına bağlı
+- [ ] “Hesabı al / ödeme alındı” gibi ayrı bir adım/durum akışı (UI state machine)
+- [ ] Split bill (kalem bazlı bölme / kişi bazlı gerçek paylaşım / kısmi kapama)
+  - Not: kişi sayısı girip “kişi başı tutar” hesaplayan bir yardımcı alan var; ancak kalem bazlı bölme yok.
+- [ ] Vergi/KDV/servis bedeli/yuvarlama kuralları
+
+**Menü modeli (ürün seçenekleri)**
+
+- [x] Modifier/opsiyon: ürün opsiyonları + fiyat farkı
+- [x] Porsiyon/variant: variant seçimi + variant fiyatı
+- [x] Alerjen bilgisi: menüde gösterim
+- [ ] Kampanya/menü seti (bundle) modeli
+
+**Mutfak operasyonu**
+
+- [x] İstasyon (BAR/HOT/COLD/DESSERT) alanı + mutfakta istasyon filtresi
+- [x] İstasyon bazlı “hazır” işaretleme (station parametreli akış)
+- [ ] Hazırlama süresi & SLA: sipariş yaşı/ geciken sipariş göstergesi
+- [x] Fiş yazdırma (opsiyonel): tarayıcı yazdırma + opsiyonel print server desteği
+- [x] Ürün uygunluğu (temel): menü öğesinde `isAvailable` alanı
+- [ ] “Tükendi” işaretinin garson/mutfak ekranına anlık ve operasyonel yansıması (bildirim + engelleme kuralları)
+
+**Yetki / denetim**
+
+- [x] Rol bazlı kısıtlar (ör. ödeme ekleme/indirim/kapatma gibi aksiyonlarda backend kontrolü)
+- [x] Audit log yazımı (kısmi): sipariş oluşturma, kalem durum, not, ödeme, indirim, ikram, taşıma/birleştirme/ayırma, kapatma
+- [ ] Audit log ekranı (UI’dan görüntüleme/filtreleme)
+- [ ] Yetkilendirme matrisi (konfigüre edilebilir izinler)
+- [ ] Cihaz yönetimi / oturum sonlandırma
+
+### P1 durumu
+
+- [x] Masa taşıma + masa birleştir/ayır
+- [x] Günlük özet rapor + garson performansı (temel)
+- [x] Yazıcı entegrasyonu (minimum): mutfak fişi/adisyon çıktısı için browser veya print server
+
+### P2 durumu
+
+- [x] Offline mod + senkron/çatışma çözümü (demo)
+- [ ] Entegrasyonlar (POS, online sipariş)
+
+---
+
 ## 6) Kısa kullanıcı hikayeleri (örnek)
 
 - Garson: “Masa 12’de 4 kişi ayrı ödeyecek; 2 kişi kart, 2 kişi nakit. Üç kalem iptal, bir kalem ikram.”
