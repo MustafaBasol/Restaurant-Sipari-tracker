@@ -176,7 +176,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 ### P2 durumu
 
 - [x] Offline mod + senkron/çatışma çözümü (demo)
-- [ ] Entegrasyonlar (POS, online sipariş)
+- [x] Entegrasyonlar (POS, online sipariş) (demo)
 
 ---
 
@@ -516,3 +516,32 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - Browser print helper: `shared/lib/print.ts`.
 - Print server client: `shared/lib/printClient.ts`.
 - Tenant ayarı: `Tenant.printConfig` (mode + opsiyonel serverUrl).
+
+### 8.14 P2 — Entegrasyonlar (POS, online sipariş) (demo)
+
+**Amaç**
+
+- Demo ortamında online sipariş ve POS ödeme entegrasyonlarının sisteme nasıl “bağlanacağını” göstermek.
+- Repo prod backend içermediği için entegrasyonlar UI üzerinden “simülasyon” olarak tetiklenir.
+
+**Kapsam (demo yaklaşımı)**
+
+- **Online sipariş**: Dış kaynaktan gelen sipariş, demo için seçilen bir **hedef masaya** sipariş olarak düşürülür.
+- **POS ödeme**: Seçilen masadaki aktif adisyon için, demo POS “kalan tutarı kartla öde” şeklinde ödeme satırı ekler ve ödemeyi onaylar.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → **Ayarlar** → **Entegrasyonlar (Demo)**
+  - Online siparişler:
+    - “Online siparişleri etkinleştir”i aç.
+    - “Online siparişler için hedef masa” seç.
+    - “Online sipariş simüle et” ile örnek sipariş düşür.
+  - POS ödemeleri:
+    - “POS ödemelerini etkinleştir”i aç.
+    - “POS ile ödeme alınacak masa” seç.
+    - “POS ödemesi simüle et (kalanı öde)” ile kalan tutar kadar kart ödemesi + ödeme onayı tetiklenir.
+
+**Notlar**
+
+- Demo’da entegrasyon event’leri sipariş notunda “Online sipariş” etiketiyle görünür.
+- Gerçek hayatta bu event’ler backend tarafında doğrulanmalı (imza/secret), idempotency uygulanmalı ve tenant izolasyonu sağlanmalıdır.

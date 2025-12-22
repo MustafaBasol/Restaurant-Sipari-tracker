@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { updateTenantSettings } from '../api';
+import { getTables } from '../../tables/api';
+import { getMenuItems } from '../../menu/api';
+import { getOrders, createOrder, addOrderPayment, confirmOrderPayment } from '../../orders/api';
 import { Button } from '../../../shared/components/ui/Button';
 import { Select } from '../../../shared/components/ui/Select';
 import { Card } from '../../../shared/components/ui/Card';
 import { Input } from '../../../shared/components/ui/Input';
-import { PermissionKey, Tenant, UserRole } from '../../../shared/types';
+import { OrderStatus, PaymentMethod, PermissionKey, Tenant, UserRole } from '../../../shared/types';
+import { getOrderPaymentTotals } from '../../../shared/lib/mockApi';
 
 const timezones = ['America/New_York', 'Europe/Paris', 'Europe/Istanbul', 'Asia/Tokyo'];
 const currencies = ['USD', 'EUR', 'TRY'];
@@ -22,12 +26,23 @@ const SettingsManagement: React.FC = () => {
   const [settings, setSettings] = useState<Tenant | null>(authState?.tenant ?? null);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [tables, setTables] = useState<{ id: string; name: string }[]>([]);
+  const [integrationMessage, setIntegrationMessage] = useState<string>('');
+  const [posTargetTableId, setPosTargetTableId] = useState<string>('');
 
   useEffect(() => {
     if (authState?.tenant) {
       setSettings(authState.tenant);
     }
   }, [authState?.tenant]);
+
+  useEffect(() => {
+    const tenantId = authState?.tenant?.id;
+    if (!tenantId) return;
+    getTables(tenantId)
+      .then((rows) => setTables(rows.map((tt) => ({ id: tt.id, name: tt.name }))))
+      .catch((e) => console.error('Failed to load tables', e));
+  }, [authState?.tenant?.id]);
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,6 +70,112 @@ const SettingsManagement: React.FC = () => {
       console.error('Failed to save settings', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const setIntegrationField = (
+    updater: (prev: NonNullable<Tenant['integrations']>) => NonNullable<Tenant['integrations']>,
+  ) => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const current = prev.integrations ?? {
+        pos: { enabled: false, providerName: '' },
+        onlineOrders: { enabled: false, providerName: '', targetTableId: '' },
+      };
+      return { ...prev, integrations: updater(current) };
+    });
+  };
+
+  const handleSimulateOnlineOrder = async () => {
+    setIntegrationMessage('');
+    const tenantId = authState?.tenant?.id;
+    const actorUserId = authState?.user?.id;
+    if (!tenantId || !actorUserId || !settings) return;
+
+    const onlineCfg = settings.integrations?.onlineOrders;
+    if (!onlineCfg?.enabled) {
+      setIntegrationMessage(t('admin.settings.integrations.onlineOrdersNotEnabled'));
+      return;
+    }
+    const targetTableId = onlineCfg.targetTableId;
+    if (!targetTableId) {
+      setIntegrationMessage(t('admin.settings.integrations.onlineOrdersTargetTableRequired'));
+      return;
+    }
+
+    try {
+      const menuItems = await getMenuItems(tenantId);
+      const orderable = menuItems.filter((mi) => mi.isAvailable !== false);
+      if (orderable.length === 0) {
+        setIntegrationMessage(t('admin.settings.integrations.noOrderableMenuItems'));
+        return;
+      }
+
+      const pick = (idx: number) => orderable[idx % orderable.length];
+      const extId = `onl_${Date.now()}`;
+      await createOrder(
+        tenantId,
+        targetTableId,
+        [
+          { menuItemId: pick(0).id, quantity: 1, note: '' },
+          { menuItemId: pick(1).id, quantity: 1, note: '' },
+        ],
+        actorUserId,
+        `${t('admin.settings.integrations.onlineOrderNotePrefix')} ${onlineCfg.providerName || 'Online'} (${extId})`,
+      );
+
+      setIntegrationMessage(t('admin.settings.integrations.onlineOrderSimulated'));
+      setTimeout(() => setIntegrationMessage(''), 4000);
+    } catch (e) {
+      console.error('Failed to simulate online order', e);
+      setIntegrationMessage(t('admin.settings.integrations.simulationFailed'));
+    }
+  };
+
+  const handleSimulatePosPayment = async () => {
+    setIntegrationMessage('');
+    const tenantId = authState?.tenant?.id;
+    const actor = authState?.user ? { userId: authState.user.id, role: authState.user.role } : null;
+    if (!tenantId || !actor || !settings) return;
+
+    const posCfg = settings.integrations?.pos;
+    if (!posCfg?.enabled) {
+      setIntegrationMessage(t('admin.settings.integrations.posNotEnabled'));
+      return;
+    }
+    if (!posTargetTableId) {
+      setIntegrationMessage(t('admin.settings.integrations.posTargetTableRequired'));
+      return;
+    }
+
+    try {
+      const orders = await getOrders(tenantId);
+      const active = orders.find(
+        (o) => o.tableId === posTargetTableId && o.status !== OrderStatus.CLOSED,
+      );
+      if (!active) {
+        setIntegrationMessage(t('admin.settings.integrations.noActiveOrderOnTable'));
+        return;
+      }
+
+      const totals = await getOrderPaymentTotals(active.id);
+      if (!totals) {
+        setIntegrationMessage(t('admin.settings.integrations.simulationFailed'));
+        return;
+      }
+      if (totals.remaining <= 0.00001) {
+        setIntegrationMessage(t('admin.settings.integrations.orderAlreadyPaid'));
+        return;
+      }
+
+      await addOrderPayment(active.id, PaymentMethod.CARD, totals.remaining, actor);
+      await confirmOrderPayment(active.id, actor);
+
+      setIntegrationMessage(t('admin.settings.integrations.posPaymentSimulated'));
+      setTimeout(() => setIntegrationMessage(''), 4000);
+    } catch (e) {
+      console.error('Failed to simulate POS payment', e);
+      setIntegrationMessage(t('admin.settings.integrations.simulationFailed'));
     }
   };
 
@@ -97,6 +218,11 @@ const SettingsManagement: React.FC = () => {
   const taxRatePercent = settings.taxRatePercent ?? 0;
   const serviceChargePercent = settings.serviceChargePercent ?? 0;
   const roundingIncrement = settings.roundingIncrement ?? 0;
+
+  const integrations = settings.integrations ?? {
+    pos: { enabled: false, providerName: '' },
+    onlineOrders: { enabled: false, providerName: '', targetTableId: '' },
+  };
 
   const permissionRows: PermissionKey[] = [
     'ORDER_PAYMENTS',
@@ -245,6 +371,136 @@ const SettingsManagement: React.FC = () => {
               <p className="text-xs text-text-secondary mt-2">
                 {t('admin.settings.roundingIncrementHelp')}
               </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-text-primary mb-3">
+            {t('admin.settings.integrations.title')}
+          </h3>
+
+          {integrationMessage && (
+            <p className="text-sm text-text-secondary mb-3">{integrationMessage}</p>
+          )}
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                <input
+                  type="checkbox"
+                  checked={Boolean(integrations.onlineOrders?.enabled)}
+                  onChange={(e) =>
+                    setIntegrationField((prev) => ({
+                      ...prev,
+                      onlineOrders: {
+                        ...(prev.onlineOrders ?? {
+                          enabled: false,
+                          providerName: '',
+                          targetTableId: '',
+                        }),
+                        enabled: e.target.checked,
+                      },
+                    }))
+                  }
+                />
+                {t('admin.settings.integrations.onlineOrdersEnabled')}
+              </label>
+
+              <Input
+                value={integrations.onlineOrders?.providerName ?? ''}
+                onChange={(e) =>
+                  setIntegrationField((prev) => ({
+                    ...prev,
+                    onlineOrders: {
+                      ...(prev.onlineOrders ?? {
+                        enabled: false,
+                        providerName: '',
+                        targetTableId: '',
+                      }),
+                      providerName: e.target.value,
+                    },
+                  }))
+                }
+                placeholder={t('admin.settings.integrations.providerNamePlaceholder')}
+              />
+
+              <Select
+                value={integrations.onlineOrders?.targetTableId ?? ''}
+                onChange={(e) =>
+                  setIntegrationField((prev) => ({
+                    ...prev,
+                    onlineOrders: {
+                      ...(prev.onlineOrders ?? {
+                        enabled: false,
+                        providerName: '',
+                        targetTableId: '',
+                      }),
+                      targetTableId: e.target.value,
+                    },
+                  }))
+                }
+              >
+                <option value="">{t('admin.settings.integrations.selectTargetTable')}</option>
+                {tables.map((tt) => (
+                  <option key={tt.id} value={tt.id}>
+                    {tt.name}
+                  </option>
+                ))}
+              </Select>
+
+              <Button onClick={handleSimulateOnlineOrder} variant="secondary">
+                {t('admin.settings.integrations.simulateOnlineOrder')}
+              </Button>
+            </div>
+
+            <div className="border-t border-border pt-4 space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                <input
+                  type="checkbox"
+                  checked={Boolean(integrations.pos?.enabled)}
+                  onChange={(e) =>
+                    setIntegrationField((prev) => ({
+                      ...prev,
+                      pos: {
+                        ...(prev.pos ?? { enabled: false, providerName: '' }),
+                        enabled: e.target.checked,
+                      },
+                    }))
+                  }
+                />
+                {t('admin.settings.integrations.posEnabled')}
+              </label>
+
+              <Input
+                value={integrations.pos?.providerName ?? ''}
+                onChange={(e) =>
+                  setIntegrationField((prev) => ({
+                    ...prev,
+                    pos: {
+                      ...(prev.pos ?? { enabled: false, providerName: '' }),
+                      providerName: e.target.value,
+                    },
+                  }))
+                }
+                placeholder={t('admin.settings.integrations.providerNamePlaceholder')}
+              />
+
+              <Select
+                value={posTargetTableId}
+                onChange={(e) => setPosTargetTableId(e.target.value)}
+              >
+                <option value="">{t('admin.settings.integrations.selectPosTable')}</option>
+                {tables.map((tt) => (
+                  <option key={tt.id} value={tt.id}>
+                    {tt.name}
+                  </option>
+                ))}
+              </Select>
+
+              <Button onClick={handleSimulatePosPayment} variant="secondary">
+                {t('admin.settings.integrations.simulatePosPayment')}
+              </Button>
             </div>
           </div>
         </div>

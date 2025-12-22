@@ -132,6 +132,10 @@ const seedData: MockDB = {
       taxRatePercent: 0,
       serviceChargePercent: 0,
       roundingIncrement: 0,
+      integrations: {
+        pos: { enabled: false, providerName: 'Generic POS' },
+        onlineOrders: { enabled: false, providerName: 'Generic Online', targetTableId: '' },
+      },
       permissions: {
         [UserRole.WAITER]: {
           ORDER_PAYMENTS: true,
@@ -774,6 +778,18 @@ const updatePaymentStatus = (order: Order) => {
   } else {
     order.paymentStatus = PaymentStatus.UNPAID;
   }
+};
+
+export const getOrderPaymentTotals = async (
+  orderId: string,
+): Promise<{ total: number; paid: number; remaining: number } | null> => {
+  await simulateDelay();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return null;
+  const total = calcOrderTotal(order);
+  const paid = calcPaidTotal(order);
+  const remaining = Math.max(0, total - paid);
+  return { total, paid, remaining };
 };
 
 // --- "BACKEND" ONLY FUNCTIONS ---

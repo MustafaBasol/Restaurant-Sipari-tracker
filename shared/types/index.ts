@@ -109,6 +109,19 @@ export interface TenantPrintConfig {
   serverUrl?: string;
 }
 
+export interface TenantIntegrationsConfig {
+  pos?: {
+    enabled: boolean;
+    providerName?: string;
+  };
+  onlineOrders?: {
+    enabled: boolean;
+    providerName?: string;
+    /** For this demo, incoming online orders are mapped onto a chosen table. */
+    targetTableId?: string;
+  };
+}
+
 export interface Tenant {
   id: string;
   name: string;
@@ -125,6 +138,7 @@ export interface Tenant {
   serviceChargePercent?: number;
   roundingIncrement?: number;
   permissions?: TenantPermissions;
+  integrations?: TenantIntegrationsConfig;
 }
 
 export interface User {
