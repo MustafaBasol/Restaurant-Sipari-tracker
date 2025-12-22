@@ -28,6 +28,7 @@ import {
 } from '../../features/reports/types';
 import { hasPermission } from './permissions';
 import { getDeviceId, isBrowser } from './device';
+import { Customer } from '../../features/customers/types';
 
 const cloneOrder = (order: Order): Order => ({
   ...order,
@@ -107,6 +108,7 @@ interface MockDB {
   users: User[];
   sessions: UserSession[];
   tables: Table[];
+  customers: Customer[];
   menuCategories: MenuCategory[];
   menuItems: MenuItem[];
   orders: Order[];
@@ -199,6 +201,22 @@ const seedData: MockDB = {
     name: `T${i + 1}`,
     status: TableStatus.FREE,
   })),
+  customers: [
+    {
+      id: 'cus1',
+      tenantId: 't1',
+      fullName: 'Alex Johnson',
+      phone: '+1 555 0101',
+      createdAt: new Date('2023-11-05T12:00:00Z'),
+    },
+    {
+      id: 'cus2',
+      tenantId: 't1',
+      fullName: 'Maria Garcia',
+      phone: '+1 555 0102',
+      createdAt: new Date('2023-11-06T12:00:00Z'),
+    },
+  ],
   menuCategories: [
     { id: 'cat1', tenantId: 't1', name: 'Appetizers' },
     { id: 'cat2', tenantId: 't1', name: 'Main Courses' },
@@ -431,6 +449,13 @@ const initializeDB = () => {
         trialStartAt: t.trialStartAt ? new Date(t.trialStartAt) : undefined,
         trialEndAt: t.trialEndAt ? new Date(t.trialEndAt) : undefined,
       }));
+
+      parsed.customers = Array.isArray(parsed.customers)
+        ? parsed.customers.map((c: any) => ({
+            ...c,
+            createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
+          }))
+        : [];
 
       parsed.auditLogs = Array.isArray(parsed.auditLogs)
         ? parsed.auditLogs.map((l: any) => ({

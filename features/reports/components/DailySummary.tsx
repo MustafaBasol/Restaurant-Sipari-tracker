@@ -13,7 +13,9 @@ import {
 } from '../../../shared/components/ui/Table';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
-import { PaymentMethod } from '../../../shared/types';
+import { KitchenStation, OrderStatus, PaymentMethod } from '../../../shared/types';
+import { getOrders } from '../../orders/api';
+import { getMenuItems } from '../../menu/api';
 
 const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
   <Card className="text-center">
@@ -32,12 +34,22 @@ const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => voi
   const presets = [
     { labelKey: 'reports.presets.today', value: 'today' },
     { labelKey: 'reports.presets.yesterday', value: 'yesterday' },
+    { labelKey: 'reports.presets.thisWeek', value: 'thisWeek' },
+    { labelKey: 'reports.presets.lastWeek', value: 'lastWeek' },
     { labelKey: 'reports.presets.last7days', value: 'last7days' },
     { labelKey: 'reports.presets.last30days', value: 'last30days' },
     { labelKey: 'reports.presets.thisMonth', value: 'thisMonth' },
     { labelKey: 'reports.presets.thisYear', value: 'thisYear' },
     { labelKey: 'reports.presets.lastYear', value: 'lastYear' },
   ];
+
+  const startOfWeekMonday = (date: Date): Date => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day + 6) % 7; // Mon=0 ... Sun=6
+    d.setDate(d.getDate() - diff);
+    return d;
+  };
 
   const handlePresetClick = (preset: string) => {
     const today = new Date();
@@ -51,6 +63,17 @@ const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => voi
         start.setDate(today.getDate() - 1);
         end.setDate(today.getDate() - 1);
         break;
+      case 'thisWeek':
+        start = startOfWeekMonday(today);
+        break;
+      case 'lastWeek': {
+        const thisWeekStart = startOfWeekMonday(today);
+        start = new Date(thisWeekStart);
+        start.setDate(thisWeekStart.getDate() - 7);
+        end = new Date(thisWeekStart);
+        end.setDate(thisWeekStart.getDate() - 1);
+        break;
+      }
       case 'last7days':
         start.setDate(today.getDate() - 6);
         break;
@@ -94,6 +117,15 @@ const DailySummary: React.FC = () => {
   const { authState } = useAuth();
   const currency = authState?.tenant?.currency || 'USD';
   const timezone = authState?.tenant?.timezone || 'UTC';
+  const tenantId = authState?.tenant?.id;
+
+  const [extraLoading, setExtraLoading] = React.useState(false);
+  const [hourlyOrders, setHourlyOrders] = React.useState<Array<{ hour: number; orders: number }>>(
+    [],
+  );
+  const [stationItemCounts, setStationItemCounts] = React.useState<
+    Array<{ station: KitchenStation; quantity: number }>
+  >([]);
 
   const isSingleDay = startDate === endDate;
 
@@ -109,6 +141,82 @@ const DailySummary: React.FC = () => {
         return String(method);
     }
   };
+
+  const getStationLabel = (station: KitchenStation): string => {
+    switch (station) {
+      case KitchenStation.BAR:
+        return t('kitchen.stations.bar');
+      case KitchenStation.HOT:
+        return t('kitchen.stations.hot');
+      case KitchenStation.COLD:
+        return t('kitchen.stations.cold');
+      case KitchenStation.DESSERT:
+        return t('kitchen.stations.dessert');
+      default:
+        return String(station);
+    }
+  };
+
+  React.useEffect(() => {
+    const run = async () => {
+      if (!tenantId) return;
+      setExtraLoading(true);
+      try {
+        const [orders, menuItems] = await Promise.all([
+          getOrders(tenantId),
+          getMenuItems(tenantId),
+        ]);
+
+        const start = new Date(startDate);
+        start.setUTCHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+
+        const closedInRange = orders.filter((o) => {
+          if (o.status !== OrderStatus.CLOSED || !o.orderClosedAt) return false;
+          const d = new Date(o.orderClosedAt as any);
+          return d >= start && d <= end;
+        });
+
+        const hourly: Array<{ hour: number; orders: number }> = Array.from(
+          { length: 24 },
+          (_, h) => ({
+            hour: h,
+            orders: 0,
+          }),
+        );
+        for (const o of closedInRange) {
+          const d = new Date(o.orderClosedAt as any);
+          const hour = d.getUTCHours();
+          if (hourly[hour]) hourly[hour].orders += 1;
+        }
+        setHourlyOrders(hourly);
+
+        const stationCounts: Record<string, number> = {};
+        for (const o of closedInRange) {
+          for (const item of o.items ?? []) {
+            if (item.status === OrderStatus.CANCELED) continue;
+            const mi = menuItems.find((m) => m.id === item.menuItemId);
+            const station = mi?.station;
+            if (!station) continue;
+            stationCounts[station] = (stationCounts[station] ?? 0) + (item.quantity ?? 0);
+          }
+        }
+        const stationRows = Object.entries(stationCounts)
+          .map(([station, quantity]) => ({ station: station as KitchenStation, quantity }))
+          .sort((a, b) => b.quantity - a.quantity);
+        setStationItemCounts(stationRows);
+      } catch (e) {
+        console.error('Failed to fetch extended report data', e);
+        setHourlyOrders([]);
+        setStationItemCounts([]);
+      } finally {
+        setExtraLoading(false);
+      }
+    };
+
+    run();
+  }, [tenantId, startDate, endDate]);
 
   const formattedStartDate = formatDateTime(startDate + 'T00:00:00', timezone, {
     year: 'numeric',
@@ -281,6 +389,51 @@ const DailySummary: React.FC = () => {
                 {t('reports.canceledItems')}: {data.endOfDay.canceledItemsCount} (
                 {formatCurrency(data.endOfDay.canceledItemsAmount, currency)})
               </div>
+            </Card>
+          )}
+
+          {!extraLoading && hourlyOrders.length > 0 && (
+            <Card>
+              <h3 className="text-lg font-semibold mb-4">{t('reports.hourlyOrders')}</h3>
+              <Table>
+                <TableHeader>
+                  <TableHeaderCell>{t('reports.headers.hour')}</TableHeaderCell>
+                  <TableHeaderCell align="right">{t('reports.headers.orders')}</TableHeaderCell>
+                </TableHeader>
+                <TableBody>
+                  {hourlyOrders
+                    .filter((x) => x.orders > 0)
+                    .map((x) => (
+                      <TableRow key={x.hour}>
+                        <TableCell>{String(x.hour).padStart(2, '0')}:00</TableCell>
+                        <TableCell align="right">{x.orders}</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+              {hourlyOrders.every((x) => x.orders === 0) && (
+                <p className="text-text-secondary text-sm">{t('reports.noData')}</p>
+              )}
+            </Card>
+          )}
+
+          {!extraLoading && stationItemCounts.length > 0 && (
+            <Card>
+              <h3 className="text-lg font-semibold mb-4">{t('reports.stationBreakdown')}</h3>
+              <Table>
+                <TableHeader>
+                  <TableHeaderCell>{t('reports.headers.station')}</TableHeaderCell>
+                  <TableHeaderCell align="right">{t('reports.headers.quantity')}</TableHeaderCell>
+                </TableHeader>
+                <TableBody>
+                  {stationItemCounts.map((row) => (
+                    <TableRow key={row.station}>
+                      <TableCell>{getStationLabel(row.station)}</TableCell>
+                      <TableCell align="right">{row.quantity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </Card>
           )}
         </>

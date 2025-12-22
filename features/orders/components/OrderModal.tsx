@@ -1,6 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
-import { BillingStatus, DiscountType, OrderStatus, PaymentMethod } from '../../../shared/types';
+import {
+  BillingStatus,
+  DiscountType,
+  OrderStatus,
+  PaymentMethod,
+  UserRole,
+} from '../../../shared/types';
 import { Table } from '../../tables/types';
 import { useTables } from '../../tables/hooks/useTables';
 import { MenuItem } from '../../menu/types';
@@ -17,6 +23,9 @@ import { Select } from '../../../shared/components/ui/Select';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
 import { calcOrderPricing } from '../../../shared/lib/billing';
 import { hasPermission } from '../../../shared/lib/permissions';
+import { createCustomer, getCustomers } from '../../customers/api';
+import CustomerCreateModal from '../../customers/components/CustomerCreateModal';
+import { Customer } from '../../customers/types';
 import {
   buildKitchenTicketText,
   buildReceiptText,
@@ -109,14 +118,32 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const [currentOrderItems, setCurrentOrderItems] = useState<TempOrderItem[]>([]);
   const [sendToKitchenError, setSendToKitchenError] = useState<string>('');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [customerId, setCustomerId] = useState(table.customerId || '');
   const [customerName, setCustomerName] = useState(table.customerName || '');
   const [tableNote, setTableNote] = useState(table.note || '');
   const [orderNote, setOrderNote] = useState('');
 
   useEffect(() => {
+    setCustomerId(table.customerId || '');
     setCustomerName(table.customerName || '');
     setTableNote(table.note || '');
   }, [table]);
+
+  const canManageCustomers =
+    authState?.user?.role === UserRole.ADMIN || authState?.user?.role === UserRole.WAITER;
+
+  useEffect(() => {
+    const tenantId = authState?.tenant?.id;
+    if (!tenantId || !canManageCustomers) return;
+
+    getCustomers(tenantId)
+      .then((items) =>
+        setCustomers(items.slice().sort((a, b) => a.fullName.localeCompare(b.fullName))),
+      )
+      .catch((e) => console.error('Failed to load customers', e));
+  }, [authState?.tenant?.id, canManageCustomers]);
 
   const activeOrder = useMemo(
     () =>
@@ -159,9 +186,36 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   }, [activeOrder]);
 
   const handleTableInfoSave = () => {
-    if (table.customerName !== customerName || table.note !== tableNote) {
-      updateTable({ ...table, customerName, note: tableNote });
+    const normalizedCustomerId = customerId || undefined;
+    const normalizedCustomerName = customerName.trim() || undefined;
+    const normalizedNote = tableNote.trim() || undefined;
+
+    if (
+      table.customerId !== normalizedCustomerId ||
+      table.customerName !== normalizedCustomerName ||
+      table.note !== normalizedNote
+    ) {
+      updateTable({
+        ...table,
+        customerId: normalizedCustomerId,
+        customerName: normalizedCustomerName,
+        note: normalizedNote,
+      });
     }
+  };
+
+  const handleCustomerSelect = (nextCustomerId: string) => {
+    const normalizedId = nextCustomerId || '';
+    const selected = normalizedId ? customers.find((c) => c.id === normalizedId) : undefined;
+    const nextName = selected?.fullName || '';
+    setCustomerId(normalizedId);
+    setCustomerName(nextName);
+    updateTable({
+      ...table,
+      customerId: normalizedId || undefined,
+      customerName: nextName || undefined,
+      note: tableNote.trim() || undefined,
+    });
   };
 
   const handleOrderNoteSave = () => {
@@ -713,13 +767,48 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                   <label className="text-xs font-medium text-text-secondary">
                     {t('waiter.customerName')}
                   </label>
-                  <Input
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    onBlur={handleTableInfoSave}
-                    placeholder={t('waiter.customerName')}
-                    className="py-2"
-                  />
+                  {canManageCustomers ? (
+                    <div className="space-y-2">
+                      <Select
+                        value={customerId}
+                        onChange={(e) => handleCustomerSelect(e.target.value)}
+                        className="py-2"
+                      >
+                        <option value="">{t('customers.none')}</option>
+                        {customers.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.fullName}
+                          </option>
+                        ))}
+                      </Select>
+
+                      <div className="flex gap-2">
+                        <Input
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          onBlur={handleTableInfoSave}
+                          placeholder={t('waiter.customerName')}
+                          className="py-2"
+                          disabled={Boolean(customerId)}
+                        />
+                        <Button
+                          variant="secondary"
+                          onClick={() => setIsCustomerModalOpen(true)}
+                          className="px-3 py-2"
+                        >
+                          {t('customers.addNew')}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Input
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      onBlur={handleTableInfoSave}
+                      placeholder={t('waiter.customerName')}
+                      className="py-2"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-medium text-text-secondary">
@@ -1216,6 +1305,22 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
           </div>
         </div>
       </div>
+
+      {canManageCustomers && authState?.tenant?.id && (
+        <CustomerCreateModal
+          isOpen={isCustomerModalOpen}
+          onClose={() => setIsCustomerModalOpen(false)}
+          onCreate={(payload) =>
+            createCustomer(authState.tenant!.id, payload.fullName, payload.phone)
+          }
+          onCreated={(created) => {
+            setCustomers((prev) =>
+              [...prev, created].slice().sort((a, b) => a.fullName.localeCompare(b.fullName)),
+            );
+            handleCustomerSelect(created.id);
+          }}
+        />
+      )}
     </Modal>
   );
 };

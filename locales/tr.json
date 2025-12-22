@@ -36,6 +36,18 @@
     "all": "Tümü",
     "loading": "Yükleniyor..."
   },
+  "customers": {
+    "none": "Kayıtlı müşteri yok",
+    "addNew": "Yeni müşteri",
+    "createTitle": "Yeni müşteri",
+    "createAction": "Oluştur",
+    "fullName": "Ad Soyad",
+    "phone": "Telefon (opsiyonel)",
+    "validation": {
+      "fullNameRequired": "Ad Soyad zorunludur.",
+      "createFailed": "Müşteri oluşturulamadı."
+    }
+  },
   "actions": {
     "markAsServed": "Servis Edildi Olarak İşaretle",
     "closeTable": "Masayı Kapat",
@@ -423,11 +435,15 @@
     "complimentaryTotal": "İkram Toplamı",
     "paymentsByMethod": "Ödeme Yöntemine Göre",
     "canceledItems": "İptal Ürün",
+    "hourlyOrders": "Saatlik sipariş yoğunluğu",
+    "stationBreakdown": "İstasyonlara göre ürün adetleri",
     "noData": "Bu tarih aralığı için veri bulunamadı.",
     "headers": {
       "item": "Ürün",
       "quantity": "Satılan Adet",
       "revenue": "Ciro",
+      "hour": "Saat",
+      "station": "İstasyon",
       "method": "Yöntem",
       "amount": "Tutar",
       "waiter": "Garson",
@@ -437,6 +453,8 @@
     "presets": {
       "today": "Bugün",
       "yesterday": "Dün",
+      "thisWeek": "Bu Hafta",
+      "lastWeek": "Geçen Hafta",
       "last7days": "Son 7 Gün",
       "last30days": "Son 30 Gün",
       "thisMonth": "Bu Ay",

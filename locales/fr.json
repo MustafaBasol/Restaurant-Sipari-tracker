@@ -30,6 +30,18 @@
     "all": "Tous",
     "loading": "Chargement..."
   },
+  "customers": {
+    "none": "Aucun client enregistré",
+    "addNew": "Nouveau client",
+    "createTitle": "Nouveau client",
+    "createAction": "Créer",
+    "fullName": "Nom complet",
+    "phone": "Téléphone (facultatif)",
+    "validation": {
+      "fullNameRequired": "Le nom complet est obligatoire.",
+      "createFailed": "Impossible de créer le client."
+    }
+  },
   "actions": {
     "markAsServed": "Marquer comme Servi",
     "closeTable": "Fermer la Table",
@@ -446,11 +458,15 @@
     "complimentaryTotal": "Total offert",
     "paymentsByMethod": "Paiements par méthode",
     "canceledItems": "Articles annulés",
+    "hourlyOrders": "Commandes par heure",
+    "stationBreakdown": "Articles par station",
     "noData": "Aucune donnée disponible pour cette plage de dates.",
     "headers": {
       "item": "Article",
       "quantity": "Quantité Vendue",
       "revenue": "Revenu",
+      "hour": "Heure",
+      "station": "Station",
       "method": "Méthode",
       "amount": "Montant",
       "waiter": "Serveur",
@@ -460,6 +476,8 @@
     "presets": {
       "today": "Aujourd'hui",
       "yesterday": "Hier",
+      "thisWeek": "Cette semaine",
+      "lastWeek": "Semaine dernière",
       "last7days": "7 derniers jours",
       "last30days": "30 derniers jours",
       "thisMonth": "Ce mois-ci",

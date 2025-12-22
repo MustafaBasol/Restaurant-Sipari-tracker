@@ -30,6 +30,18 @@
     "all": "All",
     "loading": "Loading..."
   },
+  "customers": {
+    "none": "No registered customer",
+    "addNew": "New customer",
+    "createTitle": "New customer",
+    "createAction": "Create",
+    "fullName": "Full name",
+    "phone": "Phone (optional)",
+    "validation": {
+      "fullNameRequired": "Full name is required.",
+      "createFailed": "Failed to create customer."
+    }
+  },
   "actions": {
     "markAsServed": "Mark as Served",
     "closeTable": "Close Table",
@@ -417,11 +429,15 @@
     "complimentaryTotal": "Complimentary Total",
     "paymentsByMethod": "Payments by Method",
     "canceledItems": "Canceled Items",
+    "hourlyOrders": "Orders by hour",
+    "stationBreakdown": "Items by station",
     "noData": "No data available for this date range.",
     "headers": {
       "item": "Item",
       "quantity": "Quantity Sold",
       "revenue": "Revenue",
+      "hour": "Hour",
+      "station": "Station",
       "method": "Method",
       "amount": "Amount",
       "waiter": "Waiter",
@@ -431,6 +447,8 @@
     "presets": {
       "today": "Today",
       "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastWeek": "Last Week",
       "last7days": "Last 7 Days",
       "last30days": "Last 30 Days",
       "thisMonth": "This Month",

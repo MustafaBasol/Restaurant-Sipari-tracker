@@ -5,6 +5,7 @@ export interface Table {
   tenantId: string;
   name: string;
   status: TableStatus;
+  customerId?: string;
   customerName?: string;
   note?: string;
 }

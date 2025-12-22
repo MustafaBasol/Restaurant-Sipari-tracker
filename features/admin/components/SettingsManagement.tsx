@@ -259,137 +259,161 @@ const SettingsManagement: React.FC = () => {
   return (
     <Card>
       <h2 className="text-2xl font-bold text-text-primary mb-6">{t('admin.settings.title')}</h2>
-      <div className="space-y-6 max-w-md">
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            {t('admin.settings.currency')}
-          </label>
-          <Select name="currency" value={settings.currency} onChange={handleChange}>
-            {currencies.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            {t('admin.settings.timezone')}
-          </label>
-          <Select name="timezone" value={settings.timezone} onChange={handleChange}>
-            {timezones.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            {t('admin.settings.defaultLanguage')}
-          </label>
-          <Select name="defaultLanguage" value={settings.defaultLanguage} onChange={handleChange}>
-            {languages.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              {t('admin.settings.currency')}
+            </label>
+            <Select name="currency" value={settings.currency} onChange={handleChange}>
+              {currencies.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </div>
 
-        <div>
-          <h3 className="text-lg font-semibold text-text-primary mb-3">
-            {t('admin.settings.printing')}
-          </h3>
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              {t('admin.settings.timezone')}
+            </label>
+            <Select name="timezone" value={settings.timezone} onChange={handleChange}>
+              {timezones.map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
+              ))}
+            </Select>
+          </div>
 
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            {t('admin.settings.printModeLabel')}
-          </label>
-          <Select name="printMode" value={printMode} onChange={handlePrintModeChange}>
-            <option value="browser">{t('admin.settings.printModeOptions.browser')}</option>
-            <option value="server">{t('admin.settings.printModeOptions.server')}</option>
-          </Select>
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              {t('admin.settings.defaultLanguage')}
+            </label>
+            <Select name="defaultLanguage" value={settings.defaultLanguage} onChange={handleChange}>
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </Select>
+          </div>
 
-          {printMode === 'server' && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                {t('admin.settings.printServerUrl')}
-              </label>
-              <Input
-                value={printServerUrl}
-                onChange={handlePrintServerUrlChange}
-                placeholder="http://localhost:4243"
-                inputMode="url"
-              />
-              <p className="text-xs text-text-secondary mt-2">
-                {t('admin.settings.printServerUrlHelp')}
-              </p>
-            </div>
-          )}
-        </div>
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary mb-3">
+              {t('admin.settings.printing')}
+            </h3>
 
-        <div>
-          <h3 className="text-lg font-semibold text-text-primary mb-3">
-            {t('admin.settings.pricing')}
-          </h3>
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              {t('admin.settings.printModeLabel')}
+            </label>
+            <Select name="printMode" value={printMode} onChange={handlePrintModeChange}>
+              <option value="browser">{t('admin.settings.printModeOptions.browser')}</option>
+              <option value="server">{t('admin.settings.printModeOptions.server')}</option>
+            </Select>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                {t('admin.settings.taxRatePercent')}
-              </label>
-              <Input
-                name="taxRatePercent"
-                value={String(taxRatePercent)}
-                onChange={handleNumberChange}
-                inputMode="decimal"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                {t('admin.settings.serviceChargePercent')}
-              </label>
-              <Input
-                name="serviceChargePercent"
-                value={String(serviceChargePercent)}
-                onChange={handleNumberChange}
-                inputMode="decimal"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                {t('admin.settings.roundingIncrement')}
-              </label>
-              <Input
-                name="roundingIncrement"
-                value={String(roundingIncrement)}
-                onChange={handleNumberChange}
-                inputMode="decimal"
-              />
-              <p className="text-xs text-text-secondary mt-2">
-                {t('admin.settings.roundingIncrementHelp')}
-              </p>
-            </div>
+            {printMode === 'server' && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  {t('admin.settings.printServerUrl')}
+                </label>
+                <Input
+                  value={printServerUrl}
+                  onChange={handlePrintServerUrlChange}
+                  placeholder="http://localhost:4243"
+                  inputMode="url"
+                />
+                <p className="text-xs text-text-secondary mt-2">
+                  {t('admin.settings.printServerUrlHelp')}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        <div>
-          <h3 className="text-lg font-semibold text-text-primary mb-3">
-            {t('admin.settings.integrations.title')}
-          </h3>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary mb-3">
+              {t('admin.settings.pricing')}
+            </h3>
 
-          {integrationMessage && (
-            <p className="text-sm text-text-secondary mb-3">{integrationMessage}</p>
-          )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  {t('admin.settings.taxRatePercent')}
+                </label>
+                <Input
+                  name="taxRatePercent"
+                  value={String(taxRatePercent)}
+                  onChange={handleNumberChange}
+                  inputMode="decimal"
+                />
+              </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                <input
-                  type="checkbox"
-                  checked={Boolean(integrations.onlineOrders?.enabled)}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  {t('admin.settings.serviceChargePercent')}
+                </label>
+                <Input
+                  name="serviceChargePercent"
+                  value={String(serviceChargePercent)}
+                  onChange={handleNumberChange}
+                  inputMode="decimal"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  {t('admin.settings.roundingIncrement')}
+                </label>
+                <Input
+                  name="roundingIncrement"
+                  value={String(roundingIncrement)}
+                  onChange={handleNumberChange}
+                  inputMode="decimal"
+                />
+                <p className="text-xs text-text-secondary mt-2">
+                  {t('admin.settings.roundingIncrementHelp')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary mb-3">
+              {t('admin.settings.integrations.title')}
+            </h3>
+
+            {integrationMessage && (
+              <p className="text-sm text-text-secondary mb-3">{integrationMessage}</p>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(integrations.onlineOrders?.enabled)}
+                    onChange={(e) =>
+                      setIntegrationField((prev) => ({
+                        ...prev,
+                        onlineOrders: {
+                          ...(prev.onlineOrders ?? {
+                            enabled: false,
+                            providerName: '',
+                            targetTableId: '',
+                          }),
+                          enabled: e.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  {t('admin.settings.integrations.onlineOrdersEnabled')}
+                </label>
+
+                <Input
+                  value={integrations.onlineOrders?.providerName ?? ''}
                   onChange={(e) =>
                     setIntegrationField((prev) => ({
                       ...prev,
@@ -399,113 +423,95 @@ const SettingsManagement: React.FC = () => {
                           providerName: '',
                           targetTableId: '',
                         }),
-                        enabled: e.target.checked,
+                        providerName: e.target.value,
                       },
                     }))
                   }
+                  placeholder={t('admin.settings.integrations.providerNamePlaceholder')}
                 />
-                {t('admin.settings.integrations.onlineOrdersEnabled')}
-              </label>
 
-              <Input
-                value={integrations.onlineOrders?.providerName ?? ''}
-                onChange={(e) =>
-                  setIntegrationField((prev) => ({
-                    ...prev,
-                    onlineOrders: {
-                      ...(prev.onlineOrders ?? {
-                        enabled: false,
-                        providerName: '',
-                        targetTableId: '',
-                      }),
-                      providerName: e.target.value,
-                    },
-                  }))
-                }
-                placeholder={t('admin.settings.integrations.providerNamePlaceholder')}
-              />
+                <Select
+                  value={integrations.onlineOrders?.targetTableId ?? ''}
+                  onChange={(e) =>
+                    setIntegrationField((prev) => ({
+                      ...prev,
+                      onlineOrders: {
+                        ...(prev.onlineOrders ?? {
+                          enabled: false,
+                          providerName: '',
+                          targetTableId: '',
+                        }),
+                        targetTableId: e.target.value,
+                      },
+                    }))
+                  }
+                >
+                  <option value="">{t('admin.settings.integrations.selectTargetTable')}</option>
+                  {tables.map((tt) => (
+                    <option key={tt.id} value={tt.id}>
+                      {tt.name}
+                    </option>
+                  ))}
+                </Select>
 
-              <Select
-                value={integrations.onlineOrders?.targetTableId ?? ''}
-                onChange={(e) =>
-                  setIntegrationField((prev) => ({
-                    ...prev,
-                    onlineOrders: {
-                      ...(prev.onlineOrders ?? {
-                        enabled: false,
-                        providerName: '',
-                        targetTableId: '',
-                      }),
-                      targetTableId: e.target.value,
-                    },
-                  }))
-                }
-              >
-                <option value="">{t('admin.settings.integrations.selectTargetTable')}</option>
-                {tables.map((tt) => (
-                  <option key={tt.id} value={tt.id}>
-                    {tt.name}
-                  </option>
-                ))}
-              </Select>
+                <Button onClick={handleSimulateOnlineOrder} variant="secondary">
+                  {t('admin.settings.integrations.simulateOnlineOrder')}
+                </Button>
+              </div>
 
-              <Button onClick={handleSimulateOnlineOrder} variant="secondary">
-                {t('admin.settings.integrations.simulateOnlineOrder')}
-              </Button>
-            </div>
+              <div className="border-t border-border pt-4 space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(integrations.pos?.enabled)}
+                    onChange={(e) =>
+                      setIntegrationField((prev) => ({
+                        ...prev,
+                        pos: {
+                          ...(prev.pos ?? { enabled: false, providerName: '' }),
+                          enabled: e.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  {t('admin.settings.integrations.posEnabled')}
+                </label>
 
-            <div className="border-t border-border pt-4 space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                <input
-                  type="checkbox"
-                  checked={Boolean(integrations.pos?.enabled)}
+                <Input
+                  value={integrations.pos?.providerName ?? ''}
                   onChange={(e) =>
                     setIntegrationField((prev) => ({
                       ...prev,
                       pos: {
                         ...(prev.pos ?? { enabled: false, providerName: '' }),
-                        enabled: e.target.checked,
+                        providerName: e.target.value,
                       },
                     }))
                   }
+                  placeholder={t('admin.settings.integrations.providerNamePlaceholder')}
                 />
-                {t('admin.settings.integrations.posEnabled')}
-              </label>
 
-              <Input
-                value={integrations.pos?.providerName ?? ''}
-                onChange={(e) =>
-                  setIntegrationField((prev) => ({
-                    ...prev,
-                    pos: {
-                      ...(prev.pos ?? { enabled: false, providerName: '' }),
-                      providerName: e.target.value,
-                    },
-                  }))
-                }
-                placeholder={t('admin.settings.integrations.providerNamePlaceholder')}
-              />
+                <Select
+                  value={posTargetTableId}
+                  onChange={(e) => setPosTargetTableId(e.target.value)}
+                >
+                  <option value="">{t('admin.settings.integrations.selectPosTable')}</option>
+                  {tables.map((tt) => (
+                    <option key={tt.id} value={tt.id}>
+                      {tt.name}
+                    </option>
+                  ))}
+                </Select>
 
-              <Select
-                value={posTargetTableId}
-                onChange={(e) => setPosTargetTableId(e.target.value)}
-              >
-                <option value="">{t('admin.settings.integrations.selectPosTable')}</option>
-                {tables.map((tt) => (
-                  <option key={tt.id} value={tt.id}>
-                    {tt.name}
-                  </option>
-                ))}
-              </Select>
-
-              <Button onClick={handleSimulatePosPayment} variant="secondary">
-                {t('admin.settings.integrations.simulatePosPayment')}
-              </Button>
+                <Button onClick={handleSimulatePosPayment} variant="secondary">
+                  {t('admin.settings.integrations.simulatePosPayment')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div>
+        <div className="lg:col-span-2">
           <h3 className="text-lg font-semibold text-text-primary mb-3">
             {t('admin.settings.permissions')}
           </h3>
@@ -555,7 +561,7 @@ const SettingsManagement: React.FC = () => {
           <p className="text-xs text-text-secondary mt-2">{t('admin.settings.permissionsHelp')}</p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="lg:col-span-2 flex items-center gap-4">
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? '...' : t('general.save')}
           </Button>

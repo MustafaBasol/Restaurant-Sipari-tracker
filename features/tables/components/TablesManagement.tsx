@@ -17,14 +17,22 @@ import { useOrders } from '../../orders/hooks/useOrders';
 import AdminOrderViewModal from '../../admin/components/AdminOrderViewModal';
 import { OrderStatus } from '../../../shared/types';
 import { Order } from '../../orders/types';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { UserRole } from '../../../shared/types';
+import CustomerCreateModal from '../../customers/components/CustomerCreateModal';
+import { createCustomer } from '../../customers/api';
 
 const TablesManagement: React.FC = () => {
   const { tables, addTable, updateTable } = useTables();
   const { orders } = useOrders();
   const { t } = useLanguage();
+  const { authState } = useAuth();
   const [newTableName, setNewTableName] = useState('');
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+
+  const canCreateCustomers = authState?.user?.role === UserRole.ADMIN;
 
   const handleAddTable = async () => {
     if (newTableName.trim()) {
@@ -63,6 +71,15 @@ const TablesManagement: React.FC = () => {
           <Button onClick={handleAddTable} className="px-4 py-2">
             {t('admin.tables.add')}
           </Button>
+          {canCreateCustomers && (
+            <Button
+              onClick={() => setIsCustomerModalOpen(true)}
+              variant="secondary"
+              className="px-4 py-2"
+            >
+              {t('customers.addNew')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -141,6 +158,16 @@ const TablesManagement: React.FC = () => {
 
       {viewingOrder && (
         <AdminOrderViewModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
+      )}
+
+      {canCreateCustomers && authState?.tenant?.id && (
+        <CustomerCreateModal
+          isOpen={isCustomerModalOpen}
+          onClose={() => setIsCustomerModalOpen(false)}
+          onCreate={(payload) =>
+            createCustomer(authState.tenant!.id, payload.fullName, payload.phone)
+          }
+        />
       )}
     </div>
   );
