@@ -11,10 +11,17 @@
 - **Roller:** Super Admin, Admin, Garson (Waiter), Mutfak (Kitchen)
 - **Masa yönetimi:** masa durumu (boş/dolu) ve sipariş akışı
 - **Menü yönetimi:** kategori + ürün, ürün müsaitlik durumu
+- **Menü seti (bundle):** birden fazla ürünü set menü olarak tanımlama ve siparişe ekleme (demo)
 - **Sipariş akışı:** garson sipariş oluşturur/günceller, mutfak item statülerini ilerletir
-- **Raporlama:** özet rapor ve “top items” (mock veriden)
+- **Stok / tükendi:** tükendi ürünlerin garson/mutfak ekranlarına yansıması + backend tarafında engelleme
+- **Mutfak SLA:** sipariş yaşı (dk) + “gecikti” göstergesi (demo)
+- **Raporlama:** günlük özet + garson performansı + top items + gün sonu kırılımı (mock veriden)
 - **Dil desteği:** EN/TR/FR (JSON çeviriler)
 - **Abonelik/deneme süresi:** deneme bitince uygulama erişimi “subscription ended” ekranına yönlenir
+- **Yetkilendirme matrisi:** tenant bazlı izin matrisi (UI gating + backend enforcement)
+- **Audit log:** kritik aksiyonlar için denetim izi + admin ekranı
+- **Cihaz/oturum yönetimi:** çoklu cihaz/sekme oturumları + kullanıcı/admin için oturum sonlandırma
+- **Offline mod (demo):** client cache + outbox replay + basit conflict log
 
 ## Teknoloji
 
@@ -54,6 +61,9 @@ npm run build
 
 # Build çıktısını yerelde preview
 npm run preview
+
+# Repo doğrulama (format + lint + typecheck + build)
+npm run check
 ```
 
 ## Demo Hesapları
@@ -85,7 +95,12 @@ Uygulama hash tabanlı route kullanır:
 Bu repo, demo amaçlı **gerçek backend olmadan** çalışır. Veri mock API üzerinden `localStorage`’a yazılır.
 
 - DB anahtarı: `kitchorify-db`
-- Oturum anahtarı: `authState`
+- Oturum anahtarları (cihaz bazlı): `authState:<deviceId>`
+- Cihaz kimliği (sessionStorage): `kitchorify-device-id`
+- Offline cache/outbox (demo):
+  - Client DB: `kitchorify-db-client:<deviceId>`
+  - Outbox: `kitchorify-outbox:<deviceId>`
+  - Conflict log: `kitchorify-sync-conflicts:<deviceId>`
 
 Veriyi sıfırlamak için tarayıcıda bu anahtarları silin (veya “Site Data/Clear Storage” ile temizleyin), ardından sayfayı yenileyin.
 
@@ -157,6 +172,9 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 - `locales/` çeviri JSON dosyaları
 
 ## Notlar
+
+- Bu repo demo/POC amaçlıdır; “server” tarafı tarayıcı `localStorage` üzerinde simüle edilir.
+- Daha production yaklaşımlar için: gerçek backend + gerçek zamanlı senkron (örn. WebSocket) + güvenli auth gerekir.
 
 ## Geliştirme / İyileştirme Takibi
 
