@@ -33,10 +33,13 @@
   "customers": {
     "none": "No registered customer",
     "addNew": "New customer",
+    "searchPlaceholder": "Search customer...",
+    "clearSelection": "Clear",
     "createTitle": "New customer",
     "createAction": "Create",
     "fullName": "Full name",
     "phone": "Phone (optional)",
+    "email": "Email (optional)",
     "validation": {
       "fullNameRequired": "Full name is required.",
       "createFailed": "Failed to create customer."

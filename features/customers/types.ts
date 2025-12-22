@@ -3,5 +3,6 @@ export interface Customer {
   tenantId: string;
   fullName: string;
   phone?: string;
+  email?: string;
   createdAt: Date;
 }

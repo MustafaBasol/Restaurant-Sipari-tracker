@@ -33,10 +33,13 @@
   "customers": {
     "none": "Aucun client enregistré",
     "addNew": "Nouveau client",
+    "searchPlaceholder": "Rechercher un client...",
+    "clearSelection": "Effacer",
     "createTitle": "Nouveau client",
     "createAction": "Créer",
     "fullName": "Nom complet",
     "phone": "Téléphone (facultatif)",
+    "email": "E-mail (facultatif)",
     "validation": {
       "fullNameRequired": "Le nom complet est obligatoire.",
       "createFailed": "Impossible de créer le client."

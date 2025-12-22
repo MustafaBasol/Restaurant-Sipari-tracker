@@ -8,7 +8,7 @@ import { Customer } from '../types';
 interface CustomerCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (payload: { fullName: string; phone?: string }) => Promise<Customer>;
+  onCreate: (payload: { fullName: string; phone?: string; email?: string }) => Promise<Customer>;
   onCreated?: (customer: Customer) => void;
 }
 
@@ -21,12 +21,14 @@ const CustomerCreateModal: React.FC<CustomerCreateModalProps> = ({
   const { t } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const reset = () => {
     setFullName('');
     setPhone('');
+    setEmail('');
     setError('');
     setIsSaving(false);
   };
@@ -40,6 +42,7 @@ const CustomerCreateModal: React.FC<CustomerCreateModalProps> = ({
     setError('');
     const name = fullName.trim();
     const p = phone.trim();
+    const e = email.trim();
     if (!name) {
       setError(t('customers.validation.fullNameRequired'));
       return;
@@ -47,7 +50,11 @@ const CustomerCreateModal: React.FC<CustomerCreateModalProps> = ({
 
     setIsSaving(true);
     try {
-      const created = await onCreate({ fullName: name, phone: p || undefined });
+      const created = await onCreate({
+        fullName: name,
+        phone: p || undefined,
+        email: e || undefined,
+      });
       onCreated?.(created);
       handleClose();
     } catch (e) {
@@ -73,6 +80,18 @@ const CustomerCreateModal: React.FC<CustomerCreateModalProps> = ({
               {t('customers.phone')}
             </label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              {t('customers.email')}
+            </label>
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              inputMode="email"
+              autoComplete="email"
+            />
           </div>
 
           {error && <div className="text-sm text-red-600">{error}</div>}

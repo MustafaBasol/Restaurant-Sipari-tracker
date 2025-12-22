@@ -121,6 +121,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [customerId, setCustomerId] = useState(table.customerId || '');
+  const [customerSearch, setCustomerSearch] = useState('');
   const [customerName, setCustomerName] = useState(table.customerName || '');
   const [tableNote, setTableNote] = useState(table.note || '');
   const [orderNote, setOrderNote] = useState('');
@@ -129,6 +130,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     setCustomerId(table.customerId || '');
     setCustomerName(table.customerName || '');
     setTableNote(table.note || '');
+    setCustomerSearch('');
   }, [table]);
 
   const canManageCustomers =
@@ -214,6 +216,26 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
       ...table,
       customerId: normalizedId || undefined,
       customerName: nextName || undefined,
+      note: tableNote.trim() || undefined,
+    });
+  };
+
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter((c) => {
+      const haystack = `${c.fullName} ${c.phone ?? ''} ${c.email ?? ''}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [customers, customerSearch]);
+
+  const handleClearCustomerSelection = () => {
+    setCustomerId('');
+    setCustomerName('');
+    updateTable({
+      ...table,
+      customerId: undefined,
+      customerName: undefined,
       note: tableNote.trim() || undefined,
     });
   };
@@ -769,13 +791,19 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                   </label>
                   {canManageCustomers ? (
                     <div className="space-y-2">
+                      <Input
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        placeholder={t('customers.searchPlaceholder')}
+                        className="py-2"
+                      />
                       <Select
                         value={customerId}
                         onChange={(e) => handleCustomerSelect(e.target.value)}
                         className="py-2"
                       >
                         <option value="">{t('customers.none')}</option>
-                        {customers.map((c) => (
+                        {filteredCustomers.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.fullName}
                           </option>
@@ -791,6 +819,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                           className="py-2"
                           disabled={Boolean(customerId)}
                         />
+                        <Button
+                          variant="secondary"
+                          onClick={handleClearCustomerSelection}
+                          className="px-3 py-2"
+                        >
+                          {t('customers.clearSelection')}
+                        </Button>
                         <Button
                           variant="secondary"
                           onClick={() => setIsCustomerModalOpen(true)}
@@ -1311,7 +1346,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
           isOpen={isCustomerModalOpen}
           onClose={() => setIsCustomerModalOpen(false)}
           onCreate={(payload) =>
-            createCustomer(authState.tenant!.id, payload.fullName, payload.phone)
+            createCustomer(authState.tenant!.id, payload.fullName, payload.phone, payload.email)
           }
           onCreated={(created) => {
             setCustomers((prev) =>

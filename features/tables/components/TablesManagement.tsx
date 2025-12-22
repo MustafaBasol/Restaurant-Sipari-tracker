@@ -34,6 +34,7 @@ const TablesManagement: React.FC = () => {
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
 
   const canCreateCustomers = authState?.user?.role === UserRole.ADMIN;
 
@@ -47,11 +48,24 @@ const TablesManagement: React.FC = () => {
       .catch((e) => console.error('Failed to load customers', e));
   }, [authState?.tenant?.id, canCreateCustomers]);
 
+  useEffect(() => {
+    setCustomerSearch('');
+  }, [editingTable?.id]);
+
   const customersById = useMemo(() => {
     const map = new Map<string, Customer>();
     for (const c of customers) map.set(c.id, c);
     return map;
   }, [customers]);
+
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter((c) => {
+      const haystack = `${c.fullName} ${c.phone ?? ''} ${c.email ?? ''}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [customers, customerSearch]);
 
   const handleAddTable = async () => {
     if (newTableName.trim()) {
@@ -142,26 +156,49 @@ const TablesManagement: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   {editingTable?.id === table.id ? (
-                    <Select
-                      value={editingTable.customerId ?? ''}
-                      onChange={(e) => {
-                        const nextId = e.target.value || undefined;
-                        const nextName = nextId ? customersById.get(nextId)?.fullName : undefined;
-                        setEditingTable({
-                          ...editingTable,
-                          customerId: nextId,
-                          customerName: nextName,
-                        });
-                      }}
-                      className="py-2"
-                    >
-                      <option value="">{t('customers.none')}</option>
-                      {customers.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.fullName}
-                        </option>
-                      ))}
-                    </Select>
+                    <div className="space-y-2">
+                      <Input
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        placeholder={t('customers.searchPlaceholder')}
+                        className="py-2"
+                      />
+
+                      <Select
+                        value={editingTable.customerId ?? ''}
+                        onChange={(e) => {
+                          const nextId = e.target.value || undefined;
+                          const nextName = nextId ? customersById.get(nextId)?.fullName : undefined;
+                          setEditingTable({
+                            ...editingTable,
+                            customerId: nextId,
+                            customerName: nextName,
+                          });
+                        }}
+                        className="py-2"
+                      >
+                        <option value="">{t('customers.none')}</option>
+                        {filteredCustomers.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.fullName}
+                          </option>
+                        ))}
+                      </Select>
+
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setEditingTable({
+                            ...editingTable,
+                            customerId: undefined,
+                            customerName: undefined,
+                          });
+                        }}
+                        className="px-3 py-2"
+                      >
+                        {t('customers.clearSelection')}
+                      </Button>
+                    </div>
                   ) : (
                     <span className="text-sm text-text-secondary">
                       {resolvedCustomerName || '-'}
@@ -218,7 +255,7 @@ const TablesManagement: React.FC = () => {
           isOpen={isCustomerModalOpen}
           onClose={() => setIsCustomerModalOpen(false)}
           onCreate={(payload) =>
-            createCustomer(authState.tenant!.id, payload.fullName, payload.phone)
+            createCustomer(authState.tenant!.id, payload.fullName, payload.phone, payload.email)
           }
           onCreated={(created) => {
             setCustomers((prev) =>

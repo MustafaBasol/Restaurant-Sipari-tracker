@@ -207,6 +207,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       fullName: 'Alex Johnson',
       phone: '+1 555 0101',
+      email: 'alex@example.com',
       createdAt: new Date('2023-11-05T12:00:00Z'),
     },
     {
@@ -214,6 +215,7 @@ const seedData: MockDB = {
       tenantId: 't1',
       fullName: 'Maria Garcia',
       phone: '+1 555 0102',
+      email: 'maria@example.com',
       createdAt: new Date('2023-11-06T12:00:00Z'),
     },
   ],
