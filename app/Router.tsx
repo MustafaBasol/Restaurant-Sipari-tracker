@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, Suspense } from 'react';
+import React, { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useLanguage } from '../shared/hooks/useLanguage';
 import { UserRole } from '../shared/types';
@@ -30,7 +30,9 @@ const normalizeHash = (value: string | null | undefined) =>
 
 const AppRoutes: React.FC = () => {
   const { authState, isLoading } = useAuth();
-  const { lang, setLang } = useLanguage();
+  const { setLang } = useLanguage();
+
+  const lastTenantIdRef = useRef<string | null>(null);
 
   const [hash, setHash] = useState(() => normalizeHash(window.location.hash));
   const currentHash = hash || '#/';
@@ -45,10 +47,20 @@ const AppRoutes: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (authState?.tenant && authState.tenant.defaultLanguage !== lang) {
-      setLang(authState.tenant.defaultLanguage);
+    const tenantId = authState?.tenant?.id ?? null;
+    const tenantDefaultLanguage = authState?.tenant?.defaultLanguage;
+
+    // Apply tenant default language only once per tenant (e.g., on login / tenant switch).
+    // Do not override manual language switching.
+    if (tenantId && lastTenantIdRef.current !== tenantId && tenantDefaultLanguage) {
+      lastTenantIdRef.current = tenantId;
+      setLang(tenantDefaultLanguage);
     }
-  }, [authState, lang, setLang]);
+
+    if (!tenantId) {
+      lastTenantIdRef.current = null;
+    }
+  }, [authState?.tenant?.id, authState?.tenant?.defaultLanguage, setLang]);
 
   const canAccessLegalPage = useMemo(() => {
     return currentHash === '#/privacy' || currentHash === '#/terms';

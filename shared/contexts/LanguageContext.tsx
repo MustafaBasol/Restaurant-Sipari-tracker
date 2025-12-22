@@ -1,7 +1,19 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { fetchTranslations, prefetchTranslations, resolve, Language } from '../lib/i18n';
+import { isBrowser } from '../lib/device';
 
 const ALL_LANGUAGES: Language[] = ['en', 'tr', 'fr'];
+
+const STORAGE_KEY = 'kitchorify-lang';
+
+const isValidLanguage = (value: unknown): value is Language =>
+  value === 'en' || value === 'tr' || value === 'fr';
+
+const getInitialLanguage = (): Language => {
+  if (!isBrowser()) return 'en';
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  return isValidLanguage(stored) ? stored : 'en';
+};
 
 interface LanguageContextData {
   lang: Language;
@@ -12,8 +24,13 @@ interface LanguageContextData {
 export const LanguageContext = createContext<LanguageContextData | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLang] = useState<Language>(() => getInitialLanguage());
   const [translations, setTranslations] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (!isBrowser()) return;
+    window.localStorage.setItem(STORAGE_KEY, lang);
+  }, [lang]);
 
   useEffect(() => {
     const load = async () => {
