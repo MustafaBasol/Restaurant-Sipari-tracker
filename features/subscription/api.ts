@@ -30,6 +30,20 @@ export type StripeInvoiceSummary = {
   invoice_pdf?: string | null;
 };
 
+export type StripeSubscriptionStatusSummary = {
+  id: string;
+  status: string;
+  cancel_at_period_end: boolean;
+  current_period_end?: number | null;
+  canceled_at?: number | null;
+  ended_at?: number | null;
+};
+
+export type GetSubscriptionStatusParams = {
+  backendUrl: string;
+  customerEmail: string;
+};
+
 export type ListInvoicesParams = {
   backendUrl: string;
   customerEmail: string;
@@ -100,6 +114,26 @@ export const listInvoices = async (
 
   const data = (await res.json()) as any;
   return { invoices: (data?.invoices || []) as StripeInvoiceSummary[] };
+};
+
+export const getSubscriptionStatus = async (
+  params: GetSubscriptionStatusParams,
+): Promise<{ subscription: StripeSubscriptionStatusSummary | null }> => {
+  const res = await fetch(`${params.backendUrl.replace(/\/$/, '')}/get-subscription-status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      customerEmail: params.customerEmail,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to get subscription status (${res.status}): ${text}`);
+  }
+
+  const data = (await res.json()) as any;
+  return { subscription: (data?.subscription || null) as StripeSubscriptionStatusSummary | null };
 };
 
 export const confirmPaymentSuccess = (tenantId: string): Promise<Tenant> => {

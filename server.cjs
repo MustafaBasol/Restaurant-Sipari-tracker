@@ -146,6 +146,41 @@ app.post('/create-portal-session', async (req, res) => {
   }
 });
 
+app.post('/get-subscription-status', async (req, res) => {
+  try {
+    const { customerEmail } = req.body || {};
+    if (!customerEmail) return res.status(400).json({ error: 'Missing customerEmail' });
+
+    // Demo-friendly lookup. In a production app, store customerId in your DB.
+    const customers = await stripe.customers.list({ email: customerEmail, limit: 10 });
+    const customer = customers.data?.[0];
+    if (!customer) return res.status(404).json({ error: 'Customer not found for email' });
+
+    const subs = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'all',
+      limit: 10,
+    });
+
+    const latest = (subs.data || []).sort((a, b) => (b.created || 0) - (a.created || 0))[0];
+    if (!latest) return res.json({ subscription: null });
+
+    return res.json({
+      subscription: {
+        id: latest.id,
+        status: latest.status,
+        cancel_at_period_end: !!latest.cancel_at_period_end,
+        current_period_end: latest.current_period_end,
+        canceled_at: latest.canceled_at,
+        ended_at: latest.ended_at,
+      },
+    });
+  } catch (err) {
+    console.error('Failed to get subscription status', err);
+    return res.status(500).json({ error: err?.message || 'Unknown error' });
+  }
+});
+
 app.post('/list-invoices', async (req, res) => {
   try {
     const { customerEmail, limit } = req.body || {};

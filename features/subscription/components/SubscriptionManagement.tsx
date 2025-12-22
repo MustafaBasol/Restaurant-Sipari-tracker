@@ -6,13 +6,18 @@ import { getTrialDaysLeft, isSubscriptionActive } from '../../../shared/lib/util
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
-import { createBillingPortalSession, listInvoices, StripeInvoiceSummary } from '../api';
+import {
+  createBillingPortalSession,
+  getSubscriptionStatus,
+  listInvoices,
+  StripeInvoiceSummary,
+} from '../api';
 import { formatCurrency } from '../../../shared/lib/utils';
 
 const stripeBackendUrl = (import.meta as any).env?.VITE_STRIPE_BACKEND_URL as string | undefined;
 
 const SubscriptionManagement: React.FC = () => {
-  const { authState } = useAuth();
+  const { authState, updateTenantInState } = useAuth();
   const { t } = useLanguage();
   const [error, setError] = useState('');
 
@@ -25,6 +30,9 @@ const SubscriptionManagement: React.FC = () => {
   const subscriptionIsActive = tenant ? isSubscriptionActive(tenant) : false;
   const trialDaysLeft = tenant ? getTrialDaysLeft(tenant) : 0;
   const currency = (tenant?.currency || 'EUR').toLowerCase();
+
+  const isCancelScheduled =
+    !!tenant?.subscriptionCancelAtPeriodEnd && !!tenant?.subscriptionCurrentPeriodEndAt;
 
   const canLoadInvoices = useMemo(() => {
     return (
@@ -58,6 +66,58 @@ const SubscriptionManagement: React.FC = () => {
     run();
   }, [authState, canLoadInvoices, t]);
 
+  // Best-effort: sync subscription cancellation state from Stripe so the UI matches
+  // what the user did in Billing Portal (cancel now vs cancel at period end).
+  useEffect(() => {
+    const run = async () => {
+      if (!tenant) return;
+      if (tenant.subscriptionStatus !== SubscriptionStatus.ACTIVE) return;
+      if (!stripeBackendUrl) return;
+      if (!authState?.user?.email) return;
+
+      try {
+        const { subscription } = await getSubscriptionStatus({
+          backendUrl: stripeBackendUrl,
+          customerEmail: authState.user.email,
+        });
+        if (!subscription) return;
+
+        const stripeStatus = subscription.status;
+        const cancelAtPeriodEnd = !!subscription.cancel_at_period_end;
+        const currentPeriodEndAt = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000)
+          : undefined;
+
+        // Map Stripe -> demo tenant status.
+        const nextTenant = { ...tenant };
+        if (stripeStatus === 'canceled' || stripeStatus === 'incomplete_expired') {
+          nextTenant.subscriptionStatus = SubscriptionStatus.CANCELED;
+          nextTenant.subscriptionCancelAtPeriodEnd = false;
+          nextTenant.subscriptionCurrentPeriodEndAt = undefined;
+        } else {
+          nextTenant.subscriptionStatus = SubscriptionStatus.ACTIVE;
+          nextTenant.subscriptionCancelAtPeriodEnd = cancelAtPeriodEnd;
+          nextTenant.subscriptionCurrentPeriodEndAt = currentPeriodEndAt;
+        }
+
+        const changed =
+          nextTenant.subscriptionStatus !== tenant.subscriptionStatus ||
+          !!nextTenant.subscriptionCancelAtPeriodEnd !== !!tenant.subscriptionCancelAtPeriodEnd ||
+          (nextTenant.subscriptionCurrentPeriodEndAt?.getTime() || 0) !==
+            (tenant.subscriptionCurrentPeriodEndAt?.getTime() || 0);
+
+        if (changed) {
+          updateTenantInState(nextTenant);
+        }
+      } catch (e) {
+        // Don't block the page on Stripe sync failures.
+        console.error('Failed to sync Stripe subscription status', e);
+      }
+    };
+
+    run();
+  }, [authState?.user?.email, tenant, updateTenantInState]);
+
   if (!tenant) return null;
 
   const handleActivate = () => {
@@ -78,7 +138,7 @@ const SubscriptionManagement: React.FC = () => {
 
     try {
       const baseUrl = `${window.location.origin}${window.location.pathname}`;
-      const returnUrl = `${baseUrl}#/app`;
+      const returnUrl = `${baseUrl}#/app?tab=subscription&portal=1`;
       const { url } = await createBillingPortalSession({
         backendUrl: stripeBackendUrl,
         customerEmail: authState.user.email,
@@ -106,8 +166,18 @@ const SubscriptionManagement: React.FC = () => {
       }
       return (
         <div>
-          <Badge variant="green">{t('statuses.ACTIVE')}</Badge>
+          <Badge variant={isCancelScheduled ? 'yellow' : 'green'}>
+            {isCancelScheduled ? t('subscription.cancelingBadge') : t('statuses.ACTIVE')}
+          </Badge>
           <p className="mt-2 text-text-secondary">{t('subscription.activeSubscription')}</p>
+          {isCancelScheduled && tenant.subscriptionCurrentPeriodEndAt && (
+            <p className="mt-1 text-text-secondary">
+              {t('subscription.cancelingNotice').replace(
+                '{date}',
+                tenant.subscriptionCurrentPeriodEndAt.toLocaleDateString(),
+              )}
+            </p>
+          )}
         </div>
       );
     } else {
@@ -123,43 +193,47 @@ const SubscriptionManagement: React.FC = () => {
   return (
     <Card>
       <h2 className="text-2xl font-bold text-text-primary mb-6">{t('subscription.status')}</h2>
-      <div className="space-y-6 max-w-md">
-        <div className="bg-light-bg p-4 rounded-xl">
-          <p className="text-sm font-medium text-text-secondary mb-2">
-            {t('subscription.currentPlan')}
-          </p>
-          <div className="flex items-center justify-between">
-            <p className="font-bold text-lg">{t('marketing.pricing.planName')}</p>
-            {renderStatus()}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div className="bg-light-bg p-4 rounded-xl">
+            <p className="text-sm font-medium text-text-secondary mb-2">
+              {t('subscription.currentPlan')}
+            </p>
+            <div className="flex items-center justify-between">
+              <p className="font-bold text-lg">{t('marketing.pricing.planName')}</p>
+              {renderStatus()}
+            </div>
           </div>
+
+          <div className="text-sm text-text-secondary">
+            {t('subscription.cancellationPeriodEndNotice')}{' '}
+            <button
+              type="button"
+              className="text-accent hover:text-accent-hover font-medium"
+              onClick={() => (window.location.hash = '#/subscription-terms')}
+            >
+              {t('subscription.viewTerms')}
+            </button>
+          </div>
+
+          {(tenant.subscriptionStatus === SubscriptionStatus.TRIAL || !subscriptionIsActive) && (
+            <div>
+              <Button onClick={handleActivate} className="w-full">
+                {t('subscription.upgradeButton')}
+              </Button>
+            </div>
+          )}
+
+          {subscriptionIsActive && tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
+            <div>
+              <Button variant="secondary" onClick={handleManageSubscription} className="w-full">
+                {t('subscription.manageButton')}
+              </Button>
+            </div>
+          )}
+
+          {error && <div className="text-sm text-red-600">{error}</div>}
         </div>
-
-        <div className="text-sm text-text-secondary">
-          {t('subscription.cancellationPeriodEndNotice')}{' '}
-          <button
-            type="button"
-            className="text-accent hover:text-accent-hover font-medium"
-            onClick={() => (window.location.hash = '#/subscription-terms')}
-          >
-            {t('subscription.viewTerms')}
-          </button>
-        </div>
-
-        {(tenant.subscriptionStatus === SubscriptionStatus.TRIAL || !subscriptionIsActive) && (
-          <div>
-            <Button onClick={handleActivate} className="w-full">
-              {t('subscription.upgradeButton')}
-            </Button>
-          </div>
-        )}
-
-        {subscriptionIsActive && tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
-          <div>
-            <Button variant="secondary" onClick={handleManageSubscription} className="w-full">
-              {t('subscription.manageButton')}
-            </Button>
-          </div>
-        )}
 
         {tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
           <div className="space-y-3">
@@ -173,9 +247,19 @@ const SubscriptionManagement: React.FC = () => {
               </div>
             )}
 
-            {invoicesError && <div className="text-sm text-red-600">{invoicesError}</div>}
-
-            {invoicesLoading ? (
+            {invoicesError ? (
+              <div className="space-y-2">
+                <div className="text-sm text-red-600">{invoicesError}</div>
+                {authState?.user?.email && (
+                  <div className="text-sm text-text-secondary">
+                    {t('subscription.paymentHistoryTroubleshoot').replace(
+                      '{email}',
+                      authState.user.email,
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : invoicesLoading ? (
               <div className="text-sm text-text-secondary">{t('general.loading')}</div>
             ) : invoices.length === 0 ? (
               <div className="text-sm text-text-secondary">
@@ -235,8 +319,6 @@ const SubscriptionManagement: React.FC = () => {
             )}
           </div>
         )}
-
-        {error && <div className="text-sm text-red-600">{error}</div>}
       </div>
     </Card>
   );

@@ -128,6 +128,10 @@ export interface Tenant {
   slug: string;
   defaultLanguage: 'tr' | 'en' | 'fr';
   subscriptionStatus: SubscriptionStatus;
+  /** Optional: Stripe subscription cancellation state (demo sync). */
+  subscriptionCancelAtPeriodEnd?: boolean;
+  /** Optional: Stripe billing period end when cancellation is scheduled. */
+  subscriptionCurrentPeriodEndAt?: Date;
   createdAt: Date;
   currency: string; // e.g. 'USD', 'EUR', 'TRY'
   timezone: string; // e.g. 'America/New_York'

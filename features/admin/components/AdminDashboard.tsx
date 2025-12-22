@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import TablesManagement from '../../tables/components/TablesManagement';
 import MenuManagement from '../../menu/components/MenuManagement';
@@ -34,9 +34,68 @@ type AdminTab =
   | 'settings'
   | 'subscription';
 
+const ADMIN_TAB_STORAGE_KEY = 'kitchorify-admin-active-tab';
+
+const isAdminTab = (value: string | null | undefined): value is AdminTab => {
+  return (
+    value === 'tables' ||
+    value === 'menu' ||
+    value === 'users' ||
+    value === 'customers' ||
+    value === 'history' ||
+    value === 'reports' ||
+    value === 'auditLogs' ||
+    value === 'settings' ||
+    value === 'subscription'
+  );
+};
+
+const getTabFromHash = (): AdminTab | null => {
+  const hash = window.location.hash || '';
+  if (!hash.startsWith('#/app')) return null;
+  const qIndex = hash.indexOf('?');
+  if (qIndex === -1) return null;
+  const params = new URLSearchParams(hash.slice(qIndex + 1));
+  const tab = params.get('tab');
+  return isAdminTab(tab) ? tab : null;
+};
+
 const AdminDashboard: React.FC = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<AdminTab>('tables');
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => {
+    const fromHash = getTabFromHash();
+    if (fromHash) return fromHash;
+    const fromStorage = localStorage.getItem(ADMIN_TAB_STORAGE_KEY);
+    return isAdminTab(fromStorage) ? fromStorage : 'tables';
+  });
+
+  useEffect(() => {
+    localStorage.setItem(ADMIN_TAB_STORAGE_KEY, activeTab);
+
+    const currentHash = window.location.hash || '#/app';
+    if (!currentHash.startsWith('#/app')) return;
+
+    const qIndex = currentHash.indexOf('?');
+    const base = qIndex === -1 ? '#/app' : currentHash.slice(0, qIndex);
+    const params = new URLSearchParams(qIndex === -1 ? '' : currentHash.slice(qIndex + 1));
+    params.set('tab', activeTab);
+    const nextHash = `${base}?${params.toString()}`;
+    if (nextHash !== currentHash) {
+      window.location.hash = nextHash;
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const tab = getTabFromHash();
+      if (tab && tab !== activeTab) {
+        setActiveTab(tab);
+      }
+    };
+
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [activeTab]);
 
   const tabs: { id: AdminTab; labelKey: any; icon: React.ReactNode }[] = [
     { id: 'tables', labelKey: 'admin.tabs.tables', icon: <TableIcon /> },

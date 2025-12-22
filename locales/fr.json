@@ -650,9 +650,13 @@
     "perMonth": "mois",
     "cancellationPeriodEndNotice": "En cas d’annulation, l’abonnement reste actif jusqu’à la fin de la période de facturation en cours.",
     "viewTerms": "Voir les conditions d’abonnement",
+    "manageButton": "Gérer l’abonnement",
+    "cancelingBadge": "Annulation en cours",
+    "cancelingNotice": "Sera annulé en fin de période : {date}",
     "paymentHistoryTitle": "Historique des paiements",
     "paymentHistoryEmpty": "Aucune facture trouvée.",
     "paymentHistoryLoadFailed": "Impossible de charger les factures.",
+    "paymentHistoryTroubleshoot": "Les factures sont recherchées via votre e-mail de connexion : {email}. Vérifiez que le compte Stripe (Test/Live) et l’e-mail utilisé correspondent.",
     "invoiceOpen": "Ouvrir",
     "invoiceDownload": "Télécharger le PDF",
     "checkout": {

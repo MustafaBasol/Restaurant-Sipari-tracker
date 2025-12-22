@@ -55,6 +55,11 @@ const hydrateAuthStateFromStorage = (raw: unknown): AuthState => {
     if (hydrated.tenant.trialEndAt) {
       hydrated.tenant.trialEndAt = new Date(hydrated.tenant.trialEndAt);
     }
+    if ((hydrated.tenant as any).subscriptionCurrentPeriodEndAt) {
+      (hydrated.tenant as any).subscriptionCurrentPeriodEndAt = new Date(
+        (hydrated.tenant as any).subscriptionCurrentPeriodEndAt,
+      );
+    }
   }
 
   return hydrated;
