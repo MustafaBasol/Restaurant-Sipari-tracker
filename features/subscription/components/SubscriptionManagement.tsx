@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { SubscriptionStatus } from '../../../shared/types';
@@ -6,7 +6,8 @@ import { getTrialDaysLeft, isSubscriptionActive } from '../../../shared/lib/util
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
-import { createBillingPortalSession } from '../api';
+import { createBillingPortalSession, listInvoices, StripeInvoiceSummary } from '../api';
+import { formatCurrency } from '../../../shared/lib/utils';
 
 const stripeBackendUrl = (import.meta as any).env?.VITE_STRIPE_BACKEND_URL as string | undefined;
 
@@ -15,11 +16,49 @@ const SubscriptionManagement: React.FC = () => {
   const { t } = useLanguage();
   const [error, setError] = useState('');
 
-  const tenant = authState?.tenant;
-  if (!tenant) return null;
+  const [invoices, setInvoices] = useState<StripeInvoiceSummary[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const [invoicesError, setInvoicesError] = useState('');
 
-  const subscriptionIsActive = isSubscriptionActive(tenant);
-  const trialDaysLeft = getTrialDaysLeft(tenant);
+  const tenant = authState?.tenant;
+
+  const subscriptionIsActive = tenant ? isSubscriptionActive(tenant) : false;
+  const trialDaysLeft = tenant ? getTrialDaysLeft(tenant) : 0;
+  const currency = (tenant?.currency || 'EUR').toLowerCase();
+
+  const canLoadInvoices = useMemo(() => {
+    return (
+      tenant?.subscriptionStatus === SubscriptionStatus.ACTIVE &&
+      !!stripeBackendUrl &&
+      !!authState?.user?.email
+    );
+  }, [authState?.user?.email, tenant?.subscriptionStatus]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!canLoadInvoices) return;
+      setInvoicesLoading(true);
+      setInvoicesError('');
+
+      try {
+        const { invoices } = await listInvoices({
+          backendUrl: stripeBackendUrl as string,
+          customerEmail: authState?.user?.email as string,
+          limit: 10,
+        });
+        setInvoices(invoices);
+      } catch (e) {
+        console.error('Failed to load invoices', e);
+        setInvoicesError(t('subscription.paymentHistoryLoadFailed'));
+      } finally {
+        setInvoicesLoading(false);
+      }
+    };
+
+    run();
+  }, [authState, canLoadInvoices, t]);
+
+  if (!tenant) return null;
 
   const handleActivate = () => {
     setError('');
@@ -119,6 +158,81 @@ const SubscriptionManagement: React.FC = () => {
             <Button variant="secondary" onClick={handleManageSubscription} className="w-full">
               {t('subscription.manageButton')}
             </Button>
+          </div>
+        )}
+
+        {tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-text-primary">
+              {t('subscription.paymentHistoryTitle')}
+            </h3>
+
+            {!stripeBackendUrl && (
+              <div className="text-sm text-text-secondary">
+                {t('subscription.checkout.missingBackendUrl')}
+              </div>
+            )}
+
+            {invoicesError && <div className="text-sm text-red-600">{invoicesError}</div>}
+
+            {invoicesLoading ? (
+              <div className="text-sm text-text-secondary">{t('general.loading')}</div>
+            ) : invoices.length === 0 ? (
+              <div className="text-sm text-text-secondary">
+                {t('subscription.paymentHistoryEmpty')}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {invoices.map((inv) => {
+                  const createdDate = new Date(inv.created * 1000);
+                  const amountMajor = (inv.amount_paid || inv.amount_due || 0) / 100;
+                  const amountText = formatCurrency(
+                    amountMajor,
+                    (inv.currency || currency).toUpperCase(),
+                  );
+
+                  return (
+                    <div
+                      key={inv.id}
+                      className="bg-light-bg p-3 rounded-xl flex items-start justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-text-primary truncate">
+                          {inv.number || inv.id}
+                        </div>
+                        <div className="text-xs text-text-secondary">
+                          {createdDate.toLocaleDateString()} • {amountText}
+                          {inv.status ? ` • ${inv.status}` : ''}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {inv.hosted_invoice_url && (
+                          <a
+                            className="text-sm font-medium text-accent hover:text-accent-hover"
+                            href={inv.hosted_invoice_url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {t('subscription.invoiceOpen')}
+                          </a>
+                        )}
+                        {inv.invoice_pdf && (
+                          <a
+                            className="text-sm font-medium text-accent hover:text-accent-hover"
+                            href={inv.invoice_pdf}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {t('subscription.invoiceDownload')}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

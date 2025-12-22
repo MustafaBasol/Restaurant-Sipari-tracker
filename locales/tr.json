@@ -661,6 +661,11 @@
     "cancellationPeriodEndNotice": "İptal ederseniz abonelik mevcut fatura döneminin sonuna kadar aktif kalır.",
     "viewTerms": "Abonelik koşullarını görüntüle",
     "manageButton": "Aboneliği yönet",
+    "paymentHistoryTitle": "Ödeme geçmişi",
+    "paymentHistoryEmpty": "Fatura bulunamadı.",
+    "paymentHistoryLoadFailed": "Faturalar yüklenemedi.",
+    "invoiceOpen": "Aç",
+    "invoiceDownload": "PDF indir",
     "checkout": {
       "title": "Aboneliğinizi Etkinleştirin",
       "subtitle": "Tümü bir arada planı için ödemenizi tamamlayın.",

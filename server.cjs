@@ -146,5 +146,39 @@ app.post('/create-portal-session', async (req, res) => {
   }
 });
 
+app.post('/list-invoices', async (req, res) => {
+  try {
+    const { customerEmail, limit } = req.body || {};
+    if (!customerEmail) return res.status(400).json({ error: 'Missing customerEmail' });
+
+    // Demo-friendly lookup. In a production app, store customerId in your DB.
+    const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+    const customer = customers.data?.[0];
+    if (!customer) return res.status(404).json({ error: 'Customer not found for email' });
+
+    const invoices = await stripe.invoices.list({
+      customer: customer.id,
+      limit: typeof limit === 'number' ? limit : 10,
+    });
+
+    return res.json({
+      invoices: (invoices.data || []).map((inv) => ({
+        id: inv.id,
+        number: inv.number,
+        status: inv.status,
+        created: inv.created,
+        currency: inv.currency,
+        amount_paid: inv.amount_paid,
+        amount_due: inv.amount_due,
+        hosted_invoice_url: inv.hosted_invoice_url,
+        invoice_pdf: inv.invoice_pdf,
+      })),
+    });
+  } catch (err) {
+    console.error('Failed to list invoices', err);
+    return res.status(500).json({ error: err?.message || 'Unknown error' });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

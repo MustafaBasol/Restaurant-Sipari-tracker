@@ -655,6 +655,11 @@
     "cancellationPeriodEndNotice": "If you cancel, the subscription stays active until the end of the current billing period.",
     "viewTerms": "View subscription terms",
     "manageButton": "Manage subscription",
+    "paymentHistoryTitle": "Payment history",
+    "paymentHistoryEmpty": "No invoices found.",
+    "paymentHistoryLoadFailed": "Failed to load invoices.",
+    "invoiceOpen": "Open",
+    "invoiceDownload": "Download PDF",
     "checkout": {
       "title": "Activate Your Subscription",
       "subtitle": "Complete your payment for the All-in-one plan.",

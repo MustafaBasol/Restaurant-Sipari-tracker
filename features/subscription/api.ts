@@ -18,6 +18,24 @@ export type CreateBillingPortalSessionParams = {
   returnUrl: string;
 };
 
+export type StripeInvoiceSummary = {
+  id: string;
+  number?: string | null;
+  status?: string | null;
+  created: number;
+  currency: string;
+  amount_paid: number;
+  amount_due: number;
+  hosted_invoice_url?: string | null;
+  invoice_pdf?: string | null;
+};
+
+export type ListInvoicesParams = {
+  backendUrl: string;
+  customerEmail: string;
+  limit?: number;
+};
+
 export const createBillingPortalSession = async (
   params: CreateBillingPortalSessionParams,
 ): Promise<{ url: string }> => {
@@ -61,6 +79,27 @@ export const createSubscriptionCheckoutSession = async (
 
   const data = (await res.json()) as any;
   return { url: data?.url, sessionId: data?.sessionId };
+};
+
+export const listInvoices = async (
+  params: ListInvoicesParams,
+): Promise<{ invoices: StripeInvoiceSummary[] }> => {
+  const res = await fetch(`${params.backendUrl.replace(/\/$/, '')}/list-invoices`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      customerEmail: params.customerEmail,
+      limit: params.limit,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to list invoices (${res.status}): ${text}`);
+  }
+
+  const data = (await res.json()) as any;
+  return { invoices: (data?.invoices || []) as StripeInvoiceSummary[] };
 };
 
 export const confirmPaymentSuccess = (tenantId: string): Promise<Tenant> => {
