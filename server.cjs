@@ -19,6 +19,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('[stripe] Missing STRIPE_SECRET_KEY.');
+  console.error('Set it via Codespaces Secrets/Environment variables or a local .env file.');
+  console.error('Example: STRIPE_SECRET_KEY=sk_test_...');
+  process.exit(1);
+}
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
