@@ -2,8 +2,10 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import * as api from '../api';
 import { AuthState } from '../types';
 import { Tenant, User } from '../../../shared/types';
+import { getDeviceId } from '../../../shared/lib/device';
 
-const AUTH_STORAGE_KEY = 'authState';
+const LEGACY_AUTH_STORAGE_KEY = 'authState';
+const getAuthStorageKey = () => `authState:${getDeviceId()}`;
 
 const isRecord = (value: unknown): value is Record<string, any> => {
   return typeof value === 'object' && value !== null;
@@ -74,14 +76,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const storedAuthState = localStorage.getItem(AUTH_STORAGE_KEY);
+    const authStorageKey = getAuthStorageKey();
+    const storedAuthState = localStorage.getItem(authStorageKey);
     if (storedAuthState) {
       try {
         const parsedState = JSON.parse(storedAuthState);
         setAuthState(hydrateAuthStateFromStorage(parsedState));
       } catch (e) {
         console.error('Failed to parse auth state from localStorage', e);
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(authStorageKey);
+      }
+    } else {
+      // Migrate legacy (shared) storage to per-device storage.
+      const legacy = localStorage.getItem(LEGACY_AUTH_STORAGE_KEY);
+      if (legacy) {
+        try {
+          const parsedState = JSON.parse(legacy);
+          const hydrated = hydrateAuthStateFromStorage(parsedState);
+          setAuthState(hydrated);
+          localStorage.setItem(
+            authStorageKey,
+            JSON.stringify(sanitizeAuthStateForStorage(hydrated)),
+          );
+        } catch (e) {
+          console.error('Failed to migrate legacy auth state', e);
+        } finally {
+          localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+        }
       }
     }
     setIsLoading(false);
@@ -94,7 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response) {
         const sanitized = sanitizeAuthStateForStorage(response);
         setAuthState(sanitized);
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized));
+        localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
         return true;
       }
       return false;
@@ -112,7 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response) {
         const sanitized = sanitizeAuthStateForStorage(response);
         setAuthState(sanitized);
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized));
+        localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
         return true;
       }
       return false;
@@ -123,7 +144,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const clearLocalAuth = () => {
+    setAuthState(null);
+    localStorage.removeItem(getAuthStorageKey());
+  };
+
   const logout = () => {
+    // Best-effort: revoke this device session server-side.
+    if (authState?.sessionId) {
+      api.logoutSession(authState.sessionId).catch(() => {
+        // ignore
+      });
+    }
+
     // Navigate to the marketing homepage first.
     window.location.hash = '#/';
 
@@ -131,8 +164,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // event listener before the auth state changes. This reliably prevents
     // the race condition that was redirecting to /login.
     setTimeout(() => {
-      setAuthState(null);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      clearLocalAuth();
     }, 0);
   };
 
@@ -141,10 +173,81 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!prevState) return null;
       const newState = { ...prevState, tenant };
       const sanitized = sanitizeAuthStateForStorage(newState);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized));
+      localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
       return sanitized;
     });
   };
+
+  // Bootstrap session for legacy auth states that don't include a session id.
+  useEffect(() => {
+    if (!authState || authState.sessionId) return;
+
+    let cancelled = false;
+    api
+      .bootstrapSession(authState.user.id, authState.tenant?.id ?? null)
+      .then((sessionId) => {
+        if (cancelled || !sessionId) return;
+        setAuthState((prev) => {
+          if (!prev) return prev;
+          const next: AuthState = { ...prev, sessionId, deviceId: getDeviceId() };
+          const sanitized = sanitizeAuthStateForStorage(next);
+          localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
+          return sanitized;
+        });
+      })
+      .catch(() => {
+        // ignore
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authState]);
+
+  // Periodically validate the current session; if revoked/expired, force logout.
+  useEffect(() => {
+    if (!authState?.sessionId) return;
+
+    let cancelled = false;
+
+    const validate = async () => {
+      try {
+        const ok = await api.validateSession(authState.sessionId!);
+        if (!ok && !cancelled) {
+          window.location.hash = '#/';
+          setTimeout(() => {
+            clearLocalAuth();
+          }, 0);
+        }
+      } catch {
+        // ignore transient errors
+      }
+    };
+
+    const onFocus = () => {
+      validate().catch(() => {
+        // ignore
+      });
+    };
+
+    validate().catch(() => {
+      // ignore
+    });
+
+    const interval = window.setInterval(() => {
+      validate().catch(() => {
+        // ignore
+      });
+    }, 15000);
+
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [authState?.sessionId]);
 
   return (
     <AuthContext.Provider

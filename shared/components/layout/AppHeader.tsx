@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../../features/auth/hooks/useAuth';
 import { useLanguage } from '../../hooks/useLanguage';
 import LanguageSwitcher from '../LanguageSwitcher';
@@ -6,10 +6,12 @@ import { UserRole } from '../../types';
 import { NotificationBell } from '../../../features/notifications/components/NotificationBell';
 import { getTrialDaysLeft } from '../../lib/utils';
 import { Badge } from '../ui/Badge';
+import SessionsModal from '../../../features/auth/components/SessionsModal';
 
 const AppHeader: React.FC = () => {
   const { authState, logout } = useAuth();
   const { t } = useLanguage();
+  const [isSessionsOpen, setIsSessionsOpen] = useState(false);
 
   if (!authState) return null;
 
@@ -49,6 +51,12 @@ const AppHeader: React.FC = () => {
             </div>
             <LanguageSwitcher />
             <button
+              onClick={() => setIsSessionsOpen(true)}
+              className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
+            >
+              {t('header.sessions')}
+            </button>
+            <button
               onClick={logout}
               className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
             >
@@ -57,6 +65,8 @@ const AppHeader: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <SessionsModal isOpen={isSessionsOpen} onClose={() => setIsSessionsOpen(false)} />
     </header>
   );
 };

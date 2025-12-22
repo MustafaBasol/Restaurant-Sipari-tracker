@@ -3,6 +3,7 @@ import { useUsers } from '../hooks/useUsers';
 import { User } from '../types';
 import { UserRole } from '../../../shared/types';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
@@ -16,10 +17,12 @@ import {
   TableCell,
 } from '../../../shared/components/ui/Table';
 import ChangePasswordModal from './ChangePasswordModal';
+import UserSessionsModal from './UserSessionsModal';
 
 const UsersManagement: React.FC = () => {
   const { users, addUser, updateUser, changeUserPassword } = useUsers();
   const { t } = useLanguage();
+  const { authState } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
   const [newUser, setNewUser] = useState({
     fullName: '',
@@ -28,7 +31,10 @@ const UsersManagement: React.FC = () => {
     role: UserRole.WAITER,
   });
   const [editingPasswordForUser, setEditingPasswordForUser] = useState<User | null>(null);
+  const [viewingSessionsForUser, setViewingSessionsForUser] = useState<User | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+
+  const canManageSessions = authState?.user.role === UserRole.ADMIN;
 
   const handleAddUser = async () => {
     if (newUser.fullName && newUser.email && newUser.password) {
@@ -150,6 +156,14 @@ const UsersManagement: React.FC = () => {
                   >
                     {t('admin.users.changePassword')}
                   </button>
+                  {canManageSessions && (
+                    <button
+                      onClick={() => setViewingSessionsForUser(user)}
+                      className="text-accent hover:text-accent-hover text-sm font-medium"
+                    >
+                      {t('admin.users.sessions')}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleToggleActive(user)}
                     className="text-accent hover:text-accent-hover text-sm font-medium"
@@ -167,6 +181,14 @@ const UsersManagement: React.FC = () => {
           user={editingPasswordForUser}
           onClose={() => setEditingPasswordForUser(null)}
           onSave={handlePasswordSave}
+        />
+      )}
+
+      {viewingSessionsForUser && (
+        <UserSessionsModal
+          user={viewingSessionsForUser}
+          isOpen={Boolean(viewingSessionsForUser)}
+          onClose={() => setViewingSessionsForUser(null)}
         />
       )}
     </div>

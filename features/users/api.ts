@@ -3,9 +3,14 @@ import {
   addData,
   updateData,
   internalChangeUserPassword,
+  getUserSessions,
+  revokeUserSession,
+  revokeAllUserSessions,
 } from '../../shared/lib/mockApi';
 import { User } from './types';
-import { User as SharedUser } from '../../shared/types';
+import { User as SharedUser, UserRole } from '../../shared/types';
+
+type Actor = { userId: string; role: UserRole };
 
 export const getUsers = (tenantId: string) => getDataByTenant<User>('users', tenantId);
 
@@ -30,3 +35,12 @@ export const updateUser = (user: User) => updateData('users', user);
 export const changeUserPassword = (userId: string, newPassword: string) => {
   return internalChangeUserPassword(userId, newPassword);
 };
+
+export const getSessionsForUser = (tenantId: string, userId: string, actor: Actor) =>
+  getUserSessions(tenantId, userId, actor);
+
+export const revokeSessionForUser = (tenantId: string, sessionId: string, actor: Actor) =>
+  revokeUserSession(tenantId, sessionId, actor);
+
+export const revokeAllSessionsForUser = (tenantId: string, userId: string, actor: Actor) =>
+  revokeAllUserSessions(tenantId, userId, actor);

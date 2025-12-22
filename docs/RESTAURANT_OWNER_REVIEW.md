@@ -165,7 +165,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [x] Audit log yazımı (kısmi): sipariş oluşturma, kalem durum, not, ödeme, indirim, ikram, taşıma/birleştirme/ayırma, kapatma
 - [x] Audit log ekranı (UI’dan görüntüleme/filtreleme)
 - [x] Yetkilendirme matrisi (konfigüre edilebilir izinler)
-- [ ] Cihaz yönetimi / oturum sonlandırma
+- [x] Cihaz yönetimi / oturum sonlandırma
 
 ### P1 durumu
 
@@ -385,3 +385,26 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - Tenant seviyesinde `Tenant.permissions` alanı tutulur (role → permission → boolean).
 - Kontrol helper’ı: `shared/lib/permissions.ts` (`hasPermission`).
 - Enforcement: `shared/lib/mockApi.ts` içindeki mutation’larda permission check.
+
+### 8.8 P0 — Cihaz yönetimi / oturum sonlandırma
+
+**Amaç**
+
+- Aynı kullanıcıyla birden fazla cihaz/sekmeden giriş yapılabilmesi.
+- Kullanıcının (ve admin’in) aktif oturumları görüp **oturum sonlandırabilmesi**.
+
+**Kullanım (Tüm roller)**
+
+- Üst bardan **“Oturumlar”** butonuna bas.
+- Oturum listesini görürsün ve **“Diğer cihazlardan çıkış”** ile diğer oturumları sonlandırabilirsin.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → **Kullanıcılar** sekmesinde ilgili kullanıcı satırındaki **“Oturumlar”** aksiyonuna bas.
+- Kullanıcının aktif oturumlarını görür, tek tek **sonlandırabilir** veya **tümünü sonlandırabilirsin**.
+
+**Teknik not (demo)**
+
+- Mock DB’de `sessions` tablosu tutulur.
+- Auth state artık cihaz bazlıdır (sessionStorage’daki device id ile anahtarlandığı için aynı tarayıcıda çoklu sekme demo edilir).
+- Oturumlar TTL + revoke ile yönetilir; revoke edilen/expire olan oturumlar UI’da periyodik kontrolle çıkışa düşer.

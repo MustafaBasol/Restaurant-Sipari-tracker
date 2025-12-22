@@ -86,7 +86,28 @@
     "KITCHEN": "Kitchen"
   },
   "header": {
+    "sessions": "Sessions",
     "logout": "Logout"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "help": "Manage active sessions for your account.",
+    "logoutOthers": "Log out other devices",
+    "activeCount": "Active sessions: {count}",
+    "device": "Device",
+    "createdAt": "Created",
+    "lastSeenAt": "Last seen",
+    "status": "Status",
+    "current": "current",
+    "thisDevice": "This device",
+    "empty": "No sessions found.",
+    "loadFailed": "Failed to load sessions.",
+    "actionFailed": "Action failed.",
+    "statuses": {
+      "active": "Active",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    }
   },
   "waiter": {
     "tableActions": "Table Actions",
@@ -220,6 +241,12 @@
       "deactivate": "Deactivate",
       "activate": "Activate",
       "changePassword": "Change Password",
+      "sessions": "Sessions",
+      "sessionsTitle": "Sessions for {userName}",
+      "sessionsRevoke": "Revoke",
+      "sessionsRevokeAll": "Revoke all",
+      "sessionsLoadFailed": "Failed to load sessions.",
+      "sessionsActionFailed": "Action failed.",
       "newPassword": "New Password",
       "confirmPassword": "Confirm Password",
       "passwordUpdateSuccess": "Password updated successfully.",

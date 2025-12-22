@@ -11,6 +11,12 @@
     "delete": "Sil",
     "close": "Kapat",
     "name": "İsim",
+    "sessions": "Oturumlar",
+    "sessionsTitle": "{userName} için oturumlar",
+    "sessionsRevoke": "Sonlandır",
+    "sessionsRevokeAll": "Tümünü sonlandır",
+    "sessionsLoadFailed": "Oturumlar yüklenemedi.",
+    "sessionsActionFailed": "İşlem başarısız.",
     "status": "Durum",
     "role": "Rol",
     "actions": "İşlemler",
@@ -86,7 +92,28 @@
     "KITCHEN": "Mutfak"
   },
   "header": {
+    "sessions": "Oturumlar",
     "logout": "Çıkış Yap"
+  },
+  "sessions": {
+    "title": "Oturumlar",
+    "help": "Hesabınız için aktif oturumları yönetin.",
+    "logoutOthers": "Diğer cihazlardan çıkış",
+    "activeCount": "Aktif oturum: {count}",
+    "device": "Cihaz",
+    "createdAt": "Oluşturma",
+    "lastSeenAt": "Son görülme",
+    "status": "Durum",
+    "current": "mevcut",
+    "thisDevice": "Bu cihaz",
+    "empty": "Oturum bulunamadı.",
+    "loadFailed": "Oturumlar yüklenemedi.",
+    "actionFailed": "İşlem başarısız.",
+    "statuses": {
+      "active": "Aktif",
+      "revoked": "Sonlandırıldı",
+      "expired": "Süresi doldu"
+    }
   },
   "waiter": {
     "tableActions": "Masa İşlemleri",

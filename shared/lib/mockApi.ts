@@ -1,6 +1,7 @@
 import {
   Tenant,
   User,
+  UserSession,
   SubscriptionStatus,
   UserRole,
   TableStatus,
@@ -26,6 +27,7 @@ import {
   WaiterStat,
 } from '../../features/reports/types';
 import { hasPermission } from './permissions';
+import { getDeviceId, isBrowser } from './device';
 
 const cloneOrder = (order: Order): Order => ({
   ...order,
@@ -87,18 +89,6 @@ const DB_SERVER_KEY = 'kitchorify-db';
 const DB_CLIENT_KEY_PREFIX = 'kitchorify-db-client:';
 const OUTBOX_KEY_PREFIX = 'kitchorify-outbox:';
 const CONFLICTS_KEY_PREFIX = 'kitchorify-sync-conflicts:';
-const DEVICE_ID_SESSION_KEY = 'kitchorify-device-id';
-
-const isBrowser = () => typeof window !== 'undefined' && typeof localStorage !== 'undefined';
-
-const getDeviceId = (): string => {
-  if (!isBrowser()) return 'server';
-  const existing = sessionStorage.getItem(DEVICE_ID_SESSION_KEY);
-  if (existing) return existing;
-  const created = `dev_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  sessionStorage.setItem(DEVICE_ID_SESSION_KEY, created);
-  return created;
-};
 
 const getClientDbKey = (): string => `${DB_CLIENT_KEY_PREFIX}${getDeviceId()}`;
 const getOutboxKey = (): string => `${OUTBOX_KEY_PREFIX}${getDeviceId()}`;
@@ -115,6 +105,7 @@ const getIsOnline = (): boolean => {
 interface MockDB {
   tenants: Tenant[];
   users: User[];
+  sessions: UserSession[];
   tables: Table[];
   menuCategories: MenuCategory[];
   menuItems: MenuItem[];
@@ -197,6 +188,7 @@ const seedData: MockDB = {
       isActive: true,
     },
   ],
+  sessions: [],
   tables: Array.from({ length: 12 }, (_, i) => ({
     id: `tbl${i + 1}`,
     tenantId: 't1',
@@ -432,6 +424,8 @@ const initializeDB = () => {
           }))
         : [];
 
+      parsed.sessions = Array.isArray(parsed.sessions) ? parsed.sessions : [];
+
       parsed.__meta = parsed.__meta && typeof parsed.__meta === 'object' ? parsed.__meta : {};
       if (typeof parsed.__meta.mutationCounter !== 'number') {
         parsed.__meta.mutationCounter = 0;
@@ -496,6 +490,64 @@ const simulateDelay = async (ms = 200) => {
 };
 
 type Actor = { userId: string; role: UserRole };
+
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+
+const isSessionActive = (session: UserSession, now = new Date()): boolean => {
+  if (session.revokedAt) return false;
+  const expiresAt = new Date(session.expiresAt);
+  return now.getTime() < expiresAt.getTime();
+};
+
+const createSessionForUser = (user: User): UserSession => {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
+  const session: UserSession = {
+    id: `sess_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    tenantId: user.tenantId,
+    userId: user.id,
+    deviceId: getDeviceId(),
+    createdAt: now.toISOString(),
+    lastSeenAt: now.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  };
+  db.sessions.push(session);
+  saveDb();
+  return session;
+};
+
+const getSessionById = (sessionId: string): UserSession | undefined =>
+  db.sessions.find((s) => s.id === sessionId);
+
+const touchSession = (session: UserSession) => {
+  session.lastSeenAt = new Date().toISOString();
+  saveDb();
+};
+
+const requireActiveSession = (sessionId: string): UserSession => {
+  const session = getSessionById(sessionId);
+  if (!session) throw new Error('Not authenticated');
+  if (!isSessionActive(session)) throw new Error('Session expired');
+  touchSession(session);
+  return session;
+};
+
+const revokeSession = (session: UserSession, revokedByUserId?: string) => {
+  if (!session.revokedAt) {
+    session.revokedAt = new Date().toISOString();
+    session.revokedByUserId = revokedByUserId;
+    saveDb();
+  }
+};
+
+const assertCanManageTenantSessions = (tenantId: string, actor: Actor) => {
+  if (actor.role === UserRole.SUPER_ADMIN) return;
+
+  const actorUser = db.users.find((u) => u.id === actor.userId);
+  if (!actorUser) throw new Error('Not authorized');
+  if (actor.role !== UserRole.ADMIN) throw new Error('Not authorized');
+  if (actorUser.tenantId !== tenantId) throw new Error('Not authorized');
+};
 
 const getTenantById = (tenantId: string): Tenant | undefined =>
   db.tenants.find((t) => t.id === tenantId);
@@ -739,7 +791,7 @@ export interface RegisterPayload {
 
 export const registerTenant = async (
   payload: RegisterPayload,
-): Promise<{ user: User; tenant: Tenant } | null> => {
+): Promise<{ user: User; tenant: Tenant; sessionId: string; deviceId: string } | null> => {
   await simulateDelay();
   if (
     db.tenants.some((t) => t.slug === payload.tenantSlug) ||
@@ -790,25 +842,128 @@ export const registerTenant = async (
     isActive: true,
   };
   db.users.push(newAdminUser);
+  const session = createSessionForUser(newAdminUser);
   saveDb();
-  return { user: newAdminUser, tenant: newTenant };
+  return {
+    user: newAdminUser,
+    tenant: newTenant,
+    sessionId: session.id,
+    deviceId: session.deviceId,
+  };
 };
 
 export const login = async (
   email: string,
   passwordOrSlug: string,
-): Promise<{ user: User; tenant: Tenant | null } | null> => {
+): Promise<{ user: User; tenant: Tenant | null; sessionId: string; deviceId: string } | null> => {
   await simulateDelay();
   const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
   if (!user) return null;
   if (user.role === UserRole.SUPER_ADMIN && user.passwordHash === passwordOrSlug) {
-    return { user, tenant: null };
+    const session = createSessionForUser(user);
+    return { user, tenant: null, sessionId: session.id, deviceId: session.deviceId };
   }
   if (user.passwordHash === passwordOrSlug) {
     const tenant = db.tenants.find((t) => t.id === user.tenantId);
-    return tenant ? { user, tenant } : null;
+    if (!tenant) return null;
+    const session = createSessionForUser(user);
+    return { user, tenant, sessionId: session.id, deviceId: session.deviceId };
   }
   return null;
+};
+
+export const bootstrapSession = async (userId: string, tenantId: string | null) => {
+  await simulateDelay();
+
+  const user = db.users.find((u) => u.id === userId);
+  if (!user) return null;
+
+  if (tenantId === null) {
+    if (user.role !== UserRole.SUPER_ADMIN) return null;
+  } else {
+    if (user.tenantId !== tenantId) return null;
+  }
+
+  const session = createSessionForUser(user);
+  return session.id;
+};
+
+export const validateSession = async (sessionId: string): Promise<boolean> => {
+  await simulateDelay(50);
+  const session = getSessionById(sessionId);
+  if (!session) return false;
+  if (!isSessionActive(session)) return false;
+  touchSession(session);
+  return true;
+};
+
+export const getMySessions = async (sessionId: string): Promise<UserSession[]> => {
+  await simulateDelay();
+  const session = requireActiveSession(sessionId);
+  return db.sessions
+    .filter((s) => s.userId === session.userId && s.tenantId === session.tenantId)
+    .slice()
+    .sort((a, b) => new Date(b.lastSeenAt).getTime() - new Date(a.lastSeenAt).getTime());
+};
+
+export const logoutSession = async (sessionId: string): Promise<boolean> => {
+  await simulateDelay(50);
+  const session = getSessionById(sessionId);
+  if (!session) return true;
+  revokeSession(session, session.userId);
+  return true;
+};
+
+export const logoutOtherSessions = async (sessionId: string): Promise<boolean> => {
+  await simulateDelay();
+  const session = requireActiveSession(sessionId);
+  db.sessions
+    .filter(
+      (s) => s.userId === session.userId && s.tenantId === session.tenantId && s.id !== session.id,
+    )
+    .forEach((s) => revokeSession(s, session.userId));
+  return true;
+};
+
+export const getUserSessions = async (
+  tenantId: string,
+  userId: string,
+  actor: Actor,
+): Promise<UserSession[]> => {
+  await simulateDelay();
+  assertCanManageTenantSessions(tenantId, actor);
+  const user = db.users.find((u) => u.id === userId);
+  if (!user || user.tenantId !== tenantId) throw new Error('User not found');
+  return db.sessions
+    .filter((s) => s.tenantId === tenantId && s.userId === userId)
+    .slice()
+    .sort((a, b) => new Date(b.lastSeenAt).getTime() - new Date(a.lastSeenAt).getTime());
+};
+
+export const revokeUserSession = async (
+  tenantId: string,
+  sessionIdToRevoke: string,
+  actor: Actor,
+): Promise<boolean> => {
+  await simulateDelay();
+  assertCanManageTenantSessions(tenantId, actor);
+  const session = getSessionById(sessionIdToRevoke);
+  if (!session || session.tenantId !== tenantId) throw new Error('Session not found');
+  revokeSession(session, actor.userId);
+  return true;
+};
+
+export const revokeAllUserSessions = async (
+  tenantId: string,
+  userId: string,
+  actor: Actor,
+): Promise<boolean> => {
+  await simulateDelay();
+  assertCanManageTenantSessions(tenantId, actor);
+  db.sessions
+    .filter((s) => s.tenantId === tenantId && s.userId === userId)
+    .forEach((s) => revokeSession(s, actor.userId));
+  return true;
 };
 
 export const getDataByTenant = async <T extends { tenantId?: string }>(

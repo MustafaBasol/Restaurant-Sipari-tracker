@@ -137,6 +137,18 @@ export interface User {
   isActive: boolean;
 }
 
+export interface UserSession {
+  id: string;
+  tenantId?: string; // Optional for SUPER_ADMIN
+  userId: string;
+  deviceId: string;
+  createdAt: string; // ISO
+  lastSeenAt: string; // ISO
+  expiresAt: string; // ISO
+  revokedAt?: string; // ISO
+  revokedByUserId?: string;
+}
+
 // Below types are aliased and moved to feature folders
 // to demonstrate splitting types by feature.
 // In a real app, you might keep them here or move them.
