@@ -152,17 +152,61 @@ Notlar:
 
 ## Abonelik / Stripe Notları
 
-- Stripe publishable key, ortam değişkeninden okunur: `VITE_STRIPE_PUBLISHABLE_KEY`.
-- Lokal geliştirmede örnek olarak `.env.local` içine ekleyebilirsiniz:
+- Bu repo şu an **Stripe Checkout (subscription mode)** ile çalışacak şekilde ayarlanmıştır.
+  - Frontend, backend’in döndürdüğü **Checkout Session URL**’ine yönlendirir.
+  - Bu akışta frontend tarafında `pk_test_...` (publishable key) zorunlu değildir.
+
+### Güvenlik
+
+- `sk_test_...` gibi **secret key** değerlerini asla frontend env (`VITE_*`) içine koymayın, repoya commit etmeyin ve paylaşmayın.
+- Yanlışlıkla paylaşıldıysa Stripe Dashboard → Developers → API keys üzerinden **hemen Rotate/Revoke** edin.
+
+### Lokal Stripe Test Kurulumu (önerilen)
+
+1. Stripe Dashboard (Test mode) içinde aylık bir **Price** oluşturun ve `price_...` değerini alın.
+
+2. Backend için `.env` oluşturun (bu repo içindeki `server.cjs` ile):
 
 ```bash
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_ID_MONTHLY=price_...
+CORS_ORIGINS=http://localhost:3000
+PORT=4242
 ```
 
-- Ödeme onayı **mock** çalışır: ödeme başarılı varsayılır ve mock “webhook” simülasyonu ile tenant aboneliği ACTIVE’e çekilir.
-- Klasörde ayrıca örnek bir webhook sunucusu vardır: `server.cjs`.
-  - Bu dosya, mevcut `package.json` scriptlerine bağlı değildir.
-  - Çalıştırmak isterseniz `express/stripe/dotenv/cors` gibi bağımlılıkları ayrıca kurmanız gerekir (detaylar dosya içinde yorum olarak var).
+3. Frontend için `.env.local` oluşturun:
+
+```bash
+VITE_STRIPE_BACKEND_URL=http://localhost:4242
+```
+
+4. Çalıştırma:
+
+```bash
+# Terminal 1
+node server.cjs
+
+# Terminal 2
+npm run dev
+```
+
+### GitHub Codespaces Notu
+
+- Frontend URL’niz örn. `https://<codespace>-3000.app.github.dev` ise backend’i **ayrı bir porttan** açın (örn. 4242) ve Ports panelinden public/visibility ayarını yapın.
+- Bu durumda frontend env şöyle olmalı:
+
+```bash
+VITE_STRIPE_BACKEND_URL=https://<codespace>-4242.app.github.dev
+```
+
+- `CORS_ORIGINS` içinde **origin** kullanın (hash dahil değil):
+  - ✅ `https://<codespace>-3000.app.github.dev`
+  - ❌ `https://<codespace>-3000.app.github.dev/#/app`
+
+### Demo Aktivasyon Notu
+
+- Ödeme dönüşü (success) sonrasında tenant’ı ACTIVE yapan kısım şu an **demo amaçlı mock**tur.
+- Gerçek hayatta bu aktivasyon, Stripe **webhook** event’leri (örn. `checkout.session.completed`, `invoice.payment_succeeded`) ile backend/DB üzerinde yapılmalıdır.
 
 ## Proje Yapısı (Özet)
 
