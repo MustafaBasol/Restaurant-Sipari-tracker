@@ -478,3 +478,41 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 - Menü öğesinde `bundleItemIds?: string[]` tutulur.
 - UI tarafında set menü siparişe eklenirken, bundle içeriğindeki ürünlerin uygunluğu kontrol edilir.
 - Mock backend tarafında da sipariş oluşturma sırasında aynı kontrol yapılır (UI bypass edilse bile).
+
+### 8.12 P1 — Günlük özet rapor + garson performansı (temel)
+
+**Amaç**
+
+- Belirli bir gün veya tarih aralığı için toplam ciro/sipariş sayısı/ortalama adisyonu görmek.
+- Garson bazında performans (sipariş sayısı, ciro, ortalama adisyon) kırılımını görebilmek.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin panelinde **Raporlar** sekmesine gir.
+- Tarih aralığı preset’lerini (bugün/dün/son 7 gün vb.) kullanabilir veya başlangıç-bitiş tarihini manuel seçebilirsin.
+- Özet kartları + “Top Items” ve “Garson performansı” tablosu görünür.
+
+**Teknik not (demo)**
+
+- UI bileşeni: `features/reports/components/DailySummary.tsx`.
+- Veri, mock backend tarafında kapanmış siparişlerden (CLOSED) agregasyon ile üretilir.
+- Tek gün seçildiğinde “gün sonu” (end-of-day) kırılımı ayrıca gösterilir.
+
+### 8.13 P1 — Yazıcı entegrasyonu (minimum)
+
+**Amaç**
+
+- Adisyon ve mutfak fişi için minimum yazdırma akışını desteklemek.
+- Demo ortamında iki mod: **tarayıcı yazdırma** veya **print server**.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → **Ayarlar** ekranında **Yazıcı** bölümünden yazdırma modunu seç:
+  - **Browser print**: yeni bir print penceresi açıp `window.print()` ile yazdırır.
+  - **Print Server**: URL tanımlayıp fişi sunucuya gönderir.
+
+**Teknik not (demo)**
+
+- Browser print helper: `shared/lib/print.ts`.
+- Print server client: `shared/lib/printClient.ts`.
+- Tenant ayarı: `Tenant.printConfig` (mode + opsiyonel serverUrl).
