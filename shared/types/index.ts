@@ -5,6 +5,20 @@ export enum UserRole {
   KITCHEN = 'KITCHEN',
 }
 
+export type PermissionKey =
+  | 'ORDER_PAYMENTS'
+  | 'ORDER_DISCOUNT'
+  | 'ORDER_COMPLIMENTARY'
+  | 'ORDER_ITEM_CANCEL'
+  | 'ORDER_ITEM_SERVE'
+  | 'ORDER_TABLES'
+  | 'ORDER_CLOSE'
+  | 'KITCHEN_ITEM_STATUS'
+  | 'KITCHEN_MARK_ALL_READY';
+
+export type RolePermissions = Partial<Record<PermissionKey, boolean>>;
+export type TenantPermissions = Partial<Record<UserRole, RolePermissions>>;
+
 export enum TableStatus {
   FREE = 'FREE',
   OCCUPIED = 'OCCUPIED',
@@ -110,6 +124,7 @@ export interface Tenant {
   taxRatePercent?: number;
   serviceChargePercent?: number;
   roundingIncrement?: number;
+  permissions?: TenantPermissions;
 }
 
 export interface User {

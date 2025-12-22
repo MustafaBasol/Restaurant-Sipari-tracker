@@ -164,7 +164,7 @@ Bu bölüm, yukarıdaki maddelerin **hangilerinin şu an repoda bulunduğunu** h
 - [x] Rol bazlı kısıtlar (ör. ödeme ekleme/indirim/kapatma gibi aksiyonlarda backend kontrolü)
 - [x] Audit log yazımı (kısmi): sipariş oluşturma, kalem durum, not, ödeme, indirim, ikram, taşıma/birleştirme/ayırma, kapatma
 - [x] Audit log ekranı (UI’dan görüntüleme/filtreleme)
-- [ ] Yetkilendirme matrisi (konfigüre edilebilir izinler)
+- [x] Yetkilendirme matrisi (konfigüre edilebilir izinler)
 - [ ] Cihaz yönetimi / oturum sonlandırma
 
 ### P1 durumu
@@ -363,3 +363,25 @@ Bu bölüm, yukarıdaki yol haritasındaki maddelerden **hangilerinin koda işle
 
 - Audit log kayıtları mock DB’de `auditLogs` tablosuna yazılır.
 - Ekran, tenant bazlı `getDataByTenant('auditLogs', tenantId)` ile listeyi çeker.
+
+### 8.7 P0 — Yetkilendirme matrisi (konfigüre edilebilir izinler)
+
+**Amaç**
+
+- Rol bazlı sabit kontroller yerine, her tenant’ın (restoranın) **Garson/Mutfak** rollerine hangi aksiyonların açık olacağını yönetebilmesi.
+
+**Kullanım (Admin / ADMIN)**
+
+- Admin → **Ayarlar** ekranında **Yetkiler** bölümüne gir.
+- İzin matrisinden (Garson / Mutfak sütunları) ilgili checkbox’ları aç/kapat.
+
+**Etkisi (UI + backend)**
+
+- UI’da ilgili buton/aksiyonlar (ödeme ekleme, indirim, kalem iptali, mutfakta durum güncelleme vb.) permission’a göre aktif/pasif olur.
+- Mock backend (localStorage) tarafında kritik mutation’lar permission’a göre yetkilendirilir; yetkisiz aksiyonlar hata verir.
+
+**Teknik not (demo)**
+
+- Tenant seviyesinde `Tenant.permissions` alanı tutulur (role → permission → boolean).
+- Kontrol helper’ı: `shared/lib/permissions.ts` (`hasPermission`).
+- Enforcement: `shared/lib/mockApi.ts` içindeki mutation’larda permission check.

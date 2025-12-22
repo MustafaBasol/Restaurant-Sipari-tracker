@@ -1,12 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
-import {
-  BillingStatus,
-  DiscountType,
-  OrderStatus,
-  PaymentMethod,
-  UserRole,
-} from '../../../shared/types';
+import { BillingStatus, DiscountType, OrderStatus, PaymentMethod } from '../../../shared/types';
 import { Table } from '../../tables/types';
 import { useTables } from '../../tables/hooks/useTables';
 import { MenuItem } from '../../menu/types';
@@ -22,6 +16,7 @@ import { useMenu } from '../../menu/hooks/useMenu';
 import { Select } from '../../../shared/components/ui/Select';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
 import { calcOrderPricing } from '../../../shared/lib/billing';
+import { hasPermission } from '../../../shared/lib/permissions';
 import {
   buildKitchenTicketText,
   buildReceiptText,
@@ -220,6 +215,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   };
 
   const handleCloseTable = async () => {
+    if (!canCloseOrder) return;
     if (activeOrder) {
       await closeOrder(activeOrder.id);
       onClose();
@@ -487,10 +483,19 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
 
   const isBillingPaid = billingStatus === BillingStatus.PAID;
 
-  const canManagePayment =
-    authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
+  const canManagePayment = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'ORDER_PAYMENTS',
+  );
 
-  const canManageDiscount = canManagePayment;
+  const canManageDiscount = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'ORDER_DISCOUNT',
+  );
+
+  const canCloseOrder = hasPermission(authState?.tenant, authState?.user?.role, 'ORDER_CLOSE');
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [paymentAmount, setPaymentAmount] = useState<string>('');
@@ -635,8 +640,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     !activeOrder ||
     (activeOrder.status !== OrderStatus.SERVED && activeOrder.status !== OrderStatus.CLOSED);
 
-  const canManageTables =
-    authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
+  const canManageTables = hasPermission(authState?.tenant, authState?.user?.role, 'ORDER_TABLES');
 
   const canMoveOrder = Boolean(activeOrder) && mergedTableIds.length === 0;
 
@@ -1159,7 +1163,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
               <Button
                 onClick={handleCloseTable}
                 className="w-full bg-status-closed hover:opacity-90"
-                disabled={!isPaymentComplete || !isBillingPaid || !canManagePayment}
+                disabled={!isPaymentComplete || !isBillingPaid || !canCloseOrder}
               >
                 {t('actions.closeTable')}
               </Button>

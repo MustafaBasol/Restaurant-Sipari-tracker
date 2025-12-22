@@ -130,7 +130,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     handleOrderMutation(() => api.updateOrderItemStatus(orderId, itemId, status, actor));
 
   const markOrderAsReady = (orderId: string, station?: KitchenStation) =>
-    handleOrderMutation(() => api.markOrderAsReady(orderId, station));
+    handleOrderMutation(() => api.markOrderAsReady(orderId, station, actor));
 
   const serveOrderItem = (orderId: string, itemId: string) =>
     handleOrderMutation(() => api.serveOrderItem(orderId, itemId, actor));

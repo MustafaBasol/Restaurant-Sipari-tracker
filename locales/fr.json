@@ -273,7 +273,27 @@
       "serviceChargePercent": "Frais de service (%)",
       "roundingIncrement": "Incrément d'arrondi",
       "roundingIncrementHelp": "0 = pas d'arrondi. Exemples : 0,05 (au 5 centimes), 0,1, 1",
+      "permissions": "Autorisations",
+      "permissionsHelp": "S'applique aux rôles Serveur/Cuisine. Admin/Super Admin ont toujours tous les droits.",
       "saveSuccess": "Paramètres mis à jour avec succès !"
+    },
+    "permissions": {
+      "permission": "Autorisation",
+      "roles": {
+        "waiter": "Serveur",
+        "kitchen": "Cuisine"
+      },
+      "keys": {
+        "ORDER_PAYMENTS": "Paiements (ajouter / demander l’addition / confirmer)",
+        "ORDER_DISCOUNT": "Remise",
+        "ORDER_COMPLIMENTARY": "Articles offerts",
+        "ORDER_ITEM_CANCEL": "Annuler un article",
+        "ORDER_ITEM_SERVE": "Marquer un article servi",
+        "ORDER_TABLES": "Actions table (déplacer / fusionner / séparer)",
+        "ORDER_CLOSE": "Clôturer la commande",
+        "KITCHEN_ITEM_STATUS": "Cuisine : modifier le statut",
+        "KITCHEN_MARK_ALL_READY": "Cuisine : tout marquer prêt"
+      }
     }
   },
   "statuses": {

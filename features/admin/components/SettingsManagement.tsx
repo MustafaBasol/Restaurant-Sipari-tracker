@@ -6,7 +6,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Select } from '../../../shared/components/ui/Select';
 import { Card } from '../../../shared/components/ui/Card';
 import { Input } from '../../../shared/components/ui/Input';
-import { Tenant } from '../../../shared/types';
+import { PermissionKey, Tenant, UserRole } from '../../../shared/types';
 
 const timezones = ['America/New_York', 'Europe/Paris', 'Europe/Istanbul', 'Asia/Tokyo'];
 const currencies = ['USD', 'EUR', 'TRY'];
@@ -97,6 +97,38 @@ const SettingsManagement: React.FC = () => {
   const taxRatePercent = settings.taxRatePercent ?? 0;
   const serviceChargePercent = settings.serviceChargePercent ?? 0;
   const roundingIncrement = settings.roundingIncrement ?? 0;
+
+  const permissionRows: PermissionKey[] = [
+    'ORDER_PAYMENTS',
+    'ORDER_DISCOUNT',
+    'ORDER_COMPLIMENTARY',
+    'ORDER_ITEM_CANCEL',
+    'ORDER_ITEM_SERVE',
+    'ORDER_TABLES',
+    'ORDER_CLOSE',
+    'KITCHEN_ITEM_STATUS',
+    'KITCHEN_MARK_ALL_READY',
+  ];
+
+  const getPermissionValue = (role: UserRole, key: PermissionKey): boolean => {
+    return Boolean(settings.permissions?.[role]?.[key]);
+  };
+
+  const setPermissionValue = (role: UserRole, key: PermissionKey, value: boolean) => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        permissions: {
+          ...(prev.permissions ?? {}),
+          [role]: {
+            ...((prev.permissions ?? {})[role] ?? {}),
+            [key]: value,
+          },
+        },
+      };
+    });
+  };
 
   return (
     <Card>
@@ -215,6 +247,56 @@ const SettingsManagement: React.FC = () => {
               </p>
             </div>
           </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-text-primary mb-3">
+            {t('admin.settings.permissions')}
+          </h3>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-text-secondary">
+                  <th className="py-2 pr-4 font-medium">{t('admin.permissions.permission')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('admin.permissions.roles.waiter')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('admin.permissions.roles.kitchen')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {permissionRows.map((key) => (
+                  <tr key={key} className="border-t border-border-color">
+                    <td className="py-2 pr-4 text-text-primary">
+                      {t(`admin.permissions.keys.${key}`)}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <input
+                        type="checkbox"
+                        checked={getPermissionValue(UserRole.WAITER, key)}
+                        onChange={(e) =>
+                          setPermissionValue(UserRole.WAITER, key, Boolean(e.target.checked))
+                        }
+                        aria-label={t('admin.permissions.roles.waiter')}
+                        className="h-4 w-4"
+                      />
+                    </td>
+                    <td className="py-2 pr-4">
+                      <input
+                        type="checkbox"
+                        checked={getPermissionValue(UserRole.KITCHEN, key)}
+                        onChange={(e) =>
+                          setPermissionValue(UserRole.KITCHEN, key, Boolean(e.target.checked))
+                        }
+                        aria-label={t('admin.permissions.roles.kitchen')}
+                        className="h-4 w-4"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-text-secondary mt-2">{t('admin.settings.permissionsHelp')}</p>
         </div>
 
         <div className="flex items-center gap-4">

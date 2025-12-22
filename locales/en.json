@@ -261,7 +261,27 @@
       "serviceChargePercent": "Service charge (%)",
       "roundingIncrement": "Rounding increment",
       "roundingIncrementHelp": "0 = no rounding. Examples: 0.05 (to nearest 5 cents), 0.1, 1",
+      "permissions": "Permissions",
+      "permissionsHelp": "Applies to WAITER/KITCHEN. ADMIN/SUPER_ADMIN always have full access.",
       "saveSuccess": "Settings updated successfully!"
+    },
+    "permissions": {
+      "permission": "Permission",
+      "roles": {
+        "waiter": "Waiter",
+        "kitchen": "Kitchen"
+      },
+      "keys": {
+        "ORDER_PAYMENTS": "Payments (add / request bill / confirm)",
+        "ORDER_DISCOUNT": "Discount",
+        "ORDER_COMPLIMENTARY": "Complimentary items",
+        "ORDER_ITEM_CANCEL": "Cancel item",
+        "ORDER_ITEM_SERVE": "Mark item served",
+        "ORDER_TABLES": "Table actions (move / merge / split)",
+        "ORDER_CLOSE": "Close order",
+        "KITCHEN_ITEM_STATUS": "Kitchen: update item status",
+        "KITCHEN_MARK_ALL_READY": "Kitchen: mark all ready"
+      }
     }
   },
   "statuses": {

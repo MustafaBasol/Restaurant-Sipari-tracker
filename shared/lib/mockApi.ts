@@ -13,6 +13,7 @@ import {
   AuditLog,
   AuditAction,
   AuditEntityType,
+  PermissionKey,
 } from '../types';
 import { Table } from '../../features/tables/types';
 import { MenuCategory, MenuItem } from '../../features/menu/types';
@@ -24,6 +25,7 @@ import {
   TopItem,
   WaiterStat,
 } from '../../features/reports/types';
+import { hasPermission } from './permissions';
 
 const cloneOrder = (order: Order): Order => ({
   ...order,
@@ -40,12 +42,10 @@ type DbMeta = {
   // Used for coarse conflict detection on reconnect.
   mutationCounter: number;
 };
-
 type ClientMeta = {
   // Snapshot of the server mutation counter at the time the client cache was last refreshed.
   lastKnownServerMutationCounter: number;
 };
-
 type OutboxItem = {
   id: string;
   createdAt: string;
@@ -141,6 +141,21 @@ const seedData: MockDB = {
       taxRatePercent: 0,
       serviceChargePercent: 0,
       roundingIncrement: 0,
+      permissions: {
+        [UserRole.WAITER]: {
+          ORDER_PAYMENTS: true,
+          ORDER_DISCOUNT: true,
+          ORDER_COMPLIMENTARY: true,
+          ORDER_ITEM_CANCEL: true,
+          ORDER_ITEM_SERVE: true,
+          ORDER_TABLES: true,
+          ORDER_CLOSE: true,
+        },
+        [UserRole.KITCHEN]: {
+          KITCHEN_ITEM_STATUS: true,
+          KITCHEN_MARK_ALL_READY: true,
+        },
+      },
       trialStartAt: new Date(),
       trialEndAt: trialEndDate,
     },
@@ -482,6 +497,16 @@ const simulateDelay = async (ms = 200) => {
 
 type Actor = { userId: string; role: UserRole };
 
+const getTenantById = (tenantId: string): Tenant | undefined =>
+  db.tenants.find((t) => t.id === tenantId);
+
+const assertPermission = (tenantId: string, actor: Actor, key: PermissionKey, message: string) => {
+  const tenant = getTenantById(tenantId);
+  if (!hasPermission(tenant ?? null, actor.role, key)) {
+    throw new Error(message);
+  }
+};
+
 const writeAuditLog = (
   tenantId: string,
   actor: Actor,
@@ -571,9 +596,7 @@ export const internalSetOrderDiscount = async (
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
 
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to update discount');
-  }
+  assertPermission(order.tenantId, actor, 'ORDER_DISCOUNT', 'Not authorized to update discount');
 
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue) || Number.isNaN(numericValue)) {
@@ -632,9 +655,7 @@ export const internalSetOrderItemComplimentary = async (
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
 
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to update item');
-  }
+  assertPermission(order.tenantId, actor, 'ORDER_COMPLIMENTARY', 'Not authorized to update item');
 
   const item = order.items.find((i) => i.id === itemId);
   if (!item) return cloneOrder(order);
@@ -740,6 +761,21 @@ export const registerTenant = async (
     createdAt: now,
     currency: 'USD',
     timezone: 'America/New_York',
+    permissions: {
+      [UserRole.WAITER]: {
+        ORDER_PAYMENTS: true,
+        ORDER_DISCOUNT: true,
+        ORDER_COMPLIMENTARY: true,
+        ORDER_ITEM_CANCEL: true,
+        ORDER_ITEM_SERVE: true,
+        ORDER_TABLES: true,
+        ORDER_CLOSE: true,
+      },
+      [UserRole.KITCHEN]: {
+        KITCHEN_ITEM_STATUS: true,
+        KITCHEN_MARK_ALL_READY: true,
+      },
+    },
     trialStartAt: now,
     trialEndAt: trialEndAt,
   };
@@ -932,9 +968,7 @@ export const internalRequestOrderBill = async (
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
 
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to request bill');
-  }
+  assertPermission(order.tenantId, actor, 'ORDER_PAYMENTS', 'Not authorized to request bill');
 
   // Default for older orders
   if (!order.billingStatus) order.billingStatus = BillingStatus.OPEN;
@@ -979,9 +1013,7 @@ export const internalConfirmOrderPayment = async (
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
 
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to confirm payment');
-  }
+  assertPermission(order.tenantId, actor, 'ORDER_PAYMENTS', 'Not authorized to confirm payment');
 
   if (!order.billingStatus) order.billingStatus = BillingStatus.OPEN;
   if (order.status === OrderStatus.CLOSED)
@@ -1029,12 +1061,10 @@ export const internalMoveOrderToTable = async (
 ): Promise<Order | undefined> => {
   await simulateDelay();
 
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to move order');
-  }
-
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
+
+  assertPermission(order.tenantId, actor, 'ORDER_TABLES', 'Not authorized to move order');
   if (order.status === OrderStatus.CLOSED) throw new Error('Cannot move a closed order');
 
   const fromTableId = order.tableId;
@@ -1095,12 +1125,10 @@ export const internalMergeOrderWithTable = async (
   actor: Actor,
 ): Promise<Order | undefined> => {
   await simulateDelay();
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to merge tables');
-  }
-
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
+
+  assertPermission(order.tenantId, actor, 'ORDER_TABLES', 'Not authorized to merge tables');
   if (order.status === OrderStatus.CLOSED) throw new Error('Cannot merge a closed order');
 
   if (order.tableId === secondaryTableId) return cloneOrder(order);
@@ -1159,12 +1187,10 @@ export const internalUnmergeOrderFromTable = async (
   actor: Actor,
 ): Promise<Order | undefined> => {
   await simulateDelay();
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to unmerge tables');
-  }
-
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
+
+  assertPermission(order.tenantId, actor, 'ORDER_TABLES', 'Not authorized to unmerge tables');
   if (!Array.isArray(order.linkedTableIds) || order.linkedTableIds.length === 0) {
     return cloneOrder(order);
   }
@@ -1218,6 +1244,24 @@ export const internalUpdateOrderItemStatus = async (
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
+    if (actor) {
+      if (status === OrderStatus.CANCELED) {
+        assertPermission(
+          order.tenantId,
+          actor,
+          'ORDER_ITEM_CANCEL',
+          'Not authorized to cancel item',
+        );
+      } else if (status === OrderStatus.IN_PREPARATION || status === OrderStatus.READY) {
+        assertPermission(
+          order.tenantId,
+          actor,
+          'KITCHEN_ITEM_STATUS',
+          'Not authorized to update kitchen item status',
+        );
+      }
+    }
+
     const item = order.items.find((i) => i.id === itemId);
     if (item && item.status !== OrderStatus.SERVED && item.status !== OrderStatus.CLOSED) {
       item.status = status;
@@ -1266,10 +1310,20 @@ export const internalUpdateOrderItemStatus = async (
 export const internalMarkOrderAsReady = async (
   orderId: string,
   station?: KitchenStation,
+  actor?: Actor,
 ): Promise<Order | undefined> => {
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
+    if (actor) {
+      assertPermission(
+        order.tenantId,
+        actor,
+        'KITCHEN_MARK_ALL_READY',
+        'Not authorized to mark all items ready',
+      );
+    }
+
     order.items.forEach((item) => {
       const matchesStation = station ? getMenuItemStation(item.menuItemId) === station : true;
       if (
@@ -1304,7 +1358,7 @@ export const internalMarkOrderAsReady = async (
         id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
         createdAt: new Date().toISOString(),
         op: 'internalMarkOrderAsReady',
-        args: [orderId, station],
+        args: [orderId, station, actor],
       });
     }
     return cloneOrder(order);
@@ -1320,6 +1374,10 @@ export const internalServeOrderItem = async (
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
+    if (actor) {
+      assertPermission(order.tenantId, actor, 'ORDER_ITEM_SERVE', 'Not authorized to serve item');
+    }
+
     const item = order.items.find((i) => i.id === itemId);
     if (item && item.status === OrderStatus.READY) {
       item.status = OrderStatus.SERVED;
@@ -1375,9 +1433,7 @@ export const internalAddOrderPayment = async (
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return undefined;
 
-  if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-    throw new Error('Not authorized to add payment');
-  }
+  assertPermission(order.tenantId, actor, 'ORDER_PAYMENTS', 'Not authorized to add payment');
 
   if (amount <= 0 || Number.isNaN(amount) || !Number.isFinite(amount)) {
     throw new Error('Invalid amount');
@@ -1434,9 +1490,7 @@ export const internalCloseOrder = async (
   await simulateDelay();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
-    if (![UserRole.WAITER, UserRole.ADMIN].includes(actor.role)) {
-      throw new Error('Not authorized to close order');
-    }
+    assertPermission(order.tenantId, actor, 'ORDER_CLOSE', 'Not authorized to close order');
 
     updatePaymentStatus(order);
     if (!order.billingStatus) order.billingStatus = BillingStatus.OPEN;
@@ -1828,7 +1882,11 @@ export const flushOutbox = async (): Promise<{
           break;
         }
         case 'internalMarkOrderAsReady': {
-          await internalMarkOrderAsReady(item.args[0] as string, item.args[1] as any);
+          await internalMarkOrderAsReady(
+            item.args[0] as string,
+            item.args[1] as any,
+            item.args[2] as any,
+          );
           break;
         }
         case 'internalServeOrderItem': {

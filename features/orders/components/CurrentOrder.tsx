@@ -2,13 +2,14 @@ import React from 'react';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { useMenu } from '../../menu/hooks/useMenu';
 import { Order, OrderItem } from '../types';
-import { DiscountType, OrderStatus, UserRole } from '../../../shared/types';
+import { DiscountType, OrderStatus } from '../../../shared/types';
 import { TrashIcon } from '../../../shared/components/icons/Icons';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
+import { hasPermission } from '../../../shared/lib/permissions';
 
 export interface TempOrderItem {
   tempId: string;
@@ -107,8 +108,17 @@ const OrderItemRow: React.FC<{
 
   const status = 'status' in item ? item.status : OrderStatus.NEW;
   const isComplimentary = 'isComplimentary' in item ? Boolean(item.isComplimentary) : false;
-  const canManageDiscounts =
-    authState?.user?.role === UserRole.WAITER || authState?.user?.role === UserRole.ADMIN;
+  const canToggleComplimentary = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'ORDER_COMPLIMENTARY',
+  );
+  const canCancelItem = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'ORDER_ITEM_CANCEL',
+  );
+  const canServeItem = hasPermission(authState?.tenant, authState?.user?.role, 'ORDER_ITEM_SERVE');
 
   const variants = Array.isArray((menuItem as any).variants) ? (menuItem as any).variants : [];
   const modifiers = Array.isArray((menuItem as any).modifiers) ? (menuItem as any).modifiers : [];
@@ -135,13 +145,15 @@ const OrderItemRow: React.FC<{
   };
 
   const handleToggleComplimentary = () => {
-    if (!canManageDiscounts) return;
+    if (!canToggleComplimentary) return;
     if ('orderId' in item && item.orderId && item.id) {
       setOrderItemComplimentary(item.orderId, item.id, !isComplimentary);
     }
   };
   const isCancelable =
-    !isTemp && (status === OrderStatus.NEW || status === OrderStatus.IN_PREPARATION);
+    !isTemp &&
+    canCancelItem &&
+    (status === OrderStatus.NEW || status === OrderStatus.IN_PREPARATION);
 
   return (
     <div className={`py-3 ${status === OrderStatus.CANCELED ? 'opacity-60' : ''}`}>
@@ -178,6 +190,7 @@ const OrderItemRow: React.FC<{
           {status === OrderStatus.READY && (
             <button
               onClick={handleServeItem}
+              disabled={!canServeItem}
               className="px-3 py-1 bg-accent text-white text-xs font-semibold rounded-full hover:bg-accent-hover transition-colors"
             >
               {t('actions.markAsServed')}
@@ -278,7 +291,7 @@ const OrderItemRow: React.FC<{
             <div />
           )}
           <div className="flex items-center gap-2">
-            {canManageDiscounts && status !== OrderStatus.CANCELED && (
+            {canToggleComplimentary && status !== OrderStatus.CANCELED && (
               <button
                 onClick={handleToggleComplimentary}
                 className="px-2 py-0.5 bg-border-color text-text-secondary text-xs font-semibold rounded-full hover:opacity-90 transition-opacity"

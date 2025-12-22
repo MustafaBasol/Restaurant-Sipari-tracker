@@ -9,6 +9,7 @@ import { Card } from '../../../shared/components/ui/Card';
 import { NoteIcon } from '../../../shared/components/icons/Icons';
 import { formatDateTime } from '../../../shared/lib/utils';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { hasPermission } from '../../../shared/lib/permissions';
 
 interface OrderListProps {
   orders: Order[];
@@ -19,9 +20,16 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
   const { menuItems } = useMenu();
   const { updateOrderItemStatus } = useOrders();
   const { t } = useLanguage();
+  const { authState } = useAuth();
+  const canUpdateKitchenStatus = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'KITCHEN_ITEM_STATUS',
+  );
   const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
+    if (!canUpdateKitchenStatus) return;
     await updateOrderItemStatus(orderId, item.id, newStatus);
   };
 
@@ -39,6 +47,7 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
         {item.status === OrderStatus.NEW && (
           <button
             onClick={() => handleStatusChange(OrderStatus.IN_PREPARATION)}
+            disabled={!canUpdateKitchenStatus}
             className="px-3 py-1 bg-status-prep text-white text-xs font-semibold rounded-full"
           >
             {t(`statuses.IN_PREPARATION`)}
@@ -47,6 +56,7 @@ const OrderItemCard: React.FC<{ item: OrderItem; orderId: string }> = ({ item, o
         {item.status === OrderStatus.IN_PREPARATION && (
           <button
             onClick={() => handleStatusChange(OrderStatus.READY)}
+            disabled={!canUpdateKitchenStatus}
             className="px-3 py-1 bg-status-ready text-white text-xs font-semibold rounded-full"
           >
             {t(`statuses.READY`)}
@@ -68,6 +78,11 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const { markOrderAsReady } = useOrders();
   const { authState } = useAuth();
   const timezone = authState?.tenant?.timezone || 'UTC';
+  const canMarkAllReady = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'KITCHEN_MARK_ALL_READY',
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -76,7 +91,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         const activeItems = order.items.filter((item) =>
           [OrderStatus.NEW, OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(item.status),
         );
-        const canMarkAllReady = order.items.some(
+        const hasItemsToMarkReady = order.items.some(
           (item) => item.status === OrderStatus.NEW || item.status === OrderStatus.IN_PREPARATION,
         );
 
@@ -103,7 +118,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
                       </p>
                     )}
                   </div>
-                  {canMarkAllReady && (
+                  {canMarkAllReady && hasItemsToMarkReady && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

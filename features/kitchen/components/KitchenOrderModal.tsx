@@ -10,6 +10,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import KitchenItemStatusToggle from './KitchenItemStatusToggle';
 import { formatDateTime } from '../../../shared/lib/utils';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { hasPermission } from '../../../shared/lib/permissions';
 
 interface KitchenOrderModalProps {
   order: Order;
@@ -27,8 +28,25 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
   const timezone = authState?.tenant?.timezone || 'UTC';
   const table = tables.find((t) => t.id === order.tableId);
 
+  const canUpdateKitchenStatus = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'KITCHEN_ITEM_STATUS',
+  );
+  const canCancelItem = hasPermission(
+    authState?.tenant,
+    authState?.user?.role,
+    'ORDER_ITEM_CANCEL',
+  );
+
   const handleStatusChange = async (item: OrderItem, newStatus: OrderStatus) => {
     if (updatingItemId) return;
+    if (
+      (newStatus === OrderStatus.CANCELED && !canCancelItem) ||
+      ([OrderStatus.IN_PREPARATION, OrderStatus.READY].includes(newStatus) &&
+        !canUpdateKitchenStatus)
+    )
+      return;
     setUpdatingItemId(item.id);
     try {
       await updateOrderItemStatus(order.id, item.id, newStatus);
@@ -110,7 +128,7 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
                         item.status === OrderStatus.IN_PREPARATION) && (
                         <button
                           onClick={() => handleStatusChange(item, OrderStatus.CANCELED)}
-                          disabled={isLoading}
+                          disabled={isLoading || !canCancelItem}
                           className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full hover:bg-red-200 transition-colors disabled:opacity-50"
                         >
                           {t('actions.cancelItem')}
@@ -119,7 +137,7 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
                       {item.status === OrderStatus.NEW ? (
                         <button
                           onClick={() => handleStatusChange(item, OrderStatus.IN_PREPARATION)}
-                          disabled={isLoading}
+                          disabled={isLoading || !canUpdateKitchenStatus}
                           className="px-4 py-2 bg-status-prep text-white text-sm font-semibold rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
                           {t('statuses.IN_PREPARATION')}
@@ -128,7 +146,7 @@ const KitchenOrderModal: React.FC<KitchenOrderModalProps> = ({ order, onClose })
                         <KitchenItemStatusToggle
                           status={item.status}
                           onChange={(newStatus) => handleStatusChange(item, newStatus)}
-                          disabled={isLoading}
+                          disabled={isLoading || !canUpdateKitchenStatus}
                         />
                       ) : null}
                     </>

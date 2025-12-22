@@ -43,8 +43,8 @@ export const updateOrderItemStatus = (
   actor?: Actor,
 ) => internalUpdateOrderItemStatus(orderId, itemId, status, actor);
 
-export const markOrderAsReady = (orderId: string, station?: KitchenStation) =>
-  internalMarkOrderAsReady(orderId, station);
+export const markOrderAsReady = (orderId: string, station?: KitchenStation, actor?: Actor) =>
+  internalMarkOrderAsReady(orderId, station, actor);
 
 export const serveOrderItem = (orderId: string, itemId: string, actor?: Actor) =>
   internalServeOrderItem(orderId, itemId, actor);

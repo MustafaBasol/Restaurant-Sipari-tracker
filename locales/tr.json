@@ -261,7 +261,27 @@
       "serviceChargePercent": "Servis bedeli (%)",
       "roundingIncrement": "Yuvarlama adımı",
       "roundingIncrementHelp": "0 = yuvarlama yok. Örnekler: 0.05 (en yakın 5 kuruş), 0.1, 1",
+      "permissions": "Yetkiler",
+      "permissionsHelp": "Garson/Mutfak rolleri için geçerlidir. Yönetici/Süper Yönetici her zaman tam yetkilidir.",
       "saveSuccess": "Ayarlar başarıyla güncellendi!"
+    },
+    "permissions": {
+      "permission": "İzin",
+      "roles": {
+        "waiter": "Garson",
+        "kitchen": "Mutfak"
+      },
+      "keys": {
+        "ORDER_PAYMENTS": "Ödemeler (ekle / hesabı al / onayla)",
+        "ORDER_DISCOUNT": "İndirim",
+        "ORDER_COMPLIMENTARY": "İkram",
+        "ORDER_ITEM_CANCEL": "Kalem iptali",
+        "ORDER_ITEM_SERVE": "Kalemi servis edildi işaretle",
+        "ORDER_TABLES": "Masa işlemleri (taşı / birleştir / ayır)",
+        "ORDER_CLOSE": "Adisyon kapatma",
+        "KITCHEN_ITEM_STATUS": "Mutfak: kalem durumu güncelle",
+        "KITCHEN_MARK_ALL_READY": "Mutfak: tümünü hazır yap"
+      }
     }
   },
   "statuses": {
