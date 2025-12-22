@@ -198,6 +198,14 @@
       "dessert": "Dessert"
     }
   },
+  "menu": {
+    "categories": {
+      "appetizers": "Entrées",
+      "mainCourses": "Plats",
+      "desserts": "Desserts",
+      "drinks": "Boissons"
+    }
+  },
   "admin": {
     "title": "Panneau d'Administration",
     "tabs": {

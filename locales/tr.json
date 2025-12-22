@@ -204,6 +204,14 @@
       "dessert": "Tatlı"
     }
   },
+  "menu": {
+    "categories": {
+      "appetizers": "Başlangıçlar",
+      "mainCourses": "Ana Yemekler",
+      "desserts": "Tatlılar",
+      "drinks": "İçecekler"
+    }
+  },
   "admin": {
     "title": "Yönetici Paneli",
     "tabs": {
@@ -264,6 +272,12 @@
       "deactivate": "Pasif Yap",
       "activate": "Aktif Yap",
       "changePassword": "Şifre Değiştir",
+      "sessions": "Oturumlar",
+      "sessionsTitle": "{userName} için oturumlar",
+      "sessionsRevoke": "Sonlandır",
+      "sessionsRevokeAll": "Tümünü sonlandır",
+      "sessionsLoadFailed": "Oturumlar yüklenemedi.",
+      "sessionsActionFailed": "İşlem başarısız.",
       "newPassword": "Yeni Şifre",
       "confirmPassword": "Şifreyi Onayla",
       "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",

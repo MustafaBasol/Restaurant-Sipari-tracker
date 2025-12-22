@@ -9,6 +9,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
 import { KitchenStation } from '../../../shared/types';
+import { getMenuCategoryLabel } from '../i18n';
 
 const makeId = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
@@ -419,7 +420,7 @@ const MenuManagement: React.FC = () => {
         <ul className="mt-4 space-y-2">
           {menuCategories.map((cat) => (
             <li key={cat.id} className="bg-gray-100 p-3 rounded-lg text-sm">
-              {cat.name}
+              {getMenuCategoryLabel(cat.name, t)}
             </li>
           ))}
         </ul>
@@ -472,7 +473,7 @@ const MenuManagement: React.FC = () => {
               <option value="">{t('general.category')}</option>
               {menuCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                  {getMenuCategoryLabel(cat.name, t)}
                 </option>
               ))}
             </Select>
@@ -686,7 +687,7 @@ const MenuManagement: React.FC = () => {
                       >
                         {menuCategories.map((cat) => (
                           <option key={cat.id} value={cat.id}>
-                            {cat.name}
+                            {getMenuCategoryLabel(cat.name, t)}
                           </option>
                         ))}
                       </Select>

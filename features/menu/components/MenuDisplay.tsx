@@ -7,6 +7,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency } from '../../../shared/lib/utils';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
+import { getMenuCategoryLabel } from '../i18n';
 
 interface MenuDisplayProps {
   onAddItem: (item: MenuItem) => void;
@@ -57,7 +58,7 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onAddItem }) => {
                   : 'bg-card-bg text-text-secondary hover:bg-gray-200'
               }`}
             >
-              {category.name}
+              {getMenuCategoryLabel(category.name, t)}
             </button>
           ))}
         </div>
