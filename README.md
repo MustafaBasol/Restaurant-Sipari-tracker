@@ -272,3 +272,4 @@ Bu yaklaşım, yanlış yapılandırılmış env’lerden kaynaklı isteklerin �
 
 - Teknik borç ve ilerleme: `docs/IMPROVEMENTS.md`
 - Ürün / ihtiyaç analizi (restoran sahibi gözüyle): `docs/RESTAURANT_OWNER_REVIEW.md`
+- Güvenlik deploy checklist: `docs/SECURITY.md`
