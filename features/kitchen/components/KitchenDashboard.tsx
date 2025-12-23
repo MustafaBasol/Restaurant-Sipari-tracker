@@ -53,7 +53,7 @@ const KitchenDashboard: React.FC = () => {
     <>
       <NotificationModal />
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-text-primary">{t('kitchen.title')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">{t('kitchen.title')}</h1>
         <Card>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
             <h2 className="text-xl font-semibold">{t('kitchen.activeOrders')}</h2>

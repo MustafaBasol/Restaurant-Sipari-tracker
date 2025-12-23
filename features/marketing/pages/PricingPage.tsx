@@ -8,7 +8,7 @@ const PricingPage: React.FC = () => {
   return (
     <MarketingLayout>
       <div className="py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
             {t('marketing.pricing.title')}
           </h1>

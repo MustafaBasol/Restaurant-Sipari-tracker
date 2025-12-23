@@ -18,7 +18,9 @@ const WaiterDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-primary">{t('waiter.tablesTitle')}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+        {t('waiter.tablesTitle')}
+      </h1>
       <TableGrid onSelectTable={handleSelectTable} />
       {selectedTable && <OrderModal table={selectedTable} onClose={handleCloseModal} />}
     </div>

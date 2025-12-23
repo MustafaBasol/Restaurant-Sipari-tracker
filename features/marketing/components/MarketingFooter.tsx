@@ -6,7 +6,7 @@ const MarketingFooter: React.FC = () => {
 
   return (
     <footer className="bg-card-bg border-t border-border-color">
-      <div className="max-w-7xl mx-auto py-12 px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           <div>
             <h3 className="text-xl font-bold">{t('branding.name')}</h3>

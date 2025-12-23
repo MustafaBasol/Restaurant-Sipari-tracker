@@ -80,3 +80,9 @@ Bu doküman, repodaki eksikleri/yanlışları tespit edip düzeltirken ilerlemey
 - ✅ ESLint + Prettier + typecheck script’i ekle ve CI’ya bağla
   - `npm run lint`, `npm run format`, `npm run typecheck`, `npm run check`
   - GitHub Actions CI: `.github/workflows/ci.yml`
+
+- ✅ Mobil/Tablet responsive iyileştirmeleri
+  - Shared `Table` hücre padding’leri küçük ekranda küçültüldü; `whitespace-nowrap` yalnızca `sm+` için.
+  - Shared `Modal` küçük ekranda daha dar max-width ile açılır.
+  - `AppHeader` taşmaları azaltmak için `truncate/min-w-0` ile düzenlendi; küçük ekranda ikincil metinler azaltıldı.
+  - Marketing sayfalarında `px-6` yerine `px-4 sm:px-6` kullanılarak mobil boşluklar dengelendi.

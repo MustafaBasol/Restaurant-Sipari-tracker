@@ -21,7 +21,7 @@ export const TableHeaderCell: React.FC<{
   isAction?: boolean;
 }> = ({ children, align = 'left', isAction = false }) => (
   <th
-    className={`px-6 py-3 text-${align} text-xs font-medium text-text-secondary uppercase tracking-wider ${isAction ? 'relative' : ''}`}
+    className={`px-3 sm:px-6 py-2 sm:py-3 ${align === 'right' ? 'text-right' : 'text-left'} text-xs font-medium text-text-secondary uppercase tracking-wider ${isAction ? 'relative' : ''}`}
   >
     {children}
   </th>
@@ -37,7 +37,9 @@ export const TableCell: React.FC<{ children: ReactNode; align?: 'left' | 'right'
   children,
   align = 'left',
 }) => (
-  <td className={`px-6 py-4 whitespace-nowrap text-sm text-text-primary text-${align}`}>
+  <td
+    className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-normal sm:whitespace-nowrap text-sm text-text-primary ${align === 'right' ? 'text-right' : 'text-left'}`}
+  >
     {children}
   </td>
 );

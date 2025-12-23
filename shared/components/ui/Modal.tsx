@@ -19,11 +19,11 @@ export const Modal: React.FC<ModalProps> = ({ children, title, onClose, isOpen }
       onClick={onClose}
     >
       <div
-        className="bg-light-bg w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-medium flex flex-col overflow-hidden"
+        className="bg-light-bg w-full max-w-lg sm:max-w-2xl lg:max-w-6xl max-h-[90vh] rounded-2xl shadow-medium flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
         <header className="flex items-center justify-between p-4 border-b border-border-color bg-card-bg">
-          <h2 className="text-xl font-bold">{title}</h2>
+          <h2 className="text-lg sm:text-xl font-bold">{title}</h2>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
             <XIcon />
           </button>

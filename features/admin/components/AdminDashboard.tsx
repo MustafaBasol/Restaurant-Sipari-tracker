@@ -136,7 +136,7 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-primary">{t('admin.title')}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">{t('admin.title')}</h1>
       <Card padding="none">
         <div className="border-b border-border-color p-2">
           <nav className="flex space-x-2 overflow-x-auto" aria-label="Tabs">
@@ -159,7 +159,7 @@ const AdminDashboard: React.FC = () => {
             ))}
           </nav>
         </div>
-        <div className="p-6">{renderContent()}</div>
+        <div className="p-4 sm:p-6">{renderContent()}</div>
       </Card>
     </div>
   );

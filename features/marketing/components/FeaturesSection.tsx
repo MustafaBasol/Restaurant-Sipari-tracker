@@ -53,7 +53,7 @@ const FeaturesSection: React.FC = () => {
 
   return (
     <section className="py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
           <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
             {t('marketing.features.title')}

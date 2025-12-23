@@ -9,7 +9,7 @@ const MarketingHeader: React.FC = () => {
 
   return (
     <header className="bg-card-bg/80 backdrop-blur-sm border-b border-border-color sticky top-0 z-20">
-      <nav className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <div className="flex items-center gap-x-8">
           <button
             onClick={() => (window.location.hash = '#/')}

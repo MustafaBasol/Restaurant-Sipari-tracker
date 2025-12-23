@@ -45,7 +45,7 @@ const PricingSection: React.FC = () => {
 
   return (
     <div id="pricing" className="bg-card-bg py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
             {t('marketing.pricing.title')}
