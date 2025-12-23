@@ -7,6 +7,12 @@ import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import {
+  getServiceOriginAllowlist,
+  isSafeExternalHttpUrl,
+  isTrustedServiceBaseUrl,
+  shouldAllowInsecureServices,
+} from '../../../shared/lib/urlSecurity';
+import {
   createBillingPortalSession,
   getSubscriptionStatus,
   listInvoices,
@@ -43,13 +49,23 @@ const SubscriptionManagement: React.FC = () => {
   const isCancelScheduled =
     !!tenant?.subscriptionCancelAtPeriodEnd && !!tenant?.subscriptionCurrentPeriodEndAt;
 
+  const stripeBackendUrlIsValid = (() => {
+    if (!stripeBackendUrl) return false;
+    const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+    return isTrustedServiceBaseUrl(stripeBackendUrl, {
+      allowedOrigins: getServiceOriginAllowlist(),
+      requireHttps,
+    });
+  })();
+
   const canLoadInvoices = useMemo(() => {
     return (
       tenant?.subscriptionStatus === SubscriptionStatus.ACTIVE &&
       !!stripeBackendUrl &&
+      stripeBackendUrlIsValid &&
       !!authState?.user?.email
     );
-  }, [authState?.user?.email, tenant?.subscriptionStatus]);
+  }, [authState?.user?.email, stripeBackendUrlIsValid, tenant?.subscriptionStatus]);
 
   useEffect(() => {
     const run = async () => {
@@ -157,6 +173,10 @@ const SubscriptionManagement: React.FC = () => {
   };
 
   const openExternal = (url: string) => {
+    if (!isSafeExternalHttpUrl(url)) {
+      setError(t('subscription.checkout.startFailed'));
+      return;
+    }
     try {
       window.open(url, '_blank', 'noreferrer');
     } catch {
@@ -195,6 +215,10 @@ const SubscriptionManagement: React.FC = () => {
     setError('');
     if (!stripeBackendUrl) {
       setError(t('subscription.checkout.missingBackendUrl'));
+      return;
+    }
+    if (!stripeBackendUrlIsValid) {
+      setError(t('subscription.checkout.invalidBackendUrl'));
       return;
     }
     if (!authState?.user?.email) {

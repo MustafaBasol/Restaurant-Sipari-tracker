@@ -271,6 +271,8 @@
     "tables": {
       "add": "Add Table",
       "edit": "Edit Table",
+      "showArchive": "Archive",
+      "showActive": "Active",
       "name": "Table Name",
       "viewOrder": "View Order",
       "orderModalTitle": "Order for {tableName}"
@@ -304,6 +306,9 @@
       "passwordOptional": "Password (leave blank to not change)",
       "deactivate": "Deactivate",
       "activate": "Activate",
+      "showArchive": "Archive",
+      "showActive": "Active",
+      "cannotDeactivateLastAdmin": "You can't deactivate the last active admin. Add another admin first.",
       "changePassword": "Change Password",
       "sessions": "Sessions",
       "sessionsTitle": "Sessions for {userName}",
@@ -347,6 +352,8 @@
       },
       "printServerUrl": "Print Server URL",
       "printServerUrlHelp": "Example: http://localhost:4243 (leave empty to use browser print)",
+      "printServerUrlRequired": "Print Server URL is required.",
+      "printServerUrlInvalid": "Print Server URL is invalid or not an allowed origin.",
       "pricing": "Pricing",
       "taxRatePercent": "Tax rate (%)",
       "serviceChargePercent": "Service charge (%)",
@@ -512,6 +519,36 @@
       "optionPriceDelta": "Price delta",
       "seeDemo": "See how it works"
     },
+    "features": {
+      "title": "Key features that make service flow",
+      "subtitle": "Everything you need to run table service smoothly — from menu to kitchen to reports.",
+      "items": {
+        "menu": {
+          "title": "Menu management",
+          "description": "Create categories, items, and prices in minutes. Keep your menu always up to date."
+        },
+        "tables": {
+          "title": "Table & order tracking",
+          "description": "Select a table, add items, and follow the order status without confusion."
+        },
+        "orders": {
+          "title": "Fast order taking",
+          "description": "Designed for speed on tablet/phone so your team can move quickly at peak hours."
+        },
+        "kitchen": {
+          "title": "Instant kitchen visibility",
+          "description": "Orders appear instantly on the kitchen screen so nothing gets lost."
+        },
+        "reports": {
+          "title": "Simple daily reports",
+          "description": "See daily revenue and key metrics without complex setup."
+        },
+        "roles": {
+          "title": "Roles & permissions",
+          "description": "Separate waiter, kitchen, and admin experiences with role-based access."
+        }
+      }
+    },
     "benefits": {
       "title": "Everything you need, nothing you don't.",
       "card1": {
@@ -546,6 +583,26 @@
         "description": "The order instantly appears on the kitchen screen for preparation."
       }
     },
+    "faq": {
+      "title": "Frequently asked questions",
+      "subtitle": "Quick answers about the trial, setup, and how it fits your workflow.",
+      "q1": {
+        "q": "Do I need a credit card to start the trial?",
+        "a": "No. You can start the 7-day trial without a credit card. You can upgrade anytime."
+      },
+      "q2": {
+        "q": "How fast can we start using it?",
+        "a": "Typically within minutes: create your menu, add tables, and start taking orders on a tablet or phone."
+      },
+      "q3": {
+        "q": "Can I cancel anytime?",
+        "a": "Yes. You can cancel from the billing portal. If you cancel, access continues until the end of the billing period."
+      },
+      "q4": {
+        "q": "Does it work in multiple languages?",
+        "a": "Yes. The interface supports English, Turkish, and French."
+      }
+    },
     "forWho": {
       "title": "Designed for simplicity.",
       "description": "Kitchorify is perfect for cafes, bistros, and small restaurants that need a reliable and easy-to-use system without the high cost and complexity of traditional POS hardware."
@@ -573,14 +630,47 @@
     },
     "footer": {
       "description": "A modern OS for small restaurants.",
+      "contact": "Contact:",
       "privacy": "Privacy",
       "terms": "Terms",
+      "cookies": "Cookie Policy",
+      "security": "Security",
+      "dataRights": "Data Rights",
       "copyright": "© 2025 Kitchorify. All rights reserved."
     },
     "legal": {
       "privacyTitle": "Privacy Policy",
       "termsTitle": "Terms of Service",
-      "lastUpdated": "Last Updated: October 2024",
+      "cookiesTitle": "Cookie Policy",
+      "securityTitle": "Security",
+      "dataRightsTitle": "Your Data Rights",
+      "lastUpdated": "Last Updated: December 2025",
+      "s1_title": "1. How we protect data",
+      "s1_content": "We use standard security practices to protect data in transit and at rest where applicable. Access to production systems is limited to authorized personnel.",
+      "s2_title": "2. Access controls",
+      "s2_content": "We apply role-based access controls in the application and follow the principle of least privilege for internal access.",
+      "s3_title": "3. Incident response",
+      "s3_content": "If we become aware of a security incident, we will take reasonable steps to investigate, mitigate impact, and notify affected parties when required.",
+      "s4_title": "4. Reporting security issues",
+      "s4_content": "If you believe you found a vulnerability, please contact us at info@kitchorify.com with details so we can investigate.",
+      "r1_title": "1. Overview",
+      "r1_content": "Depending on your location, you may have rights over your personal data (such as access, correction, deletion, and portability).",
+      "r2_title": "2. How to make a request",
+      "r2_content": "To make a data request, contact us at info@kitchorify.com. We may ask for additional information to verify your identity.",
+      "r3_title": "3. Account and restaurant data",
+      "r3_content": "Some data is required to provide the Service. If you request deletion, we may need to remove or anonymize related records, subject to legal obligations.",
+      "r4_title": "4. Response timeframe",
+      "r4_content": "We aim to respond within a reasonable time and within legally required timeframes where applicable.",
+      "c1_title": "1. What are cookies?",
+      "c1_content": "Cookies are small text files stored on your device when you visit a website. They help websites remember preferences and improve the user experience.",
+      "c2_title": "2. Why we use cookies",
+      "c2_content": "We use cookies and similar technologies to keep the Service working reliably, remember language preferences, and understand how the website is used so we can improve it.",
+      "c3_title": "3. Types of cookies we may use",
+      "c3_content": "We may use essential cookies (required for core functionality), preference cookies (such as language), and analytics cookies (to understand usage patterns).",
+      "c4_title": "4. Managing cookies",
+      "c4_content": "You can control and delete cookies through your browser settings. Disabling certain cookies may impact parts of the Service.",
+      "c5_title": "5. Contact",
+      "c5_content": "If you have questions about this Cookie Policy, you can contact us at info@kitchorify.com.",
       "p1_title": "1. Introduction",
       "p1_content": "Welcome to Kitchorify ('we', 'us', or 'our'). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our software-as-a-service application (the 'Service'). Please read this policy carefully. If you do not agree with the terms of this privacy policy, please do not access the Service.",
       "p2_title": "2. Information We Collect",
@@ -700,6 +790,7 @@
       "error": "An error occurred. Please check your payment details and try again.",
       "missingStripeKey": "Stripe configuration is missing: VITE_STRIPE_PUBLISHABLE_KEY is not set.",
       "missingBackendUrl": "Stripe backend is not configured: VITE_STRIPE_BACKEND_URL is not set.",
+      "invalidBackendUrl": "Stripe backend URL is invalid or not an allowed origin.",
       "authError": "Authentication error. Please log in again.",
       "activateFailed": "Payment succeeded but activation failed. Please contact support.",
       "canceled": "Checkout was canceled.",

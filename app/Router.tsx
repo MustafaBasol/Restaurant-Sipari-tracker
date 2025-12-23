@@ -4,6 +4,17 @@ import { useLanguage } from '../shared/hooks/useLanguage';
 import { UserRole } from '../shared/types';
 import { isSubscriptionActive } from '../shared/lib/utils';
 
+const LANG_STORAGE_KEY = 'kitchorify-lang';
+
+const getStoredLanguagePreference = (): 'en' | 'tr' | 'fr' | null => {
+  try {
+    const value = window.localStorage.getItem(LANG_STORAGE_KEY);
+    return value === 'en' || value === 'tr' || value === 'fr' ? value : null;
+  } catch {
+    return null;
+  }
+};
+
 // Lazy load components for better performance
 const LoginScreen = React.lazy(() => import('../features/auth/components/LoginScreen'));
 const RegisterScreen = React.lazy(() => import('../features/auth/components/RegisterScreen'));
@@ -14,6 +25,9 @@ const SuperAdminDashboard = React.lazy(
 const HomePage = React.lazy(() => import('../features/marketing/pages/HomePage'));
 const PrivacyPage = React.lazy(() => import('../features/marketing/pages/PrivacyPage'));
 const TermsPage = React.lazy(() => import('../features/marketing/pages/TermsPage'));
+const CookiePolicyPage = React.lazy(() => import('../features/marketing/pages/CookiePolicyPage'));
+const SecurityPage = React.lazy(() => import('../features/marketing/pages/SecurityPage'));
+const DataRightsPage = React.lazy(() => import('../features/marketing/pages/DataRightsPage'));
 const SubscriptionTermsPage = React.lazy(
   () => import('../features/marketing/pages/SubscriptionTermsPage'),
 );
@@ -53,11 +67,15 @@ const AppRoutes: React.FC = () => {
     const tenantId = authState?.tenant?.id ?? null;
     const tenantDefaultLanguage = authState?.tenant?.defaultLanguage;
 
+    const storedLanguagePreference = getStoredLanguagePreference();
+
     // Apply tenant default language only once per tenant (e.g., on login / tenant switch).
     // Do not override manual language switching.
     if (tenantId && lastTenantIdRef.current !== tenantId && tenantDefaultLanguage) {
       lastTenantIdRef.current = tenantId;
-      setLang(tenantDefaultLanguage);
+      if (!storedLanguagePreference) {
+        setLang(tenantDefaultLanguage);
+      }
     }
 
     if (!tenantId) {
@@ -69,13 +87,21 @@ const AppRoutes: React.FC = () => {
     return (
       currentHash === '#/privacy' ||
       currentHash === '#/terms' ||
+      currentHash === '#/cookies' ||
+      currentHash === '#/security' ||
+      currentHash === '#/data-rights' ||
       currentHash === '#/subscription-terms'
     );
   }, [currentHash]);
 
-  const legalPageType = useMemo<'privacy' | 'terms' | 'subscription-terms' | null>(() => {
+  const legalPageType = useMemo<
+    'privacy' | 'terms' | 'cookies' | 'security' | 'data-rights' | 'subscription-terms' | null
+  >(() => {
     if (currentHash === '#/privacy') return 'privacy';
     if (currentHash === '#/terms') return 'terms';
+    if (currentHash === '#/cookies') return 'cookies';
+    if (currentHash === '#/security') return 'security';
+    if (currentHash === '#/data-rights') return 'data-rights';
     if (currentHash === '#/subscription-terms') return 'subscription-terms';
     return null;
   }, [currentHash]);
@@ -154,6 +180,9 @@ const AppRoutes: React.FC = () => {
     if (canAccessLegalPage) {
       if (legalPageType === 'privacy') return <PrivacyPage />;
       if (legalPageType === 'terms') return <TermsPage />;
+      if (legalPageType === 'cookies') return <CookiePolicyPage />;
+      if (legalPageType === 'security') return <SecurityPage />;
+      if (legalPageType === 'data-rights') return <DataRightsPage />;
       return <SubscriptionTermsPage />;
     }
 
@@ -176,6 +205,9 @@ const AppRoutes: React.FC = () => {
   if (canAccessLegalPage) {
     if (legalPageType === 'privacy') return <PrivacyPage />;
     if (legalPageType === 'terms') return <TermsPage />;
+    if (legalPageType === 'cookies') return <CookiePolicyPage />;
+    if (legalPageType === 'security') return <SecurityPage />;
+    if (legalPageType === 'data-rights') return <DataRightsPage />;
     return <SubscriptionTermsPage />;
   }
   if (currentHash === '#/login') return <LoginScreen />;

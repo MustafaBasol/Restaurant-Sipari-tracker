@@ -18,6 +18,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error('[stripe] Missing STRIPE_SECRET_KEY.');
@@ -29,6 +31,12 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
+
+app.disable('x-powered-by');
+
+// If you're behind a reverse proxy (Render, Fly, Nginx, etc.), this helps rate limiting
+// use the correct client IP.
+app.set('trust proxy', 1);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -61,6 +69,42 @@ const allowedOriginPatterns = (process.env.CORS_ORIGINS || 'http://localhost:300
 
 const isOriginAllowed = buildOriginMatcher(allowedOriginPatterns);
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+app.use(
+  helmet({
+    // SPA + Stripe redirects often need to be embedded/redirected in various flows.
+    // Keep default protections while explicitly disabling COEP to avoid surprising breaks.
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: isDevelopment ? 300 : 120,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
+
+const requireApiKeyIfConfigured = (req, res, next) => {
+  const apiKey = String(process.env.API_KEY || '').trim();
+  if (!apiKey) return next();
+
+  const provided = String(req.header('x-api-key') || '').trim();
+  if (provided && provided === apiKey) return next();
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+const isAllowedRedirectUrl = (value) => {
+  try {
+    const u = new URL(String(value));
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    return isOriginAllowed(u.origin);
+  } catch {
+    return false;
+  }
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -83,40 +127,54 @@ app.get('/', (_req, res) => {
 });
 
 // Stripe webhooks must use express.raw for signature verification.
-app.post('/stripe-webhook', express.raw({ type: 'application/json' }), (request, response) => {
-  console.log('Webhook received!');
+app.post(
+  '/stripe-webhook',
+  express.raw({ type: 'application/json', limit: '1mb' }),
+  (request, response) => {
+    console.log('Webhook received!');
 
-  const sig = request.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const sig = request.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(request.body, sig, webhookSecret);
-  } catch (err) {
-    console.log(`❌ Error message: ${err.message}`);
-    response.status(400).send(`Webhook Error: ${err.message}`);
-    return;
-  }
-
-  console.log(`✅ Success: Verified webhook event: ${event.id}`);
-
-  switch (event.type) {
-    case 'payment_intent.succeeded': {
-      const paymentIntent = event.data.object;
-      console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-      console.log('TODO: Update database subscription status for the customer.');
-      break;
+    if (!webhookSecret) {
+      console.error('[stripe] Missing STRIPE_WEBHOOK_SECRET. Refusing to process webhooks.');
+      response.status(500).send('Webhook misconfigured');
+      return;
     }
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
 
-  response.send();
-});
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(request.body, sig, webhookSecret);
+    } catch (err) {
+      console.log(`❌ Error message: ${err.message}`);
+      response.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+
+    console.log(`✅ Success: Verified webhook event: ${event.id}`);
+
+    switch (event.type) {
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object;
+        console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
+        console.log('TODO: Update database subscription status for the customer.');
+        break;
+      }
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    response.send();
+  },
+);
 
 // JSON endpoints (keep AFTER webhook to avoid breaking signature verification).
-app.use(express.json());
+app.use(express.json({ limit: '256kb' }));
+
+// Protect API endpoints (webhook excluded above)
+app.use(apiLimiter);
+app.use(requireApiKeyIfConfigured);
 
 app.post('/create-checkout-session', async (req, res) => {
   try {
@@ -127,6 +185,10 @@ app.post('/create-checkout-session', async (req, res) => {
     }
     if (!successUrl || !cancelUrl) {
       return res.status(400).json({ error: 'Missing successUrl/cancelUrl' });
+    }
+
+    if (!isAllowedRedirectUrl(successUrl) || !isAllowedRedirectUrl(cancelUrl)) {
+      return res.status(400).json({ error: 'Invalid successUrl/cancelUrl' });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -151,7 +213,10 @@ app.post('/create-checkout-session', async (req, res) => {
     return res.json({ url: session.url, sessionId: session.id });
   } catch (err) {
     console.error('Failed to create checkout session', err);
-    return res.status(500).json({ error: err?.message || 'Unknown error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      ...(isDevelopment ? { details: err?.message } : {}),
+    });
   }
 });
 
@@ -160,6 +225,10 @@ app.post('/create-portal-session', async (req, res) => {
     const { customerEmail, returnUrl } = req.body || {};
     if (!customerEmail) return res.status(400).json({ error: 'Missing customerEmail' });
     if (!returnUrl) return res.status(400).json({ error: 'Missing returnUrl' });
+
+    if (!isAllowedRedirectUrl(returnUrl)) {
+      return res.status(400).json({ error: 'Invalid returnUrl' });
+    }
 
     // Demo-friendly lookup. In a production app, store customerId in your DB.
     const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
@@ -174,7 +243,10 @@ app.post('/create-portal-session', async (req, res) => {
     return res.json({ url: session.url });
   } catch (err) {
     console.error('Failed to create portal session', err);
-    return res.status(500).json({ error: err?.message || 'Unknown error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      ...(isDevelopment ? { details: err?.message } : {}),
+    });
   }
 });
 
@@ -213,7 +285,10 @@ app.post('/get-subscription-status', async (req, res) => {
     });
   } catch (err) {
     console.error('Failed to get subscription status', err);
-    return res.status(500).json({ error: err?.message || 'Unknown error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      ...(isDevelopment ? { details: err?.message } : {}),
+    });
   }
 });
 
@@ -247,7 +322,10 @@ app.post('/list-invoices', async (req, res) => {
     });
   } catch (err) {
     console.error('Failed to list invoices', err);
-    return res.status(500).json({ error: err?.message || 'Unknown error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      ...(isDevelopment ? { details: err?.message } : {}),
+    });
   }
 });
 

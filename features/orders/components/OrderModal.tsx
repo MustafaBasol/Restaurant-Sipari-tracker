@@ -33,6 +33,11 @@ import {
 } from '../../../shared/lib/printTemplates';
 import { openPrintWindow } from '../../../shared/lib/print';
 import { sendToPrintServer } from '../../../shared/lib/printClient';
+import {
+  getServiceOriginAllowlist,
+  isTrustedServiceBaseUrl,
+  shouldAllowInsecureServices,
+} from '../../../shared/lib/urlSecurity';
 
 interface OrderModalProps {
   table: Table;
@@ -536,9 +541,21 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const tenantServerUrl =
       tenantPrintConfig?.mode === 'server' ? tenantPrintConfig.serverUrl?.trim() : undefined;
 
-    const prefersServer = Boolean(tenantServerUrl || import.meta.env.VITE_PRINT_SERVER_URL);
+    const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+    const allowedOrigins = getServiceOriginAllowlist();
+
+    const tenantServerUrlOk =
+      !!tenantServerUrl &&
+      isTrustedServiceBaseUrl(tenantServerUrl, { allowedOrigins, requireHttps });
+    const envServerUrl = import.meta.env.VITE_PRINT_SERVER_URL;
+    const envServerUrlOk =
+      !!envServerUrl && isTrustedServiceBaseUrl(envServerUrl, { allowedOrigins, requireHttps });
+
+    const prefersServer = Boolean(tenantServerUrlOk || envServerUrlOk);
     if (prefersServer) {
-      await sendToPrintServer('receipt', text, { serverUrl: tenantServerUrl });
+      await sendToPrintServer('receipt', text, {
+        serverUrl: tenantServerUrlOk ? tenantServerUrl : undefined,
+      });
       return;
     }
 
@@ -558,9 +575,21 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const tenantServerUrl =
       tenantPrintConfig?.mode === 'server' ? tenantPrintConfig.serverUrl?.trim() : undefined;
 
-    const prefersServer = Boolean(tenantServerUrl || import.meta.env.VITE_PRINT_SERVER_URL);
+    const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+    const allowedOrigins = getServiceOriginAllowlist();
+
+    const tenantServerUrlOk =
+      !!tenantServerUrl &&
+      isTrustedServiceBaseUrl(tenantServerUrl, { allowedOrigins, requireHttps });
+    const envServerUrl = import.meta.env.VITE_PRINT_SERVER_URL;
+    const envServerUrlOk =
+      !!envServerUrl && isTrustedServiceBaseUrl(envServerUrl, { allowedOrigins, requireHttps });
+
+    const prefersServer = Boolean(tenantServerUrlOk || envServerUrlOk);
     if (prefersServer) {
-      await sendToPrintServer('kitchen', text, { serverUrl: tenantServerUrl });
+      await sendToPrintServer('kitchen', text, {
+        serverUrl: tenantServerUrlOk ? tenantServerUrl : undefined,
+      });
       return;
     }
 

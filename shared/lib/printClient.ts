@@ -1,3 +1,9 @@
+import {
+  assertTrustedServiceBaseUrl,
+  getServiceOriginAllowlist,
+  shouldAllowInsecureServices,
+} from './urlSecurity';
+
 type PrintJobType = 'receipt' | 'kitchen';
 
 type PrintClientOptions = {
@@ -14,7 +20,13 @@ export const sendToPrintServer = async (
     throw new Error('VITE_PRINT_SERVER_URL is not set');
   }
 
-  const url = `${String(serverUrl).replace(/\/$/, '')}/api/print`;
+  const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+  const baseUrl = assertTrustedServiceBaseUrl(serverUrl, {
+    allowedOrigins: getServiceOriginAllowlist(),
+    requireHttps,
+  });
+
+  const url = `${String(baseUrl).replace(/\/$/, '')}/api/print`;
 
   const resp = await fetch(url, {
     method: 'POST',

@@ -24,6 +24,7 @@ const UsersManagement: React.FC = () => {
   const { t } = useLanguage();
   const { authState } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [newUser, setNewUser] = useState({
     fullName: '',
     email: '',
@@ -35,6 +36,9 @@ const UsersManagement: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   const canManageSessions = authState?.user.role === UserRole.ADMIN;
+
+  const activeAdminCount = users.filter((u) => u.role === UserRole.ADMIN && u.isActive).length;
+  const visibleUsers = users.filter((u) => (showArchived ? !u.isActive : u.isActive));
 
   const handleAddUser = async () => {
     if (newUser.fullName && newUser.email && newUser.password) {
@@ -57,7 +61,14 @@ const UsersManagement: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6 flex justify-end">
+      <div className="mb-6 flex justify-end gap-2">
+        <Button
+          onClick={() => setShowArchived((p) => !p)}
+          variant="secondary"
+          className="px-4 py-2"
+        >
+          {showArchived ? t('admin.users.showActive') : t('admin.users.showArchive')}
+        </Button>
         <Button onClick={() => setIsAdding(!isAdding)} className="px-4 py-2">
           {isAdding ? t('general.cancel') : t('admin.users.add')}
         </Button>
@@ -66,6 +77,12 @@ const UsersManagement: React.FC = () => {
       {successMessage && (
         <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm">
           {successMessage}
+        </div>
+      )}
+
+      {activeAdminCount <= 1 && (
+        <div className="mb-4 rounded-xl border border-border-color bg-card-bg px-4 py-3 text-sm text-text-secondary">
+          {t('admin.users.cannotDeactivateLastAdmin')}
         </div>
       )}
 
@@ -136,44 +153,60 @@ const UsersManagement: React.FC = () => {
           <TableHeaderCell align="right">{t('general.actions')}</TableHeaderCell>
         </TableHeader>
         <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>
-                <div className="font-medium">{user.fullName}</div>
-                <div className="text-sm text-text-secondary">{user.email}</div>
-              </TableCell>
-              <TableCell>{t(`roles.${user.role}`)}</TableCell>
-              <TableCell>
-                <Badge variant={user.isActive ? 'green' : 'red'}>
-                  {user.isActive ? t('general.active') : t('general.inactive')}
-                </Badge>
-              </TableCell>
-              <TableCell align="right">
-                <div className="flex gap-4 justify-end">
-                  <button
-                    onClick={() => setEditingPasswordForUser(user)}
-                    className="text-accent hover:text-accent-hover text-sm font-medium"
-                  >
-                    {t('admin.users.changePassword')}
-                  </button>
-                  {canManageSessions && (
+          {visibleUsers.map((user) => {
+            const isLastActiveAdmin =
+              user.role === UserRole.ADMIN && user.isActive && activeAdminCount <= 1;
+
+            return (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <div className="font-medium">{user.fullName}</div>
+                  <div className="text-sm text-text-secondary">{user.email}</div>
+                </TableCell>
+                <TableCell>{t(`roles.${user.role}`)}</TableCell>
+                <TableCell>
+                  <Badge variant={user.isActive ? 'green' : 'red'}>
+                    {user.isActive ? t('general.active') : t('general.inactive')}
+                  </Badge>
+                </TableCell>
+                <TableCell align="right">
+                  <div className="flex gap-4 justify-end">
                     <button
-                      onClick={() => setViewingSessionsForUser(user)}
+                      onClick={() => setEditingPasswordForUser(user)}
                       className="text-accent hover:text-accent-hover text-sm font-medium"
                     >
-                      {t('admin.users.sessions')}
+                      {t('admin.users.changePassword')}
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleToggleActive(user)}
-                    className="text-accent hover:text-accent-hover text-sm font-medium"
-                  >
-                    {user.isActive ? t('admin.users.deactivate') : t('admin.users.activate')}
-                  </button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                    {canManageSessions && (
+                      <button
+                        onClick={() => setViewingSessionsForUser(user)}
+                        className="text-accent hover:text-accent-hover text-sm font-medium"
+                      >
+                        {t('admin.users.sessions')}
+                      </button>
+                    )}
+                    <button
+                      disabled={isLastActiveAdmin}
+                      title={
+                        isLastActiveAdmin ? t('admin.users.cannotDeactivateLastAdmin') : undefined
+                      }
+                      onClick={() => {
+                        if (isLastActiveAdmin) return;
+                        void handleToggleActive(user);
+                      }}
+                      className={
+                        isLastActiveAdmin
+                          ? 'text-gray-400 text-sm font-medium cursor-not-allowed'
+                          : 'text-accent hover:text-accent-hover text-sm font-medium'
+                      }
+                    >
+                      {user.isActive ? t('admin.users.deactivate') : t('admin.users.activate')}
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       {editingPasswordForUser && (

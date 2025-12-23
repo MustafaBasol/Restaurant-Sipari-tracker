@@ -5,6 +5,11 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { formatCurrency } from '../../../shared/lib/utils';
+import {
+  getServiceOriginAllowlist,
+  isTrustedServiceBaseUrl,
+  shouldAllowInsecureServices,
+} from '../../../shared/lib/urlSecurity';
 
 const stripeBackendUrl = (import.meta as any).env?.VITE_STRIPE_BACKEND_URL as string | undefined;
 
@@ -31,6 +36,14 @@ const CheckoutPage: React.FC = () => {
   const [formError, setFormError] = useState('');
 
   const currency = authState?.tenant?.currency || 'EUR';
+  const stripeBackendUrlIsValid = (() => {
+    if (!stripeBackendUrl) return false;
+    const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+    return isTrustedServiceBaseUrl(stripeBackendUrl, {
+      allowedOrigins: getServiceOriginAllowlist(),
+      requireHttps,
+    });
+  })();
   const monthlyPriceAmount = useMemo(() => {
     // Demo-friendly: keep the same price as earlier PaymentIntent flow.
     return 9.9;
@@ -91,6 +104,11 @@ const CheckoutPage: React.FC = () => {
     if (!stripeBackendUrl) {
       setStatus('error');
       setMessage(t('subscription.checkout.missingBackendUrl'));
+      return;
+    }
+    if (!stripeBackendUrlIsValid) {
+      setStatus('error');
+      setMessage(t('subscription.checkout.invalidBackendUrl'));
       return;
     }
     if (!authState?.tenant?.id) {

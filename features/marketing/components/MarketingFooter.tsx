@@ -11,8 +11,14 @@ const MarketingFooter: React.FC = () => {
           <div>
             <h3 className="text-xl font-bold">{t('branding.name')}</h3>
             <p className="text-text-secondary mt-2 text-sm max-w-xs">{t('branding.tagline')}</p>
+            <p className="text-text-secondary mt-3 text-sm">
+              <span className="font-medium text-text-primary">{t('marketing.footer.contact')}</span>{' '}
+              <a href="mailto:info@kitchorify.com" className="text-accent hover:text-accent-hover">
+                info@kitchorify.com
+              </a>
+            </p>
           </div>
-          <div className="flex gap-x-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             <button
               onClick={() => (window.location.hash = '#/privacy')}
               className="text-sm text-text-secondary hover:text-text-primary"
@@ -24,6 +30,24 @@ const MarketingFooter: React.FC = () => {
               className="text-sm text-text-secondary hover:text-text-primary"
             >
               {t('marketing.footer.terms')}
+            </button>
+            <button
+              onClick={() => (window.location.hash = '#/cookies')}
+              className="text-sm text-text-secondary hover:text-text-primary"
+            >
+              {t('marketing.footer.cookies')}
+            </button>
+            <button
+              onClick={() => (window.location.hash = '#/security')}
+              className="text-sm text-text-secondary hover:text-text-primary"
+            >
+              {t('marketing.footer.security')}
+            </button>
+            <button
+              onClick={() => (window.location.hash = '#/data-rights')}
+              className="text-sm text-text-secondary hover:text-text-primary"
+            >
+              {t('marketing.footer.dataRights')}
             </button>
           </div>
         </div>

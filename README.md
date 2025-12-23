@@ -112,6 +112,8 @@ Bu repo frontend-only demo olduğu için yazdırma iki şekilde çalışır:
 
 2. **Opsiyonel Print Server (gelişmiş entegrasyon):** Eğer cihaz/termal yazıcıya doğrudan göndermek isterseniz örnek sunucu: `printer-server.cjs`.
 
+Örnek env: `.env.printer-server.example`
+
 Çalıştırma:
 
 ```bash
@@ -124,6 +126,14 @@ PORT=4243 CORS_ORIGINS=http://localhost:3000 node printer-server.cjs
 # Terminal 2: frontend (print server'a job göndermek için)
 VITE_PRINT_SERVER_URL=http://localhost:4243 npm run dev
 ```
+
+#### Print Server güvenlik notları (printer-server.cjs)
+
+- **CORS allowlist:** `CORS_ORIGINS` ile origin allowlist.
+- **Rate limit + Helmet:** temel hardening.
+- **Opsiyonel API anahtarı:** `API_KEY` tanımlarsanız tüm endpoint’ler `x-api-key` ister.
+
+Frontend tarafında prod’da print server URL’leri de allowlist/https kurallarına tabidir.
 
 Print server yazıcıya gönderim için `PRINT_TRANSPORT` ile çalışır:
 
@@ -161,7 +171,21 @@ Notlar:
 - `sk_test_...` gibi **secret key** değerlerini asla frontend env (`VITE_*`) içine koymayın, repoya commit etmeyin ve paylaşmayın.
 - Yanlışlıkla paylaşıldıysa Stripe Dashboard → Developers → API keys üzerinden **hemen Rotate/Revoke** edin.
 
+#### Demo backend güvenlik notları (server.cjs)
+
+Bu repodaki Stripe backend örneği (`server.cjs`) demo amaçlıdır ama temel hardening içerir:
+
+- **CORS allowlist:** `CORS_ORIGINS` ile origin allowlist uygulanır.
+- **Redirect URL doğrulaması:** `successUrl`, `cancelUrl`, `returnUrl` yalnızca `CORS_ORIGINS` içindeki origin’lere izin verecek şekilde doğrulanır (open redirect riskini azaltır).
+- **Rate limit + Helmet:** istekleri sınırlar ve temel HTTP güvenlik başlıklarını ekler.
+- **Opsiyonel API anahtarı:** `API_KEY` tanımlarsanız (webhook hariç) tüm endpoint’ler `x-api-key` ister.
+- **Webhook güvenliği:** `STRIPE_WEBHOOK_SECRET` yoksa webhook işlenmez.
+
+Not: Bunlar demo için “makul” önlemlerdir; production’da ayrıca gerçek auth, kalıcı DB, secrets yönetimi, gözlemlenebilirlik vb. gerekir.
+
 ### Lokal Stripe Test Kurulumu (önerilen)
+
+Örnek env: `.env.example` (backend) ve `.env.local.example` (frontend)
 
 1. Stripe Dashboard (Test mode) içinde aylık bir **Price** oluşturun ve `price_...` değerini alın.
 
@@ -169,15 +193,26 @@ Notlar:
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_ID_MONTHLY=price_...
 CORS_ORIGINS=http://localhost:3000
 PORT=4242
+
+# Opsiyonel: API anahtarı koruması
+# API_KEY=change-me
 ```
 
 3. Frontend için `.env.local` oluşturun:
 
 ```bash
 VITE_STRIPE_BACKEND_URL=http://localhost:4242
+
+# Opsiyonel (önerilir): Frontend'in istek atacağı servis origin allowlist'i
+# VITE_SERVICE_ORIGIN_ALLOWLIST=http://localhost:4242,http://localhost:4243
+
+# Üretimde varsayılan: servis URL'leri https olmalı.
+# Sadece bilinçli olarak prod'da http servislerine izin vermek istiyorsanız:
+# VITE_ALLOW_INSECURE_SERVICES=true
 ```
 
 4. Çalıştırma:
@@ -205,6 +240,16 @@ VITE_STRIPE_BACKEND_URL=https://<codespace>-4242.app.github.dev
 
 - (Demo kolaylığı) `server.cjs`, `CORS_ORIGINS` için `*` wildcard destekler:
   - Örn: `CORS_ORIGINS=https://*.app.github.dev`
+
+### Frontend servis URL güvenliği (prod)
+
+Frontend, harici servis URL’leri (Stripe backend + Print Server) için prod’da güvenli varsayılanlar uygular:
+
+- `VITE_SERVICE_ORIGIN_ALLOWLIST` **tanımlı değilse** prod’da yalnızca **same-origin** kabul edilir (örn. `window.location.origin`).
+- Prod’da varsayılan olarak **HTTPS zorunludur**.
+- `VITE_ALLOW_INSECURE_SERVICES=true` sadece bilinçli olarak prod’da `http://...` servisleri açmak için kullanılmalıdır.
+
+Bu yaklaşım, yanlış yapılandırılmış env’lerden kaynaklı isteklerin “beklenmeyen” origin’lere gitmesini engellemeyi hedefler.
 
 ### Demo Aktivasyon Notu
 

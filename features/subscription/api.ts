@@ -3,6 +3,19 @@ import {
   createPaymentIntent as internalCreatePaymentIntent,
 } from '../../shared/lib/mockApi';
 import { Tenant } from '../../shared/types';
+import {
+  assertTrustedServiceBaseUrl,
+  getServiceOriginAllowlist,
+  shouldAllowInsecureServices,
+} from '../../shared/lib/urlSecurity';
+
+const getStripeBackendBaseUrl = (backendUrl: string): string => {
+  const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+  return assertTrustedServiceBaseUrl(backendUrl, {
+    allowedOrigins: getServiceOriginAllowlist(),
+    requireHttps,
+  });
+};
 
 export type CreateSubscriptionCheckoutSessionParams = {
   backendUrl: string;
@@ -57,7 +70,8 @@ export type ListInvoicesParams = {
 export const createBillingPortalSession = async (
   params: CreateBillingPortalSessionParams,
 ): Promise<{ url: string }> => {
-  const res = await fetch(`${params.backendUrl.replace(/\/$/, '')}/create-portal-session`, {
+  const baseUrl = getStripeBackendBaseUrl(params.backendUrl);
+  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/create-portal-session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -79,7 +93,8 @@ export const createBillingPortalSession = async (
 export const createSubscriptionCheckoutSession = async (
   params: CreateSubscriptionCheckoutSessionParams,
 ): Promise<{ url?: string; sessionId?: string }> => {
-  const res = await fetch(`${params.backendUrl.replace(/\/$/, '')}/create-checkout-session`, {
+  const baseUrl = getStripeBackendBaseUrl(params.backendUrl);
+  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/create-checkout-session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -102,7 +117,8 @@ export const createSubscriptionCheckoutSession = async (
 export const listInvoices = async (
   params: ListInvoicesParams,
 ): Promise<{ invoices: StripeInvoiceSummary[] }> => {
-  const endpoint = `${params.backendUrl.replace(/\/$/, '')}/list-invoices`;
+  const baseUrl = getStripeBackendBaseUrl(params.backendUrl);
+  const endpoint = `${baseUrl.replace(/\/$/, '')}/list-invoices`;
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -127,7 +143,8 @@ export const listInvoices = async (
 export const getSubscriptionStatus = async (
   params: GetSubscriptionStatusParams,
 ): Promise<{ subscription: StripeSubscriptionStatusSummary | null }> => {
-  const endpoint = `${params.backendUrl.replace(/\/$/, '')}/get-subscription-status`;
+  const baseUrl = getStripeBackendBaseUrl(params.backendUrl);
+  const endpoint = `${baseUrl.replace(/\/$/, '')}/get-subscription-status`;
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

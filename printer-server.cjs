@@ -16,10 +16,39 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const net = require('net');
 const { spawn } = require('child_process');
 
 const app = express();
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: isDevelopment ? 600 : 240,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
+
+const requireApiKeyIfConfigured = (req, res, next) => {
+  const apiKey = String(process.env.API_KEY || '').trim();
+  if (!apiKey) return next();
+
+  const provided = String(req.header('x-api-key') || '').trim();
+  if (provided && provided === apiKey) return next();
+  return res.status(401).json({ ok: false, message: 'Unauthorized' });
+};
 
 function getPrintTransport() {
   const value = String(process.env.PRINT_TRANSPORT || 'stdout')
@@ -98,6 +127,9 @@ app.use(
 );
 
 app.use(express.json({ limit: '1mb' }));
+
+app.use(apiLimiter);
+app.use(requireApiKeyIfConfigured);
 
 app.get('/', (_req, res) => {
   res.json({

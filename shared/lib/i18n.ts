@@ -2,13 +2,25 @@ export type Language = 'en' | 'tr' | 'fr';
 
 const translationsPromiseCache = new Map<Language, Promise<Record<string, any>>>();
 
+const shouldBypassCache = () => {
+  // In development with HMR, locale JSON files can change while the app stays loaded.
+  // Bypass the in-memory cache so new keys show up immediately.
+  try {
+    return Boolean(import.meta.env?.DEV);
+  } catch {
+    return false;
+  }
+};
+
 export const fetchTranslations = async (lang: Language): Promise<Record<string, any>> => {
-  const cached = translationsPromiseCache.get(lang);
+  const bypassCache = shouldBypassCache();
+  const cached = !bypassCache ? translationsPromiseCache.get(lang) : undefined;
   if (cached) return cached;
 
   const promise = (async () => {
     try {
-      const response = await fetch(`/locales/${lang}.json`);
+      const url = bypassCache ? `/locales/${lang}.json?ts=${Date.now()}` : `/locales/${lang}.json`;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -19,7 +31,9 @@ export const fetchTranslations = async (lang: Language): Promise<Record<string, 
     }
   })();
 
-  translationsPromiseCache.set(lang, promise);
+  if (!bypassCache) {
+    translationsPromiseCache.set(lang, promise);
+  }
   return promise;
 };
 

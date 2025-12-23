@@ -37,6 +37,9 @@
     "clearSelection": "Effacer",
     "createTitle": "Nouveau client",
     "createAction": "Créer",
+    "showArchive": "Archive",
+    "showActive": "Actifs",
+    "cannotDeactivateLastAdmin": "Vous ne pouvez pas désactiver le dernier administrateur actif. Ajoutez d’abord un autre administrateur.",
     "fullName": "Nom complet",
     "phone": "Téléphone (facultatif)",
     "email": "E-mail (facultatif)",
@@ -271,6 +274,8 @@
     "tables": {
       "add": "Ajouter une Table",
       "edit": "Modifier la Table",
+      "showArchive": "Archive",
+      "showActive": "Actifs",
       "name": "Nom de la Table",
       "viewOrder": "Voir la Commande",
       "orderModalTitle": "Commande pour {tableName}"
@@ -349,6 +354,8 @@
       },
       "printServerUrl": "URL du serveur d'impression",
       "printServerUrlHelp": "Exemple : http://localhost:4243 (laisser vide pour utiliser l'impression navigateur)",
+      "printServerUrlRequired": "L’URL du serveur d’impression est requise.",
+      "printServerUrlInvalid": "L’URL du serveur d’impression est invalide ou l’origine n’est pas autorisée.",
       "pricing": "Tarification",
       "taxRatePercent": "Taux de taxe (%)",
       "serviceChargePercent": "Frais de service (%)",
@@ -508,6 +515,36 @@
       },
       "seeDemo": "Voir comment ça marche"
     },
+    "features": {
+      "title": "Les fonctionnalités clés pour fluidifier le service",
+      "subtitle": "De la carte à la cuisine, puis aux rapports — tout ce qu’il faut, sans complexité.",
+      "items": {
+        "menu": {
+          "title": "Gestion du menu",
+          "description": "Créez des catégories et des plats rapidement, mettez à jour les prix en quelques clics."
+        },
+        "tables": {
+          "title": "Suivi tables & commandes",
+          "description": "Choisissez une table, ajoutez des articles et suivez le statut sans confusion."
+        },
+        "orders": {
+          "title": "Prise de commande rapide",
+          "description": "Optimisé pour tablette/téléphone afin d’aller vite pendant les heures de pointe."
+        },
+        "kitchen": {
+          "title": "Visibilité cuisine instantanée",
+          "description": "Les commandes apparaissent immédiatement sur l’écran cuisine, rien ne se perd."
+        },
+        "reports": {
+          "title": "Rapports quotidiens simples",
+          "description": "Consultez le chiffre d’affaires et les indicateurs clés sans configuration complexe."
+        },
+        "roles": {
+          "title": "Rôles & permissions",
+          "description": "Séparez serveur, cuisine et admin grâce à un accès basé sur les rôles."
+        }
+      }
+    },
     "benefits": {
       "title": "Tout ce dont vous avez besoin, rien de superflu.",
       "card1": {
@@ -542,6 +579,26 @@
         "description": "La commande apparaît instantanément sur l'écran de la cuisine pour la préparation."
       }
     },
+    "faq": {
+      "title": "Questions fréquentes",
+      "subtitle": "Réponses rapides sur l’essai, la mise en place et l’utilisation au quotidien.",
+      "q1": {
+        "q": "Faut-il une carte bancaire pour démarrer l’essai ?",
+        "a": "Non. Vous pouvez démarrer l’essai de 7 jours sans carte bancaire et passer à l’offre payante quand vous voulez."
+      },
+      "q2": {
+        "q": "En combien de temps peut-on commencer ?",
+        "a": "Souvent en quelques minutes : créez votre menu, ajoutez des tables et commencez à prendre des commandes sur tablette ou téléphone."
+      },
+      "q3": {
+        "q": "Puis-je résilier à tout moment ?",
+        "a": "Oui. Vous pouvez résilier via le portail de facturation. L’accès reste actif jusqu’à la fin de la période en cours."
+      },
+      "q4": {
+        "q": "L’application est-elle multilingue ?",
+        "a": "Oui. L’interface prend en charge l’anglais, le turc et le français."
+      }
+    },
     "forWho": {
       "title": "Conçu pour la simplicité.",
       "description": "Kitchorify est parfait pour les cafés, les bistros et les petits restaurants qui ont besoin d'un système fiable et facile à utiliser sans le coût et la complexité du matériel de point de vente traditionnel."
@@ -569,14 +626,47 @@
     },
     "footer": {
       "description": "Un OS moderne pour les petits restaurants.",
+      "contact": "Contact :",
       "privacy": "Confidentialité",
       "terms": "Conditions",
+      "cookies": "Politique relative aux cookies",
+      "security": "Sécurité",
+      "dataRights": "Droits des données",
       "copyright": "© 2025 Kitchorify. Tous droits réservés."
     },
     "legal": {
       "privacyTitle": "Politique de Confidentialité",
       "termsTitle": "Conditions d'Utilisation",
-      "lastUpdated": "Dernière mise à jour : Octobre 2024",
+      "cookiesTitle": "Politique relative aux cookies",
+      "securityTitle": "Sécurité",
+      "dataRightsTitle": "Vos droits sur les données",
+      "lastUpdated": "Dernière mise à jour : décembre 2025",
+      "s1_title": "1. Protection des données",
+      "s1_content": "Nous appliquons des pratiques de sécurité standard pour protéger les données. L’accès aux systèmes de production est limité au personnel autorisé.",
+      "s2_title": "2. Contrôles d’accès",
+      "s2_content": "Nous utilisons des rôles et permissions dans l’application et suivons le principe du moindre privilège pour l’accès interne.",
+      "s3_title": "3. Gestion des incidents",
+      "s3_content": "En cas d’incident de sécurité, nous prenons des mesures raisonnables pour enquêter, limiter l’impact et notifier si nécessaire.",
+      "s4_title": "4. Signaler un problème de sécurité",
+      "s4_content": "Si vous pensez avoir trouvé une vulnérabilité, contactez-nous à info@kitchorify.com avec des détails.",
+      "r1_title": "1. Aperçu",
+      "r1_content": "Selon votre localisation, vous pouvez disposer de droits concernant vos données personnelles (accès, rectification, suppression, portabilité, etc.).",
+      "r2_title": "2. Faire une demande",
+      "r2_content": "Pour toute demande, contactez-nous à info@kitchorify.com. Nous pouvons demander des informations supplémentaires pour vérifier votre identité.",
+      "r3_title": "3. Données de compte et de restaurant",
+      "r3_content": "Certaines données sont nécessaires pour fournir le Service. En cas de suppression, nous pouvons devoir supprimer ou anonymiser des enregistrements, sous réserve d’obligations légales.",
+      "r4_title": "4. Délais de réponse",
+      "r4_content": "Nous visons à répondre dans un délai raisonnable et conformément aux délais légaux applicables.",
+      "c1_title": "1. Que sont les cookies ?",
+      "c1_content": "Les cookies sont de petits fichiers texte stockés sur votre appareil lorsque vous visitez un site web. Ils aident à mémoriser des préférences et à améliorer l’expérience utilisateur.",
+      "c2_title": "2. Pourquoi nous utilisons des cookies",
+      "c2_content": "Nous utilisons des cookies et des technologies similaires pour assurer le bon fonctionnement du Service, mémoriser la langue et comprendre l’usage du site afin de l’améliorer.",
+      "c3_title": "3. Types de cookies que nous pouvons utiliser",
+      "c3_content": "Nous pouvons utiliser des cookies essentiels (fonctionnement), des cookies de préférence (ex. langue) et des cookies d’analyse (comprendre l’utilisation).",
+      "c4_title": "4. Gérer les cookies",
+      "c4_content": "Vous pouvez contrôler et supprimer les cookies via les paramètres de votre navigateur. La désactivation de certains cookies peut impacter certaines parties du Service.",
+      "c5_title": "5. Contact",
+      "c5_content": "Pour toute question concernant cette politique relative aux cookies, contactez-nous à info@kitchorify.com.",
       "p1_title": "1. Introduction",
       "p1_content": "Bienvenue chez Kitchorify ('nous', 'notre' ou 'nos'). Nous nous engageons à protéger votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre application logicielle en tant que service (le 'Service'). Veuillez lire attentivement cette politique. Si vous n'êtes pas d'accord avec les termes de cette politique de confidentialité, veuillez ne pas accéder au Service.",
       "p2_title": "2. Informations que nous collectons",
@@ -696,6 +786,7 @@
       "error": "Une erreur est survenue. Veuillez vérifier vos informations de paiement et réessayer.",
       "missingStripeKey": "Configuration Stripe manquante : VITE_STRIPE_PUBLISHABLE_KEY n’est pas défini.",
       "missingBackendUrl": "Backend Stripe non configuré : VITE_STRIPE_BACKEND_URL n’est pas défini.",
+      "invalidBackendUrl": "L’URL du backend Stripe est invalide ou l’origine n’est pas autorisée.",
       "authError": "Erreur d’authentification. Veuillez vous reconnecter.",
       "activateFailed": "Paiement réussi mais activation échouée. Veuillez contacter le support.",
       "canceled": "Le paiement a été annulé.",

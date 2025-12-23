@@ -277,6 +277,8 @@
     "tables": {
       "add": "Masa Ekle",
       "edit": "Masayı Düzenle",
+      "showArchive": "Arşiv",
+      "showActive": "Aktif",
       "name": "Masa Adı",
       "viewOrder": "Siparişi Görüntüle",
       "orderModalTitle": "{tableName} Masası Siparişi"
@@ -310,6 +312,9 @@
       "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
       "deactivate": "Pasif Yap",
       "activate": "Aktif Yap",
+      "showArchive": "Arşiv",
+      "showActive": "Aktif",
+      "cannotDeactivateLastAdmin": "Son aktif yöneticiyi pasif yapamazsınız. Önce yeni bir yönetici ekleyin.",
       "changePassword": "Şifre Değiştir",
       "sessions": "Oturumlar",
       "sessionsTitle": "{userName} için oturumlar",
@@ -353,6 +358,8 @@
       },
       "printServerUrl": "Print Server URL",
       "printServerUrlHelp": "Örn: http://localhost:4243 (boş bırakılırsa tarayıcı yazdırma kullanılır)",
+      "printServerUrlRequired": "Print Server URL zorunludur.",
+      "printServerUrlInvalid": "Print Server URL geçersiz veya izin verilmeyen bir origin.",
       "pricing": "Fiyatlandırma",
       "taxRatePercent": "KDV/Vergi oranı (%)",
       "serviceChargePercent": "Servis bedeli (%)",
@@ -518,6 +525,36 @@
       "optionPriceDelta": "Fiyat farkı",
       "seeDemo": "Nasıl çalıştığını görün"
     },
+    "features": {
+      "title": "Servisi hızlandıran temel özellikler",
+      "subtitle": "Menüden mutfağa, raporlardan yetkilere kadar küçük restoranlar için sade ve güçlü.",
+      "items": {
+        "menu": {
+          "title": "Menü yönetimi",
+          "description": "Kategori ve ürünleri dakikalar içinde ekleyin; fiyatları kolayca güncelleyin."
+        },
+        "tables": {
+          "title": "Masa ve sipariş takibi",
+          "description": "Masa seçin, ürün ekleyin ve sipariş durumunu karışıklık olmadan takip edin."
+        },
+        "orders": {
+          "title": "Hızlı sipariş alma",
+          "description": "Tablet/telefon için optimize edildi; yoğun saatlerde ekip daha hızlı ilerler."
+        },
+        "kitchen": {
+          "title": "Anında mutfak görünürlüğü",
+          "description": "Siparişler mutfak ekranına anında düşer; hiçbir şey gözden kaçmaz."
+        },
+        "reports": {
+          "title": "Basit günlük raporlar",
+          "description": "Günlük ciro ve temel metrikleri karmaşık kurulum olmadan görün."
+        },
+        "roles": {
+          "title": "Rol ve yetkiler",
+          "description": "Garson, mutfak ve admin ekranlarını rol bazlı erişimle ayırın."
+        }
+      }
+    },
     "benefits": {
       "title": "Sadece ihtiyacınız olanlar, fazlası değil.",
       "card1": {
@@ -552,6 +589,26 @@
         "description": "Sipariş anında hazırlık için mutfak ekranında belirir."
       }
     },
+    "faq": {
+      "title": "Sık sorulan sorular",
+      "subtitle": "Deneme, kurulum ve kullanım akışı hakkında hızlı cevaplar.",
+      "q1": {
+        "q": "Denemeyi başlatmak için kredi kartı gerekiyor mu?",
+        "a": "Hayır. 7 günlük denemeyi kredi kartı olmadan başlatabilirsiniz. İstediğiniz zaman yükseltebilirsiniz."
+      },
+      "q2": {
+        "q": "Ne kadar sürede kullanmaya başlarız?",
+        "a": "Genelde dakikalar içinde: menüyü oluşturun, masaları ekleyin ve tablet/telefondan sipariş almaya başlayın."
+      },
+      "q3": {
+        "q": "İstediğim zaman iptal edebilir miyim?",
+        "a": "Evet. Ödeme portalından iptal edebilirsiniz. İptal ederseniz erişim dönem sonuna kadar devam eder."
+      },
+      "q4": {
+        "q": "Çoklu dil desteği var mı?",
+        "a": "Evet. Arayüz İngilizce, Türkçe ve Fransızca destekler."
+      }
+    },
     "forWho": {
       "title": "Basitlik için tasarlandı.",
       "description": "Kitchorify; kafeler, bistrolar ve geleneksel POS donanımlarının yüksek maliyeti ve karmaşıklığı olmadan güvenilir ve kullanımı kolay bir sisteme ihtiyaç duyan küçük restoranlar için mükemmeldir."
@@ -579,14 +636,47 @@
     },
     "footer": {
       "description": "Küçük restoranlar için modern bir işletim sistemi.",
+      "contact": "İletişim:",
       "privacy": "Gizlilik",
       "terms": "Koşullar",
+      "cookies": "Çerez Politikası",
+      "security": "Güvenlik",
+      "dataRights": "KVKK / GDPR Hakları",
       "copyright": "© 2025 Kitchorify. Tüm hakları saklıdır."
     },
     "legal": {
       "privacyTitle": "Gizlilik Politikası",
       "termsTitle": "Kullanım Koşulları",
-      "lastUpdated": "Son Güncelleme: Ekim 2024",
+      "cookiesTitle": "Çerez Politikası",
+      "securityTitle": "Güvenlik",
+      "dataRightsTitle": "KVKK / GDPR Haklarınız",
+      "lastUpdated": "Son Güncelleme: Aralık 2025",
+      "s1_title": "1. Verileri nasıl koruyoruz",
+      "s1_content": "Verileri korumak için sektör standardı güvenlik uygulamalarını kullanırız. Uygun olduğu durumlarda veri aktarımında ve saklamada güvenlik önlemleri uygulanır. Üretim sistemlerine erişim yalnızca yetkili kişilerle sınırlıdır.",
+      "s2_title": "2. Erişim kontrolleri",
+      "s2_content": "Uygulama içinde rol bazlı erişim kontrolleri uygularız ve dahili erişimde en az ayrıcalık prensibini takip ederiz.",
+      "s3_title": "3. Olay yönetimi",
+      "s3_content": "Bir güvenlik olayı tespit ettiğimizde, makul adımlarla inceleme yapar, etkisini azaltır ve gerekli durumlarda etkilenen tarafları bilgilendiririz.",
+      "s4_title": "4. Güvenlik bildirimi",
+      "s4_content": "Bir zafiyet bulduğunuzu düşünüyorsanız, detaylarıyla birlikte info@kitchorify.com adresinden bize ulaşın.",
+      "r1_title": "1. Genel bakış",
+      "r1_content": "Bulunduğunuz mevzuata göre kişisel verileriniz üzerinde belirli haklara sahip olabilirsiniz (erişim, düzeltme, silme, taşınabilirlik vb.).",
+      "r2_title": "2. Talep nasıl iletilir",
+      "r2_content": "Veri talepleriniz için info@kitchorify.com adresine yazabilirsiniz. Kimlik doğrulama için ek bilgi isteyebiliriz.",
+      "r3_title": "3. Hesap ve restoran verileri",
+      "r3_content": "Hizmet'i sunabilmek için bazı veriler gereklidir. Silme talebinizde, yasal yükümlülükler saklı kalmak kaydıyla ilgili kayıtları silebilir veya anonimleştirebiliriz.",
+      "r4_title": "4. Yanıt süresi",
+      "r4_content": "Makul süre içinde ve uygulanabilir mevzuatın öngördüğü sürelerde yanıt vermeyi hedefleriz.",
+      "c1_title": "1. Çerezler nedir?",
+      "c1_content": "Çerezler, bir web sitesini ziyaret ettiğinizde cihazınıza kaydedilen küçük metin dosyalarıdır. Tercihlerin hatırlanmasına ve kullanıcı deneyiminin iyileştirilmesine yardımcı olur.",
+      "c2_title": "2. Çerezleri neden kullanıyoruz",
+      "c2_content": "Çerezleri ve benzer teknolojileri; Hizmet'in güvenilir şekilde çalışmasını sağlamak, dil tercihlerini hatırlamak ve web sitesinin nasıl kullanıldığını anlayarak iyileştirmek için kullanabiliriz.",
+      "c3_title": "3. Kullanabileceğimiz çerez türleri",
+      "c3_content": "Zorunlu çerezler (temel işlevler için), tercih çerezleri (ör. dil) ve analitik çerezler (kullanım eğilimlerini anlamak için) kullanabiliriz.",
+      "c4_title": "4. Çerezleri yönetme",
+      "c4_content": "Çerezleri tarayıcı ayarlarınızdan kontrol edebilir ve silebilirsiniz. Bazı çerezleri devre dışı bırakmak Hizmet'in bazı bölümlerini etkileyebilir.",
+      "c5_title": "5. İletişim",
+      "c5_content": "Bu Çerez Politikası hakkında sorularınız varsa info@kitchorify.com adresinden bizimle iletişime geçebilirsiniz.",
       "p1_title": "1. Giriş",
       "p1_content": "Kitchorify'a ('biz', 'bize' veya 'bizim') hoş geldiniz. Gizliliğinizi korumayı taahhüt ediyoruz. Bu Gizlilik Politikası, hizmet olarak yazılım uygulamamızı ('Hizmet') kullandığınızda bilgilerinizi nasıl topladığımızı, kullandığımızı, ifşa ettiğimizi ve koruduğumuzu açıklar. Lütfen bu politikayı dikkatlice okuyun. Bu gizlilik politikasının şartlarını kabul etmiyorsanız, lütfen Hizmete erişmeyin.",
       "p2_title": "2. Topladığımız Bilgiler",
@@ -706,6 +796,7 @@
       "error": "Bir hata oluştu. Lütfen ödeme bilgilerinizi kontrol edip tekrar deneyin.",
       "missingStripeKey": "Stripe yapılandırması eksik: VITE_STRIPE_PUBLISHABLE_KEY ayarlı değil.",
       "missingBackendUrl": "Stripe backend yapılandırılmamış: VITE_STRIPE_BACKEND_URL ayarlı değil.",
+      "invalidBackendUrl": "Stripe backend URL geçersiz veya izin verilmeyen bir origin.",
       "authError": "Kimlik doğrulama hatası. Lütfen tekrar giriş yapın.",
       "activateFailed": "Ödeme başarılı oldu ama etkinleştirme başarısız. Lütfen destek ile iletişime geçin.",
       "canceled": "Ödeme işlemi iptal edildi.",

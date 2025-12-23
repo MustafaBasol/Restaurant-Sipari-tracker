@@ -11,6 +11,11 @@ import { Card } from '../../../shared/components/ui/Card';
 import { Input } from '../../../shared/components/ui/Input';
 import { OrderStatus, PaymentMethod, PermissionKey, Tenant, UserRole } from '../../../shared/types';
 import { getOrderPaymentTotals } from '../../../shared/lib/mockApi';
+import {
+  getServiceOriginAllowlist,
+  isTrustedServiceBaseUrl,
+  shouldAllowInsecureServices,
+} from '../../../shared/lib/urlSecurity';
 
 const timezones = ['America/New_York', 'Europe/Paris', 'Europe/Istanbul', 'Asia/Tokyo'];
 const currencies = ['USD', 'EUR', 'TRY'];
@@ -215,6 +220,17 @@ const SettingsManagement: React.FC = () => {
 
   const printMode = settings.printConfig?.mode ?? 'browser';
   const printServerUrl = settings.printConfig?.serverUrl ?? '';
+
+  const printServerUrlIsValid = (() => {
+    if (!printServerUrl) return false;
+    const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+    return isTrustedServiceBaseUrl(printServerUrl, {
+      allowedOrigins: getServiceOriginAllowlist(),
+      requireHttps,
+    });
+  })();
+
+  const printServerUrlHasError = printMode === 'server' && !printServerUrlIsValid;
   const taxRatePercent = settings.taxRatePercent ?? 0;
   const serviceChargePercent = settings.serviceChargePercent ?? 0;
   const roundingIncrement = settings.roundingIncrement ?? 0;
@@ -324,6 +340,15 @@ const SettingsManagement: React.FC = () => {
                   placeholder="http://localhost:4243"
                   inputMode="url"
                 />
+                {printServerUrlHasError && (
+                  <p className="text-xs text-red-600 mt-2">
+                    {t(
+                      printServerUrl
+                        ? 'admin.settings.printServerUrlInvalid'
+                        : 'admin.settings.printServerUrlRequired',
+                    )}
+                  </p>
+                )}
                 <p className="text-xs text-text-secondary mt-2">
                   {t('admin.settings.printServerUrlHelp')}
                 </p>
@@ -562,7 +587,7 @@ const SettingsManagement: React.FC = () => {
         </div>
 
         <div className="lg:col-span-2 flex items-center gap-4">
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving || printServerUrlHasError}>
             {isSaving ? '...' : t('general.save')}
           </Button>
           {successMessage && <p className="text-green-600 text-sm font-medium">{successMessage}</p>}
