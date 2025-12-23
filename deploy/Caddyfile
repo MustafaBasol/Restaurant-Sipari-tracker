@@ -29,6 +29,12 @@
 		}
 	}
 
+	# Core app API (Postgres-backed) under same-origin prefix.
+	# Frontend should use: https://<domain>/api  (or simply /api)
+	handle_path /api/* {
+		reverse_proxy api:4000
+	}
+
 	# NOTE: Print server is intentionally NOT exposed by default.
 	# If you want remote printing, consider running the print server on a private network/VPN.
 	# Only expose it publicly if you fully understand the security implications.

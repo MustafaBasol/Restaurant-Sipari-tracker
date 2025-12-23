@@ -2,22 +2,26 @@
 
 Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmalarını tek yerde özetler ve “şu an prod için hazır mıyız?” sorusuna **kapsamı netleştirerek** yanıt verir.
 
-> Not: Bu repo uygulama tarafında **demo/POC** odaklıdır (mock API + `localStorage`). Aşağıdaki “prod” ifadesi, **VPS üzerinde güvenli yayınlama ve yanlış yapılandırma risklerini azaltma** anlamındadır; tam anlamıyla “kurumsal production” (kalıcı DB, gerçek auth, gözlemlenebilirlik, SLA, yedekleme vb.) seviyesini garanti etmez.
+Bu repo artık iki modda çalışabilir:
+
+- **Mock/Demo mod:** `VITE_API_BASE_URL` tanımlı değilse frontend `localStorage` tabanlı mock API ile çalışır.
+- **Gerçek prod mod:** `VITE_API_BASE_URL=/api` ve `DATABASE_URL` ile **Postgres + Prisma + Express (services/api)** üzerinden çalışır.
 
 ## 1) Kapsam (Neyi prod’a alıyoruz?)
 
-**Bu repo ile prod’da yapılabilenler (önerilen kullanım):**
+**Bu repo ile “gerçek production” için hedeflenen akış:**
 
-- Vite ile build edilen frontend’in güvenli şekilde (HTTPS) yayınlanması
-- Stripe demo backend’in aynı origin altında `/stripe/*` ile yayınlanması
+- Vite ile build edilen frontend’in HTTPS ile yayınlanması
+- Core API’nin aynı origin altında `/api/*` ile yayınlanması
+- Postgres üzerinde kalıcı veri + Prisma migration’larının otomatik uygulanması (`prisma migrate deploy`)
+- Stripe demo backend’in aynı origin altında `/stripe/*` ile yayınlanması (abonelik/checkout akışı için)
 - Print Server’ın **public internete açılmaması** (varsayılan)
 
-**Bu repo ile “gerçek production” için eksik olan tipik parçalar:**
+**Halen ops/kurumsal production için tipik eksikler (sizin standartlarınıza göre):**
 
-- Kalıcı sunucu DB (Postgres vs), migration, yedekleme
-- Server-side auth (JWT/session) + rol/tenant enforcement (backend)
-- Audit/telemetri/log yönetimi, alarm/monitoring
-- Secrets yönetimi (Vault/SSM), rotasyon politikaları
+- Off-host yedekleme (S3/rsync) ve düzenli restore testi
+- İzleme/alerting (uptime, disk doluluğu, DB bağlantı havuzu, hata oranı)
+- Secrets yönetimi/rotasyon (SSM/Vault) ve erişim kontrolleri
 
 ## 2) Uygulanan güvenlik önlemleri (özet)
 
@@ -57,6 +61,7 @@ Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmaların
 - Güvenlik başlıkları (HSTS, nosniff, frame deny, referrer policy, permissions policy)
 - Same-origin proxy yaklaşımı:
   - Frontend → `https://<domain>/stripe` → backend
+  - Frontend → `https://<domain>/api` → core API
 
 İlgili dosyalar:
 
@@ -82,11 +87,18 @@ Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmaların
   - `DOMAIN=kitchorify.com`
   - `ACME_EMAIL=...`
   - `CORS_ORIGINS=https://kitchorify.com`
+  - `VITE_API_BASE_URL=/api`
+  - `POSTGRES_PASSWORD=...` (uzun/rasgele)
+  - `DATABASE_URL=postgresql://...@postgres:5432/...`
   - `VITE_STRIPE_BACKEND_URL=https://kitchorify.com/stripe`
   - `STRIPE_SECRET_KEY=...`
   - `STRIPE_PRICE_ID_MONTHLY=...`
   - (önerilir) `STRIPE_WEBHOOK_SECRET=...`
   - (opsiyonel) `STRIPE_API_KEY=...` (Caddy upstream’e header enjekte eder)
+
+  Yedekleme için (varsayılanlar önerilir):
+  - `PG_BACKUP_SCHEDULE=@daily`
+  - `PG_BACKUP_KEEP_DAYS=14`
 
 4. Çalıştırma
 
@@ -96,9 +108,111 @@ Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmaların
 5. Sağlık kontrol
 
 - `https://kitchorify.com/health` → `ok`
+- `https://kitchorify.com/api/health` → `ok`
+- `https://kitchorify.com/api/health/db` → `ok` (DB bağlıysa; değilse 503)
 - `https://kitchorify.com/#/` → UI açılır
 
-## 4) Print Server stratejisi (prod önerisi)
+## 4) Postgres yedekleme ve geri yükleme (kritik)
+
+Bu repo deploy’unda `pg-backup` servisi **günlük gzip’li** yedek üretir ve `deploy/backups/` içine yazar.
+
+Önemli notlar:
+
+- Bu yaklaşım **mantıksal yedek** (`pg_dump`) seviyesindedir.
+- Aynı VPS diski kaybolursa bu klasör de kaybolur. “Veri kaybı kabul edilemez” için `deploy/backups/` klasörünü **off-host** (S3/rsync) senkronlamanız ve **restore testini** düzenli yapmanız gerekir.
+
+### Off-host senkron (otomatik) – rclone + systemd
+
+Deploy içinde örnek bir kurulum mevcut:
+
+- [deploy/backup-sync.sh](deploy/backup-sync.sh)
+- [deploy/backup-sync.env.example](deploy/backup-sync.env.example)
+- [deploy/systemd/kitchorify-backup-sync.service](deploy/systemd/kitchorify-backup-sync.service)
+- [deploy/systemd/kitchorify-backup-sync.timer](deploy/systemd/kitchorify-backup-sync.timer)
+
+Bu kurulum, `deploy/backups/` klasörünü günlük olarak off-host bir hedefe (S3/SSH/Backblaze vb. rclone remote) **mirror** eder.
+
+### Remote’dan geri alma (örnek)
+
+Örnek: Remote’daki yedekleri VPS’e geri kopyala:
+
+```bash
+sudo mkdir -p /tmp/kitchorify-backups-restore
+
+# /etc/kitchorify/backup-sync.env içindeki aynı remote/dest ile
+set -a
+source /etc/kitchorify/backup-sync.env
+set +a
+
+sudo docker run --rm \
+  -v /tmp/kitchorify-backups-restore:/restore \
+  -v /etc/kitchorify/rclone.conf:/config/rclone/rclone.conf:ro \
+  -e RCLONE_CONFIG=/config/rclone/rclone.conf \
+  rclone/rclone copy "$RCLONE_REMOTE:$RCLONE_DEST" /restore
+```
+
+### Manuel yedek (tek sefer)
+
+```bash
+cd deploy
+docker compose --env-file .env.production exec -T postgres \
+  pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" --format=custom \
+  > backups/manual-$(date +%F-%H%M).dump
+```
+
+### Manuel restore (custom format)
+
+Uyarı: Bu işlem hedef DB’yi overwrite edebilir.
+
+```bash
+cd deploy
+
+# (önerilir) önce app'i durdur
+docker compose --env-file .env.production stop api
+
+# restore
+cat backups/<dosya>.dump | docker compose --env-file .env.production exec -T postgres \
+  pg_restore -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" --clean --if-exists
+
+# tekrar başlat
+docker compose --env-file .env.production start api
+```
+
+### Restore drill (önerilen rutin)
+
+Amaç: Yedeklerin gerçekten restore edilebildiğini düzenli olarak kanıtlamak ve RTO’yu (geri dönüş süresi) ölçmek.
+
+Öneri: Prod DB’yi etkilemeden, yedeği **yeni bir test DB’ye** restore edin.
+
+Repo içinde bunun için bir script var: [deploy/restore-drill.sh](deploy/restore-drill.sh)
+
+Not: Bu restore drill’i haftalık otomatik koşturmak için systemd timer örneği de mevcut. Kurulum adımları için [deploy/README.md](deploy/README.md) içinde “Restore drill (otomatik/haftalık)” bölümüne bakın.
+
+Örnek kullanım (VPS):
+
+```bash
+cd /opt/Restaurant-Sipari-tracker/deploy
+
+# script'i kur
+sudo install -m 0755 restore-drill.sh /usr/local/bin/kitchorify-restore-drill
+
+# en yeni yedeği seç (örnek: sql.gz veya dump)
+ls -1t backups | head
+
+# DR test restore (yeni test DB oluşturur)
+sudo /usr/local/bin/kitchorify-restore-drill --env-file /opt/Restaurant-Sipari-tracker/deploy/.env.production \
+  --backup /opt/Restaurant-Sipari-tracker/deploy/backups/<yedek-dosyasi>
+```
+
+Beklenen çıktı:
+
+- Oluşturulan test DB adı (timestamp’li)
+- Restore süresi (saniye)
+- Basit sayım sorguları (Tenant/User/Order)
+
+Bu test DB’yi işiniz bittiğinde düşürün (script sonunda komut örneği basılır).
+
+## 5) Print Server stratejisi (prod önerisi)
 
 - Varsayılan olarak **public değil**; Caddy’de `/print` route yoktur.
 - En güvenlisi: Print Server’ı restoran LAN/VPN içinde çalıştırmak.
@@ -107,7 +221,7 @@ Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmaların
   - Caddy’de ayrıca `/print/*` route’unu bilinçli şekilde açmanız gerekir
   - Mutlaka `API_KEY` + dar `CORS_ORIGINS` kullanın
 
-## 5) “Şu an prod için hazır mıyız?” (dürüst değerlendirme)
+## 6) “Şu an prod için hazır mıyız?” (dürüst değerlendirme)
 
 **Evet, şu koşullarda “prod’a çıkılabilir” durumdasınız:**
 
@@ -117,19 +231,18 @@ Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmaların
 - Backend portları public internete açılmadıysa
 - (tercihen) API anahtarı koruması etkinleştirildiyse (`API_KEY` / `STRIPE_API_KEY`)
 
-**Ama “tam production-ready SaaS” demek için halen kritik boşluklar var (kapsam gereği):**
+**Ama “veri kaybı kabul edilemez” standardı için halen kritik ops işleri var:**
 
-- Uygulama verisi `localStorage` tabanlı (sunucu DB yok) → cihaz kaybı / multi-cihaz senkron / veri bütünlüğü riskleri
-- Gerçek backend auth/authorization yok → tenant/role enforcement server-side değil
-- Gözlemlenebilirlik/alarmlar yok (log toplama, uptime monitor, error tracking)
-- Güçlü CSP gibi ek tarayıcı sertleştirme opsiyonel (ihtiyaca göre Caddy’de sıkılaştırılmalı)
+- `deploy/backups/` klasörünün **off-host** senkronu (S3/rsync) ve düzenli restore testi
+- Disk doluluğu, container restart, 5xx oranı gibi metriklere alert (en azından uptime + disk alarmı)
+- DB erişim/secret yönetimi (en azından güçlü şifreler + erişim sınırı)
 
 Özet karar:
 
 - **Marketing + demo uygulama yayını için:** büyük ölçüde hazır.
 - **Gerçek restoran operasyonu (kalıcı sipariş DB, muhasebe, SLA) için:** gerçek backend/DB katmanı eklenmeden “tam prod” saymayın.
 
-## 6) Go‑Live checklist (kısa)
+## 7) Go‑Live checklist (kısa)
 
 - [ ] DNS A kaydı doğru
 - [ ] Firewall yalnızca 22/80/443 açık
@@ -139,4 +252,7 @@ Bu doküman, bu repoda yapılan **prod hardening + VPS deploy** çalışmaların
 - [ ] Webhook kullanılıyorsa `STRIPE_WEBHOOK_SECRET` set
 - [ ] Opsiyonel: API key koruması etkin (`API_KEY` ve/veya `STRIPE_API_KEY`)
 - [ ] `https://kitchorify.com/health` OK
+- [ ] `https://kitchorify.com/api/health` OK
 - [ ] Print Server public değil (varsayılan)
+- [ ] `deploy/backups/` off-host senkronlandı (S3/rsync)
+- [ ] Restore testi yapıldı ve süre ölçüldü

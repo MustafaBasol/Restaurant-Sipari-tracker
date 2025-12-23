@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# VPS backups (deploy)
+deploy/backups/
+
 # Environment files
 .env
 .env.*

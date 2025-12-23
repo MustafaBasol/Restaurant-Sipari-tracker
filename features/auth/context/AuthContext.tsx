@@ -3,6 +3,7 @@ import * as api from '../api';
 import { AuthState } from '../types';
 import { Tenant, User } from '../../../shared/types';
 import { getDeviceId } from '../../../shared/lib/device';
+import { isRealApiEnabled } from '../../../shared/lib/runtimeApi';
 
 const LEGACY_AUTH_STORAGE_KEY = 'authState';
 const getAuthStorageKey = () => `authState:${getDeviceId()}`;
@@ -186,6 +187,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Bootstrap session for legacy auth states that don't include a session id.
   useEffect(() => {
     if (!authState || authState.sessionId) return;
+
+    // In real API mode, we never create a session from just a userId.
+    // If a legacy state is missing a session id, require the user to log in again.
+    if (isRealApiEnabled()) return;
 
     let cancelled = false;
     api

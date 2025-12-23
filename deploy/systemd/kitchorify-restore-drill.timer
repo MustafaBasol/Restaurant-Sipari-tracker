@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Kitchorify restore drill weekly
+
+[Timer]
+OnCalendar=Sun *-*-* 03:30:00
+RandomizedDelaySec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

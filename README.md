@@ -4,7 +4,12 @@
 
 # Restaurant Sipariş Takip (Kitchorify / Restaurant OS)
 
-Çok kiracılı (multi-tenant), çok dilli restoran sipariş yönetim uygulaması. Garson, mutfak ve admin rolleriyle; masa, menü ve sipariş akışını tek arayüzde yönetmeyi hedefler. Demo/POC amaçlı olarak backend yerine tarayıcı `localStorage` üzerinde çalışan mock API kullanır.
+Çok kiracılı (multi-tenant), çok dilli restoran sipariş yönetim uygulaması. Garson, mutfak ve admin rolleriyle; masa, menü ve sipariş akışını tek arayüzde yönetmeyi hedefler.
+
+Uygulama iki modda çalışır:
+
+- **Gerçek API (önerilen/prod):** `services/api` (Postgres + Prisma + Express). Frontend’de `VITE_API_BASE_URL=/api` ile aktif olur.
+- **Mock/Demo:** `VITE_API_BASE_URL` tanımlı değilse tarayıcı `localStorage` tabanlı mock API ile çalışır.
 
 ## Özellikler
 
@@ -92,7 +97,7 @@ Uygulama hash tabanlı route kullanır:
 
 ## Mock Backend ve Veri Sıfırlama
 
-Bu repo, demo amaçlı **gerçek backend olmadan** çalışır. Veri mock API üzerinden `localStorage`’a yazılır.
+Bu repo, demo amaçlı **mock mod**da da çalışabilir. Mock modda veri `localStorage`’a yazılır.
 
 - DB anahtarı: `kitchorify-db`
 - Oturum anahtarları (cihaz bazlı): `authState:<deviceId>`

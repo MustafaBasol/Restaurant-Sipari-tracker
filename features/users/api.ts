@@ -9,15 +9,30 @@ import {
 } from '../../shared/lib/mockApi';
 import { User } from './types';
 import { User as SharedUser, UserRole } from '../../shared/types';
+import { apiFetch, isRealApiEnabled } from '../../shared/lib/runtimeApi';
 
 type Actor = { userId: string; role: UserRole };
 
-export const getUsers = (tenantId: string) => getDataByTenant<User>('users', tenantId);
+export const getUsers = (tenantId: string) => {
+  if (!isRealApiEnabled()) return getDataByTenant<User>('users', tenantId);
+  return apiFetch<User[]>('/users', { method: 'GET' });
+};
 
 export const addUser = (
   tenantId: string,
   user: Omit<SharedUser, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string },
 ) => {
+  if (isRealApiEnabled()) {
+    return apiFetch<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        password: user.password,
+      }),
+    });
+  }
   const newUser: User = {
     id: `user${Date.now()}`,
     tenantId,
@@ -30,17 +45,48 @@ export const addUser = (
   return addData('users', newUser);
 };
 
-export const updateUser = (user: User) => updateData('users', user);
+export const updateUser = (user: User) => {
+  if (!isRealApiEnabled()) return updateData('users', user);
+  return apiFetch<User>(`/users/${encodeURIComponent(user.id)}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    }),
+  });
+};
 
 export const changeUserPassword = (userId: string, newPassword: string) => {
-  return internalChangeUserPassword(userId, newPassword);
+  if (!isRealApiEnabled()) return internalChangeUserPassword(userId, newPassword);
+  return apiFetch<boolean>(`/users/${encodeURIComponent(userId)}/change-password`, {
+    method: 'POST',
+    body: JSON.stringify({ newPassword }),
+  });
 };
 
 export const getSessionsForUser = (tenantId: string, userId: string, actor: Actor) =>
-  getUserSessions(tenantId, userId, actor);
+  isRealApiEnabled()
+    ? apiFetch<any[]>(`/users/${encodeURIComponent(userId)}/sessions`, { method: 'GET' })
+    : getUserSessions(tenantId, userId, actor);
 
-export const revokeSessionForUser = (tenantId: string, sessionId: string, actor: Actor) =>
-  revokeUserSession(tenantId, sessionId, actor);
+export const revokeSessionForUser = (
+  tenantId: string,
+  userId: string,
+  sessionId: string,
+  actor: Actor,
+) =>
+  isRealApiEnabled()
+    ? apiFetch<boolean>(
+        `/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}/revoke`,
+        { method: 'POST' },
+      )
+    : revokeUserSession(tenantId, sessionId, actor);
 
 export const revokeAllSessionsForUser = (tenantId: string, userId: string, actor: Actor) =>
-  revokeAllUserSessions(tenantId, userId, actor);
+  isRealApiEnabled()
+    ? apiFetch<boolean>(`/users/${encodeURIComponent(userId)}/sessions/revoke-all`, {
+        method: 'POST',
+      })
+    : revokeAllUserSessions(tenantId, userId, actor);

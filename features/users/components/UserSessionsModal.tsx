@@ -67,7 +67,7 @@ const UserSessionsModal: React.FC<Props> = ({ user, isOpen, onClose }) => {
     setIsLoading(true);
     setError('');
     try {
-      await usersApi.revokeSessionForUser(tenantId, sessionId, actor);
+      await usersApi.revokeSessionForUser(tenantId, user.id, sessionId, actor);
       await load();
     } catch {
       setError(t('admin.users.sessionsActionFailed'));

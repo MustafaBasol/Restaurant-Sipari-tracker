@@ -1,0 +1,66 @@
+[Unit]
+Description=Kitchorify restore drill (restore latest backup into a test DB)
+Wants=docker.service
+After=docker.service
+OnFailure=kitchorify-email-alert@%n.service
+
+[Service]
+Type=oneshot
+
+# Create this file on the VPS: /etc/kitchorify/restore-drill.env
+EnvironmentFile=-/etc/kitchorify/restore-drill.env
+
+# Defaults if env file is missing (adjust paths to your VPS layout)
+Environment=DRILL_DEPLOY_DIR=/opt/Restaurant-Sipari-tracker/deploy
+Environment=DRILL_ENV_FILE=/opt/Restaurant-Sipari-tracker/deploy/.env.production
+Environment=DRILL_BACKUPS_DIR=/opt/Restaurant-Sipari-tracker/deploy/backups
+Environment=DRILL_BACKUP_GLOB=*.sql.gz
+
+WorkingDirectory=%E{DRILL_DEPLOY_DIR}
+
+# Pick latest backup file and run restore drill.
+ExecStart=/usr/bin/env bash -lc '
+  set -euo pipefail
+  shopt -s nullglob
+
+  backups_dir="${DRILL_BACKUPS_DIR}"
+  env_file="${DRILL_ENV_FILE}"
+  deploy_dir="${DRILL_DEPLOY_DIR}"
+
+  if [[ ! -d "$backups_dir" ]]; then
+    echo "ERROR: backups dir not found: $backups_dir" >&2
+    exit 1
+  fi
+  if [[ ! -f "$env_file" ]]; then
+    echo "ERROR: env file not found: $env_file" >&2
+    exit 1
+  fi
+
+  # Find newest file matching the glob(s)
+  newest=""
+  for pattern in ${DRILL_BACKUP_GLOB}; do
+    for f in "$backups_dir"/$pattern; do
+      if [[ -z "$newest" || "$f" -nt "$newest" ]]; then
+        newest="$f"
+      fi
+    done
+  done
+
+  if [[ -z "$newest" ]]; then
+    echo "ERROR: no backups found in $backups_dir for glob: ${DRILL_BACKUP_GLOB}" >&2
+    exit 1
+  fi
+
+  echo "Using latest backup: $newest"
+  /usr/local/bin/kitchorify-restore-drill --env-file "$env_file" --backup "$newest"
+'
+
+# Hardening (minimal)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt /etc/kitchorify /tmp
+
+[Install]
+WantedBy=multi-user.target

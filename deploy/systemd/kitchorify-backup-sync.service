@@ -1,0 +1,21 @@
+[Unit]
+Description=Kitchorify off-host backup sync (rclone via Docker)
+Wants=docker.service
+After=docker.service
+OnFailure=kitchorify-email-alert@%n.service
+
+[Service]
+Type=oneshot
+# Create this file on the VPS: /etc/kitchorify/backup-sync.env
+EnvironmentFile=-/etc/kitchorify/backup-sync.env
+ExecStart=/usr/local/bin/kitchorify-backup-sync
+
+# Hardening (minimal)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt /etc/kitchorify
+
+[Install]
+WantedBy=multi-user.target

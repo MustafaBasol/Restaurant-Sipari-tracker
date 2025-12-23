@@ -1,0 +1,336 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  WAITER
+  KITCHEN
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum TableStatus {
+  FREE
+  OCCUPIED
+  CLOSED
+}
+
+enum OrderStatus {
+  NEW
+  IN_PREPARATION
+  READY
+  SERVED
+  CANCELED
+  CLOSED
+}
+
+enum KitchenStation {
+  BAR
+  HOT
+  COLD
+  DESSERT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  MEAL_CARD
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
+enum BillingStatus {
+  OPEN
+  BILL_REQUESTED
+  PAID
+}
+
+enum DiscountType {
+  PERCENT
+  AMOUNT
+}
+
+enum AuditEntityType {
+  ORDER
+  ORDER_ITEM
+  PAYMENT
+}
+
+enum AuditAction {
+  ORDER_CREATED
+  ORDER_ITEM_STATUS_UPDATED
+  ORDER_NOTE_UPDATED
+  PAYMENT_ADDED
+  ORDER_DISCOUNT_UPDATED
+  ORDER_ITEM_COMPLIMENTARY_UPDATED
+  ORDER_BILL_REQUESTED
+  ORDER_PAYMENT_CONFIRMED
+  ORDER_CLOSED
+  ORDER_MOVED
+  ORDER_TABLE_MERGED
+  ORDER_TABLE_UNMERGED
+}
+
+model Tenant {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  defaultLanguage SubscriptionLanguage @default(en)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+
+  createdAt DateTime @default(now())
+
+  currency String
+  timezone String
+
+  trialStartAt DateTime?
+  trialEndAt   DateTime?
+
+  subscriptionCancelAtPeriodEnd Boolean?
+  subscriptionCurrentPeriodEndAt DateTime?
+
+  printConfig Json?
+  taxRatePercent Float?
+  serviceChargePercent Float?
+  roundingIncrement Int?
+  permissions Json?
+  integrations Json?
+
+  users User[]
+  sessions UserSession[]
+  tables Table[]
+  customers Customer[]
+  menuCategories MenuCategory[]
+  menuItems MenuItem[]
+  orders Order[]
+  auditLogs AuditLog[]
+}
+
+enum SubscriptionLanguage {
+  tr
+  en
+  fr
+}
+
+model User {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  fullName   String
+  email      String   @unique
+  passwordHash String
+  role       UserRole
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sessions   UserSession[]
+  ordersWaited Order[] @relation("OrderWaiter")
+}
+
+model UserSession {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceId   String
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  revokedByUserId String?
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
+model Table {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name     String
+  status   TableStatus @default(FREE)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  note       String?
+
+  orders Order[]
+
+  @@index([tenantId])
+}
+
+model Customer {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  fullName String
+  phone    String?
+  email    String?
+  createdAt DateTime @default(now())
+
+  tables Table[]
+  orders Order[]
+
+  @@index([tenantId])
+}
+
+model MenuCategory {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name     String
+
+  items MenuItem[]
+
+  @@index([tenantId])
+}
+
+model MenuItem {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  name        String
+  station     KitchenStation
+  description String?
+  price       Float
+  isAvailable Boolean @default(true)
+
+  allergens   String[]
+
+  // Variants/modifiers/bundle support are kept as JSON for minimal schema churn.
+  variants   Json?
+  modifiers  Json?
+  bundleItemIds String[]
+
+  orderItems OrderItem[]
+
+  @@index([tenantId])
+  @@index([categoryId])
+}
+
+model Order {
+  id        String @id @default(cuid())
+  tenantId  String
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  tableId   String
+  table     Table @relation(fields: [tableId], references: [id], onDelete: Restrict)
+
+  waiterId  String
+  waiter    User   @relation("OrderWaiter", fields: [waiterId], references: [id], onDelete: Restrict)
+
+  status    OrderStatus @default(NEW)
+  note      String?
+
+  // For merge/unmerge
+  linkedTableIds String[]
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  // Billing
+  billingStatus BillingStatus @default(OPEN)
+  billRequestedAt DateTime?
+  billRequestedByUserId String?
+  paymentConfirmedAt DateTime?
+  paymentConfirmedByUserId String?
+  orderClosedAt DateTime?
+  orderClosedByUserId String?
+
+  // Discount JSON to match existing frontend type
+  discount Json?
+
+  paymentStatus PaymentStatus @default(UNPAID)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+  payments PaymentLine[]
+
+  @@index([tenantId])
+  @@index([tableId])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  // Price snapshot at ordering time (important for reporting if menu prices change later)
+  unitPrice Float
+
+  quantity Int
+  note     String?
+  status   OrderStatus @default(NEW)
+
+  // Variants/modifiers
+  variantId String?
+  modifierOptionIds String[]
+
+  isComplimentary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+}
+
+model PaymentLine {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  method    PaymentMethod
+  amount    Float
+  createdAt DateTime @default(now())
+  createdByUserId String
+
+  @@index([orderId])
+}
+
+model AuditLog {
+  id        String @id @default(cuid())
+  tenantId  String
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  actorUserId String
+  actorRole   UserRole
+  action      AuditAction
+  entityType  AuditEntityType
+  entityId    String
+  createdAt   DateTime @default(now())
+  metadata    Json?
+
+  @@index([tenantId])
+  @@index([createdAt])
+}
