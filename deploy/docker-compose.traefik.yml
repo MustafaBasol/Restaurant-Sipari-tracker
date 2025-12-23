@@ -19,7 +19,7 @@ services:
       - traefik.docker.network=traefik-net
 
       # Frontend
-      - traefik.http.routers.kitchorify-web.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.kitchorify-web.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
       - traefik.http.routers.kitchorify-web.entrypoints=websecure
       - traefik.http.routers.kitchorify-web.tls=true
       - traefik.http.routers.kitchorify-web.tls.certresolver=mytlschallenge
@@ -58,7 +58,7 @@ services:
 
       # Stripe backend under same-origin prefix: /stripe/* (strip prefix before proxy)
       - traefik.http.middlewares.kitchorify-stripe-strip.stripprefix.prefixes=/stripe
-      - traefik.http.routers.kitchorify-stripe.rule=Host(`${DOMAIN}`) && PathPrefix(`/stripe`)
+      - traefik.http.routers.kitchorify-stripe.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/stripe`)
       - traefik.http.routers.kitchorify-stripe.entrypoints=websecure
       - traefik.http.routers.kitchorify-stripe.tls=true
       - traefik.http.routers.kitchorify-stripe.tls.certresolver=mytlschallenge
@@ -120,7 +120,7 @@ services:
 
       # Core API under same-origin prefix: /api/* (strip prefix before proxy)
       - traefik.http.middlewares.kitchorify-api-strip.stripprefix.prefixes=/api
-      - traefik.http.routers.kitchorify-api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)
+      - traefik.http.routers.kitchorify-api.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/api`)
       - traefik.http.routers.kitchorify-api.entrypoints=websecure
       - traefik.http.routers.kitchorify-api.tls=true
       - traefik.http.routers.kitchorify-api.tls.certresolver=mytlschallenge
@@ -129,7 +129,7 @@ services:
       - traefik.http.services.kitchorify-api.loadbalancer.server.port=4000
 
       # Optional root health check: /health -> api:/health
-      - traefik.http.routers.kitchorify-health.rule=Host(`${DOMAIN}`) && Path(`/health`)
+      - traefik.http.routers.kitchorify-health.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && Path(`/health`)
       - traefik.http.routers.kitchorify-health.entrypoints=websecure
       - traefik.http.routers.kitchorify-health.tls=true
       - traefik.http.routers.kitchorify-health.tls.certresolver=mytlschallenge
