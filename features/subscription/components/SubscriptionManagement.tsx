@@ -30,6 +30,8 @@ const SubscriptionManagement: React.FC = () => {
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [invoicesError, setInvoicesError] = useState('');
 
+  const [stripeSubscription, setStripeSubscription] = useState<any>(null);
+
   const tenant = authState?.tenant;
 
   const subscriptionIsActive = tenant ? isSubscriptionActive(tenant) : false;
@@ -90,6 +92,7 @@ const SubscriptionManagement: React.FC = () => {
           backendUrl: stripeBackendUrl,
           customerEmail: authState.user.email,
         });
+        setStripeSubscription(subscription);
         if (!subscription) return;
 
         const stripeStatus = subscription.status;
@@ -131,6 +134,25 @@ const SubscriptionManagement: React.FC = () => {
 
     run();
   }, [authState?.user?.email, tenant, updateTenantInState]);
+
+  const formatMaybeEpochDate = (epochSeconds?: number | null): string | null => {
+    if (!epochSeconds || typeof epochSeconds !== 'number') return null;
+    try {
+      return new Date(epochSeconds * 1000).toLocaleDateString();
+    } catch {
+      return null;
+    }
+  };
+
+  const formatMaybeDate = (value?: Date | string | null): string | null => {
+    if (!value) return null;
+    try {
+      const d = typeof value === 'string' ? new Date(value) : value;
+      return d.toLocaleDateString();
+    } catch {
+      return null;
+    }
+  };
 
   if (!tenant) return null;
 
@@ -254,6 +276,87 @@ const SubscriptionManagement: React.FC = () => {
             <h3 className="text-lg font-semibold text-text-primary">
               {t('subscription.paymentHistoryTitle')}
             </h3>
+
+            <div className="bg-light-bg p-3 rounded-xl space-y-1">
+              {tenant.trialStartAt && (
+                <div className="text-sm text-text-secondary">
+                  {t('subscription.historyFreeStarted').replace(
+                    '{date}',
+                    formatMaybeDate(tenant.trialStartAt) || '-',
+                  )}
+                </div>
+              )}
+              {tenant.trialEndAt && (
+                <div className="text-sm text-text-secondary">
+                  {t('subscription.historyFreeEnds').replace(
+                    '{date}',
+                    formatMaybeDate(tenant.trialEndAt) || '-',
+                  )}
+                </div>
+              )}
+
+              {stripeSubscription?.current_period_start && (
+                <div className="text-sm text-text-secondary">
+                  {t('subscription.historyPaidStarted').replace(
+                    '{date}',
+                    formatMaybeEpochDate(stripeSubscription.current_period_start) || '-',
+                  )}
+                </div>
+              )}
+
+              {stripeSubscription?.cancel_at_period_end ? (
+                <>
+                  {stripeSubscription?.canceled_at && (
+                    <div className="text-sm text-text-secondary">
+                      {t('subscription.historyCanceledOn').replace(
+                        '{date}',
+                        formatMaybeEpochDate(stripeSubscription.canceled_at) || '-',
+                      )}
+                    </div>
+                  )}
+                  {stripeSubscription?.current_period_end && (
+                    <div className="text-sm text-text-secondary">
+                      {t('subscription.historyAccessUntil').replace(
+                        '{date}',
+                        formatMaybeEpochDate(stripeSubscription.current_period_end) || '-',
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : stripeSubscription?.status === 'canceled' || stripeSubscription?.ended_at ? (
+                <>
+                  {(stripeSubscription?.ended_at || stripeSubscription?.canceled_at) && (
+                    <div className="text-sm text-text-secondary">
+                      {t('subscription.historyCanceledOn').replace(
+                        '{date}',
+                        formatMaybeEpochDate(
+                          stripeSubscription.ended_at || stripeSubscription.canceled_at,
+                        ) || '-',
+                      )}
+                    </div>
+                  )}
+                  {(stripeSubscription?.ended_at || stripeSubscription?.current_period_end) && (
+                    <div className="text-sm text-text-secondary">
+                      {t('subscription.historyAccessUntil').replace(
+                        '{date}',
+                        formatMaybeEpochDate(
+                          stripeSubscription.ended_at || stripeSubscription.current_period_end,
+                        ) || '-',
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                stripeSubscription?.current_period_end && (
+                  <div className="text-sm text-text-secondary">
+                    {t('subscription.historyNextPayment').replace(
+                      '{date}',
+                      formatMaybeEpochDate(stripeSubscription.current_period_end) || '-',
+                    )}
+                  </div>
+                )
+              )}
+            </div>
 
             {!stripeBackendUrl && (
               <div className="text-sm text-text-secondary">

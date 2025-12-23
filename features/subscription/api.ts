@@ -32,8 +32,12 @@ export type StripeInvoiceSummary = {
 
 export type StripeSubscriptionStatusSummary = {
   id: string;
+  created?: number | null;
+  start_date?: number | null;
   status: string;
   cancel_at_period_end: boolean;
+  cancel_at?: number | null;
+  current_period_start?: number | null;
   current_period_end?: number | null;
   canceled_at?: number | null;
   ended_at?: number | null;

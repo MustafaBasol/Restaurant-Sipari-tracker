@@ -200,8 +200,12 @@ app.post('/get-subscription-status', async (req, res) => {
     return res.json({
       subscription: {
         id: latest.id,
+        created: latest.created,
+        start_date: latest.start_date,
         status: latest.status,
         cancel_at_period_end: !!latest.cancel_at_period_end,
+        cancel_at: latest.cancel_at,
+        current_period_start: latest.current_period_start,
         current_period_end: latest.current_period_end,
         canceled_at: latest.canceled_at,
         ended_at: latest.ended_at,
