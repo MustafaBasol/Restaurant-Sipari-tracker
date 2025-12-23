@@ -688,6 +688,12 @@
     "invoiceTableAmount": "Tutar",
     "invoiceTableStatus": "Durum",
     "invoiceTableInvoice": "İşlemler",
+    "invoiceStatusPaid": "Ödendi",
+    "invoiceStatusOpen": "Açık",
+    "invoiceStatusDraft": "Taslak",
+    "invoiceStatusVoid": "Geçersiz",
+    "invoiceStatusUncollectible": "Tahsil edilemedi",
+    "invoiceStatusUnknown": "Bilinmiyor",
     "invoiceOpen": "Aç",
     "invoiceDownload": "PDF indir",
     "checkout": {

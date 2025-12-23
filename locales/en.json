@@ -682,6 +682,12 @@
     "invoiceTableAmount": "Amount",
     "invoiceTableStatus": "Status",
     "invoiceTableInvoice": "Invoice",
+    "invoiceStatusPaid": "Paid",
+    "invoiceStatusOpen": "Open",
+    "invoiceStatusDraft": "Draft",
+    "invoiceStatusVoid": "Void",
+    "invoiceStatusUncollectible": "Uncollectible",
+    "invoiceStatusUnknown": "Unknown",
     "invoiceOpen": "Open",
     "invoiceDownload": "Download PDF",
     "checkout": {

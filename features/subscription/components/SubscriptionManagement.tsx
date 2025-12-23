@@ -173,6 +173,17 @@ const SubscriptionManagement: React.FC = () => {
     return 'gray' as const;
   };
 
+  const getInvoiceStatusLabel = (status?: string | null) => {
+    const s = (status || '').toLowerCase();
+    if (!s) return '-';
+    if (s === 'paid') return t('subscription.invoiceStatusPaid');
+    if (s === 'open') return t('subscription.invoiceStatusOpen');
+    if (s === 'draft') return t('subscription.invoiceStatusDraft');
+    if (s === 'void') return t('subscription.invoiceStatusVoid');
+    if (s === 'uncollectible') return t('subscription.invoiceStatusUncollectible');
+    return t('subscription.invoiceStatusUnknown');
+  };
+
   if (!tenant) return null;
 
   const handleActivate = () => {
@@ -487,7 +498,7 @@ const SubscriptionManagement: React.FC = () => {
                             </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                               <Badge variant={getInvoiceStatusVariant(inv.status)}>
-                                {inv.status || '-'}
+                                {getInvoiceStatusLabel(inv.status)}
                               </Badge>
                             </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">

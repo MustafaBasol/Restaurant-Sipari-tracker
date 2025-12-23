@@ -678,6 +678,12 @@
     "invoiceTableAmount": "Montant",
     "invoiceTableStatus": "Statut",
     "invoiceTableInvoice": "Facture",
+    "invoiceStatusPaid": "Payée",
+    "invoiceStatusOpen": "Ouverte",
+    "invoiceStatusDraft": "Brouillon",
+    "invoiceStatusVoid": "Annulée",
+    "invoiceStatusUncollectible": "Irrécouvrable",
+    "invoiceStatusUnknown": "Inconnu",
     "invoiceOpen": "Ouvrir",
     "invoiceDownload": "Télécharger le PDF",
     "checkout": {
