@@ -251,6 +251,12 @@ Frontend, harici servis URL’leri (Stripe backend + Print Server) için prod’
 
 Bu yaklaşım, yanlış yapılandırılmış env’lerden kaynaklı isteklerin “beklenmeyen” origin’lere gitmesini engellemeyi hedefler.
 
+## Production / Deploy Dokümanları
+
+- `docs/PRODUCTION.md`: “Prod için hazır mıyız?” değerlendirmesi + go-live checklist
+- `docs/SECURITY.md`: env değişkenleri + güvenlik checklist
+- `deploy/README.md`: VPS kurulum (Docker Compose + Caddy)
+
 ### Demo Aktivasyon Notu
 
 - Ödeme dönüşü (success) sonrasında tenant’ı ACTIVE yapan kısım şu an **demo amaçlı mock**tur.
