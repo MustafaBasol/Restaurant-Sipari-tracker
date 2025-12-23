@@ -8,7 +8,12 @@ export type RegisterResult =
   | ({ emailVerificationRequired: true } & Record<string, unknown>)
   | (Awaited<ReturnType<typeof mockApi.registerTenant>> extends infer R ? R : never);
 
-export const login: typeof mockApi.login = async (email, passwordOrSlug, turnstileToken) => {
+export const login: typeof mockApi.login = async (
+  email,
+  passwordOrSlug,
+  turnstileToken,
+  mfaCode?: string,
+) => {
   if (!isRealApiEnabled()) return mockApi.login(email, passwordOrSlug, turnstileToken);
   const response = await apiFetch<any>('/auth/login', {
     method: 'POST',
@@ -17,10 +22,29 @@ export const login: typeof mockApi.login = async (email, passwordOrSlug, turnsti
       password: passwordOrSlug,
       deviceId: getDeviceId(),
       turnstileToken: turnstileToken ?? undefined,
+      mfaCode: mfaCode ?? undefined,
     }),
     skipAuth: true,
   });
   return response;
+};
+
+export const mfaSetup = async (): Promise<{
+  secret: string;
+  otpauthUri: string;
+  issuer: string;
+}> => {
+  if (!isRealApiEnabled()) {
+    return { secret: 'MOCK-SECRET', otpauthUri: 'otpauth://totp/mock', issuer: 'Kitchorify' };
+  }
+  return apiFetch('/auth/mfa/setup', { method: 'POST' });
+};
+
+export const mfaVerify = async (code: string): Promise<{ mfaEnabledAt: string }> => {
+  if (!isRealApiEnabled()) {
+    return { mfaEnabledAt: new Date().toISOString() };
+  }
+  return apiFetch('/auth/mfa/verify', { method: 'POST', body: JSON.stringify({ code }) });
 };
 
 export const registerTenant = async (payload: RegisterPayload): Promise<RegisterResult> => {

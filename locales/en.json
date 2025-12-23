@@ -107,6 +107,17 @@
     "humanVerificationRequired": "Please complete the human verification.",
     "humanVerificationFailed": "Human verification failed. Please try again.",
     "emailNotVerified": "Your email is not verified. Please check your inbox.",
+    "mfaRequired": "Two-factor authentication code required.",
+    "mfaInvalid": "Invalid two-factor authentication code.",
+    "mfaCode": "2FA Code",
+    "mfaSetupTitle": "Enable Two-Factor Authentication",
+    "mfaSetupIntro": "Scan the secret in your authenticator app and enter the 6-digit code.",
+    "mfaSetupSecretLabel": "Secret",
+    "mfaSetupUriLabel": "otpauth URI",
+    "mfaSetupCodeLabel": "Code",
+    "mfaSetupVerify": "Verify & Enable",
+    "mfaSetupSkip": "Later",
+    "mfaSetupError": "Could not complete 2FA setup. Please try again.",
     "forgotPassword": "Forgot password",
     "backToLogin": "Back to login",
     "checkEmailForVerification": "Registration complete. Please open the verification link sent to your email.",
@@ -346,7 +357,9 @@
       "passwordUpdateSuccess": "Password updated successfully.",
       "passwordMismatch": "Passwords do not match.",
       "passwordTooShort": "Password must be at least 6 characters.",
-      "changePasswordTitle": "Change Password for {userName}"
+      "changePasswordTitle": "Change Password for {userName}",
+      "disableMfa": "Disable 2FA",
+      "mfaDisabledSuccess": "2FA disabled."
     },
     "history": {
       "startDate": "Start Date",

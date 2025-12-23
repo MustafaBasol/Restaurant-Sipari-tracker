@@ -52,6 +52,23 @@ Bu repo demo/POC odaklı olsa da, **prod ortamında** yanlış yapılandırma ka
 
 Not: `TURNSTILE_ENABLED=true` iken secret key yoksa API 500 döner (misconfiguration).
 
+#### MFA (2FA) — TOTP
+
+Core API, TOTP tabanlı MFA (Authenticator app) desteği sağlar.
+
+- Kurulum:
+  - `POST /api/auth/mfa/setup`: kullanıcıya özel secret üretir ve DB’ye yazar; `{ secret, otpauthUri, issuer }` döner.
+  - `POST /api/auth/mfa/verify`: 6 haneli TOTP kodunu doğrular ve `mfaEnabledAt` set eder.
+- Login:
+  - `mfaEnabledAt` set edilmişse login sırasında `mfaCode` zorunludur.
+  - Hata kodları: `MFA_REQUIRED`, `MFA_INVALID`.
+- Tenant admin iptal:
+  - Yalnızca tenant admin, kullanıcı bazında `POST /api/users/:id/mfa/disable` ile MFA’yı kapatabilir.
+
+Ortam değişkenleri:
+
+- `MFA_ISSUER` (opsiyonel): Authenticator uygulamalarında görünen issuer adı.
+
 #### E-posta (MailerSend) — doğrulama + şifre sıfırlama
 
 Core API, tenant kullanıcıları için e-posta doğrulaması ve şifre sıfırlama akışı destekler.

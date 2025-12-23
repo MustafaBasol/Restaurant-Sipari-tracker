@@ -66,6 +66,16 @@ export const changeUserPassword = (userId: string, newPassword: string) => {
   });
 };
 
+export const disableUserMfa = (userId: string) => {
+  if (isRealApiEnabled()) {
+    return apiFetch<boolean>(`/users/${encodeURIComponent(userId)}/mfa/disable`, {
+      method: 'POST',
+    });
+  }
+  // Mock mode: best-effort update of the user record.
+  return updateData('users', { id: userId, mfaEnabledAt: null } as any);
+};
+
 export const getSessionsForUser = (tenantId: string, userId: string, actor: Actor) =>
   isRealApiEnabled()
     ? apiFetch<any[]>(`/users/${encodeURIComponent(userId)}/sessions`, { method: 'GET' })

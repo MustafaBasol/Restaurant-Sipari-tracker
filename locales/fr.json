@@ -132,6 +132,17 @@
       "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
       "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères."
     },
+    "mfaRequired": "Code d’authentification à deux facteurs requis.",
+    "mfaInvalid": "Code d’authentification à deux facteurs invalide.",
+    "mfaCode": "Code 2FA",
+    "mfaSetupTitle": "Activer l’authentification à deux facteurs",
+    "mfaSetupIntro": "Ajoutez le secret dans votre application d’authentification et saisissez le code à 6 chiffres.",
+    "mfaSetupSecretLabel": "Secret",
+    "mfaSetupUriLabel": "URI otpauth",
+    "mfaSetupCodeLabel": "Code",
+    "mfaSetupVerify": "Vérifier et activer",
+    "mfaSetupSkip": "Plus tard",
+    "mfaSetupError": "Impossible de terminer la configuration 2FA. Veuillez réessayer.",
     "welcome": "Bienvenue chez Kitchorify",
     "newHere": "Nouveau ici?",
     "createAccountLink": "Créer un compte de restaurant",
@@ -348,7 +359,9 @@
       "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
-      "changePasswordTitle": "Changer le mot de passe pour {userName}"
+      "changePasswordTitle": "Changer le mot de passe pour {userName}",
+      "disableMfa": "Désactiver 2FA",
+      "mfaDisabledSuccess": "2FA désactivée."
     },
     "history": {
       "startDate": "Date de début",

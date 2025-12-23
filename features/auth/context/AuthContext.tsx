@@ -20,7 +20,10 @@ const isUserLike = (value: unknown): value is User => {
     typeof value.email === 'string' &&
     typeof value.role === 'string' &&
     typeof value.isActive === 'boolean' &&
-    (value.tenantId === undefined || typeof value.tenantId === 'string')
+    (value.tenantId === undefined || typeof value.tenantId === 'string') &&
+    ((value as any).mfaEnabledAt === undefined ||
+      (value as any).mfaEnabledAt === null ||
+      typeof (value as any).mfaEnabledAt === 'string')
   );
 };
 
@@ -69,10 +72,16 @@ const hydrateAuthStateFromStorage = (raw: unknown): AuthState => {
 interface AuthContextData {
   authState: AuthState | null;
   isLoading: boolean;
-  login: (email: string, passwordOrSlug: string, turnstileToken?: string) => Promise<boolean>;
+  login: (
+    email: string,
+    passwordOrSlug: string,
+    turnstileToken?: string,
+    mfaCode?: string,
+  ) => Promise<boolean>;
   logout: () => void;
   register: (payload: api.RegisterPayload) => Promise<boolean>;
   updateTenantInState: (tenant: Tenant) => void;
+  updateUserInState: (patch: Partial<User>) => void;
 }
 
 export const AuthContext = createContext<AuthContextData | undefined>(undefined);
@@ -114,10 +123,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, passwordOrSlug: string, turnstileToken?: string) => {
+  const login = async (
+    email: string,
+    passwordOrSlug: string,
+    turnstileToken?: string,
+    mfaCode?: string,
+  ) => {
     setIsLoading(true);
     try {
-      const response = await api.login(email, passwordOrSlug, turnstileToken);
+      const response = await api.login(email, passwordOrSlug, turnstileToken, mfaCode);
       if (response) {
         const sanitized = sanitizeAuthStateForStorage(response);
         setAuthState(sanitized);
@@ -178,6 +192,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthState((prevState) => {
       if (!prevState) return null;
       const newState = { ...prevState, tenant };
+      const sanitized = sanitizeAuthStateForStorage(newState);
+      localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
+      return sanitized;
+    });
+  };
+
+  const updateUserInState = (patch: Partial<User>) => {
+    setAuthState((prevState) => {
+      if (!prevState) return null;
+      const newState: AuthState = {
+        ...prevState,
+        user: {
+          ...prevState.user,
+          ...patch,
+        },
+      };
       const sanitized = sanitizeAuthStateForStorage(newState);
       localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
       return sanitized;
@@ -261,7 +291,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider
-      value={{ authState, isLoading, login, logout, register, updateTenantInState }}
+      value={{
+        authState,
+        isLoading,
+        login,
+        logout,
+        register,
+        updateTenantInState,
+        updateUserInState,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -6,6 +6,7 @@ export interface User {
   fullName: string;
   email: string;
   passwordHash: string;
+  mfaEnabledAt?: string | null;
   role: UserRole;
   isActive: boolean;
 }

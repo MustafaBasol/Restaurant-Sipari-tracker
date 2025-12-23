@@ -135,6 +135,17 @@
       "passwordsDoNotMatch": "Şifreler eşleşmiyor.",
       "passwordTooShort": "Şifre en az 6 karakter olmalı."
     },
+    "mfaRequired": "İki adımlı doğrulama kodu gerekli.",
+    "mfaInvalid": "İki adımlı doğrulama kodu geçersiz.",
+    "mfaCode": "2FA Kodu",
+    "mfaSetupTitle": "İki Adımlı Doğrulamayı Aktif Et",
+    "mfaSetupIntro": "Authenticator uygulamana sırrı ekle ve 6 haneli kodu gir.",
+    "mfaSetupSecretLabel": "Gizli anahtar",
+    "mfaSetupUriLabel": "otpauth URI",
+    "mfaSetupCodeLabel": "Kod",
+    "mfaSetupVerify": "Doğrula ve Aktif Et",
+    "mfaSetupSkip": "Sonra",
+    "mfaSetupError": "2FA kurulumu tamamlanamadı. Lütfen tekrar dene.",
     "welcome": "Kitchorify'a Hoş Geldiniz",
     "newHere": "Yeni misiniz?",
     "createAccountLink": "Restoran Hesabı Oluştur",
@@ -352,7 +363,9 @@
       "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",
       "passwordMismatch": "Şifreler eşleşmiyor.",
       "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
-      "changePasswordTitle": "{userName} için Şifre Değiştir"
+      "changePasswordTitle": "{userName} için Şifre Değiştir",
+      "disableMfa": "2FA'yı kapat",
+      "mfaDisabledSuccess": "2FA kapatıldı."
     },
     "history": {
       "startDate": "Başlangıç Tarihi",

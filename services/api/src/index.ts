@@ -9,6 +9,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendEmail } from './mailerSend.js';
+import { authenticator } from 'otplib';
 
 const prisma = new PrismaClient();
 
@@ -77,6 +78,29 @@ const APP_PUBLIC_URL = (process.env.APP_PUBLIC_URL ?? '').trim();
 const EMAIL_VERIFICATION_TTL_MINUTES = Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? 60);
 const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 30);
 
+const MFA_ISSUER = (process.env.MFA_ISSUER ?? 'Kitchorify').trim() || 'Kitchorify';
+
+// TOTP: allow small clock drift.
+authenticator.options = { window: 1 };
+
+const sanitizeUserForResponse = (user: any) => {
+  // Keep shape compatible with existing frontend types (it expects passwordHash string)
+  // while ensuring we never leak secret/token hashes.
+  return {
+    id: user.id,
+    tenantId: user.tenantId ?? undefined,
+    fullName: user.fullName,
+    email: user.email,
+    passwordHash: '',
+    role: user.role,
+    isActive: user.isActive,
+    emailVerifiedAt: user.emailVerifiedAt ?? null,
+    mfaEnabledAt: user.mfaEnabledAt ?? null,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+};
+
 const TURNSTILE_ENABLED = (process.env.TURNSTILE_ENABLED ?? '').toLowerCase() === 'true';
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? '';
 
@@ -98,6 +122,8 @@ const verifyTurnstileToken = async (token: string, remoteIp?: string | null): Pr
   const data = (await resp.json().catch(() => null)) as null | { success?: boolean };
   return Boolean(data?.success);
 };
+
+const isSixDigitCode = (value: string): boolean => /^[0-9]{6}$/.test(value);
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');
 const hashToken = (token: string): string =>
@@ -321,13 +347,14 @@ const loginSchema = z.object({
   password: z.string().min(1),
   deviceId: z.string().min(1),
   turnstileToken: z.string().min(1).optional(),
+  mfaCode: z.string().min(1).optional(),
 });
 
 app.post('/api/auth/login', async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
 
-  const { email, password, deviceId, turnstileToken } = parsed.data;
+  const { email, password, deviceId, turnstileToken, mfaCode } = parsed.data;
 
   if (!(await requireHumanVerification(req, res, turnstileToken))) return;
 
@@ -342,6 +369,17 @@ app.post('/api/auth/login', async (req, res) => {
 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+
+  // MFA (TOTP) enforcement once enabled.
+  // NOTE: Some editor TS setups may cache older Prisma Client types; keep this access resilient.
+  if ((user as any).mfaEnabledAt) {
+    if (!mfaCode) return res.status(401).json({ error: 'MFA_REQUIRED' });
+    if (!isSixDigitCode(mfaCode)) return res.status(400).json({ error: 'INVALID_INPUT' });
+    const secret = (user as any).mfaSecret as string | null | undefined;
+    if (!secret) return res.status(500).json({ error: 'MFA_MISCONFIGURED' });
+    const valid = authenticator.check(mfaCode, secret);
+    if (!valid) return res.status(401).json({ error: 'MFA_INVALID' });
+  }
 
   const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
   const session = await prisma.userSession.create({
@@ -358,7 +396,7 @@ app.post('/api/auth/login', async (req, res) => {
     : null;
 
   return res.json({
-    user,
+    user: sanitizeUserForResponse(user),
     tenant,
     sessionId: session.id,
     deviceId,
@@ -428,6 +466,8 @@ app.post('/api/auth/register-tenant', async (req, res) => {
       emailVerifiedAt: null,
       emailVerificationTokenHash: emailTokenHash,
       emailVerificationExpiresAt: emailTokenExpiresAt,
+      mfaEnabledAt: null,
+      mfaSecret: null,
       role: 'ADMIN',
       isActive: true,
     } as any,
@@ -442,6 +482,59 @@ app.post('/api/auth/register-tenant', async (req, res) => {
 
   // Do NOT create a session until email is verified.
   return res.status(201).json({ emailVerificationRequired: true });
+});
+
+// --- MFA (TOTP) ---
+
+app.post('/api/auth/mfa/setup', requireAuth, async (req, res) => {
+  const userId = req.auth!.userId;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+
+  if ((user as any).mfaEnabledAt) {
+    return res.status(400).json({ error: 'MFA_ALREADY_ENABLED' });
+  }
+
+  const secret = authenticator.generateSecret();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { mfaSecret: secret } as any,
+  });
+
+  const label = user.email;
+  const otpauthUri = authenticator.keyuri(label, MFA_ISSUER, secret);
+  return res.json({ secret, otpauthUri, issuer: MFA_ISSUER });
+});
+
+const mfaVerifySchema = z.object({
+  code: z.string().min(1),
+});
+
+app.post('/api/auth/mfa/verify', requireAuth, async (req, res) => {
+  const parsed = mfaVerifySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const userId = req.auth!.userId;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+  const alreadyEnabledAt = (user as any).mfaEnabledAt as Date | null | undefined;
+  if (alreadyEnabledAt) return res.json({ mfaEnabledAt: alreadyEnabledAt });
+  const secret = (user as any).mfaSecret as string | null | undefined;
+  if (!secret) return res.status(400).json({ error: 'MFA_SETUP_REQUIRED' });
+
+  const code = parsed.data.code.trim();
+  if (!isSixDigitCode(code)) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const ok = authenticator.check(code, secret);
+  if (!ok) return res.status(401).json({ error: 'MFA_INVALID' });
+
+  const enabledAt = new Date();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { mfaEnabledAt: enabledAt } as any,
+  });
+
+  return res.json({ mfaEnabledAt: enabledAt });
 });
 
 const resendVerificationSchema = z.object({
@@ -918,7 +1011,22 @@ app.get('/api/users', requireAuth, requireTenant, async (req, res) => {
     return res.status(403).json({ error: 'FORBIDDEN' });
   const tenantId = req.auth!.tenantId!;
   const users = await prisma.user.findMany({ where: { tenantId }, orderBy: { createdAt: 'asc' } });
-  return res.json(users);
+  return res.json(users.map(sanitizeUserForResponse));
+});
+
+// Disable MFA for a user (tenant admin only)
+app.post('/api/users/:id/mfa/disable', requireAuth, requireTenant, async (req, res) => {
+  if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN'))
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  const tenantId = req.auth!.tenantId!;
+  const user = await prisma.user.findFirst({ where: { id: req.params.id, tenantId } });
+  if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { mfaEnabledAt: null, mfaSecret: null } as any,
+  });
+  return res.json(true);
 });
 
 const userCreateSchema = z.object({
@@ -944,7 +1052,7 @@ app.post('/api/users', requireAuth, requireTenant, async (req, res) => {
       isActive: true,
     },
   });
-  return res.json(user);
+  return res.json(sanitizeUserForResponse(user));
 });
 
 const userUpdateSchema = z.object({
@@ -971,7 +1079,7 @@ app.put('/api/users/:id', requireAuth, requireTenant, async (req, res) => {
       isActive: parsed.data.isActive,
     },
   });
-  return res.json(updated);
+  return res.json(sanitizeUserForResponse(updated));
 });
 
 const changePasswordSchema = z.object({ newPassword: z.string().min(6) });

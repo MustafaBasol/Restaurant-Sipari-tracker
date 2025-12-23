@@ -20,7 +20,7 @@ import ChangePasswordModal from './ChangePasswordModal';
 import UserSessionsModal from './UserSessionsModal';
 
 const UsersManagement: React.FC = () => {
-  const { users, addUser, updateUser, changeUserPassword } = useUsers();
+  const { users, addUser, updateUser, changeUserPassword, disableUserMfa } = useUsers();
   const { t } = useLanguage();
   const { authState } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
@@ -36,6 +36,7 @@ const UsersManagement: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   const canManageSessions = authState?.user.role === UserRole.ADMIN;
+  const canManageMfa = authState?.user.role === UserRole.ADMIN;
 
   const activeAdminCount = users.filter((u) => u.role === UserRole.ADMIN && u.isActive).length;
   const visibleUsers = users.filter((u) => (showArchived ? !u.isActive : u.isActive));
@@ -57,6 +58,12 @@ const UsersManagement: React.FC = () => {
     setEditingPasswordForUser(null);
     setSuccessMessage(t('admin.users.passwordUpdateSuccess'));
     setTimeout(() => setSuccessMessage(''), 3000); // Clear message after 3 seconds
+  };
+
+  const handleDisableMfa = async (user: User) => {
+    await disableUserMfa(user.id);
+    setSuccessMessage(t('admin.users.mfaDisabledSuccess'));
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   return (
@@ -183,6 +190,16 @@ const UsersManagement: React.FC = () => {
                         className="text-accent hover:text-accent-hover text-sm font-medium"
                       >
                         {t('admin.users.sessions')}
+                      </button>
+                    )}
+                    {canManageMfa && user.mfaEnabledAt && (
+                      <button
+                        onClick={() => {
+                          void handleDisableMfa(user);
+                        }}
+                        className="text-accent hover:text-accent-hover text-sm font-medium"
+                      >
+                        {t('admin.users.disableMfa')}
                       </button>
                     )}
                     <button

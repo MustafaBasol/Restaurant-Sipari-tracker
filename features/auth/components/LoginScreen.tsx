@@ -14,6 +14,8 @@ const LoginScreen: React.FC = () => {
   const { t } = useLanguage();
   const [email, setEmail] = useState('waiter@sunsetbistro.com');
   const [password, setPassword] = useState('sunset-bistro');
+  const [mfaCode, setMfaCode] = useState('');
+  const [needsMfaCode, setNeedsMfaCode] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
@@ -89,6 +91,8 @@ const LoginScreen: React.FC = () => {
       if (err.code === 'HUMAN_VERIFICATION_REQUIRED') return t('auth.humanVerificationRequired');
       if (err.code === 'HUMAN_VERIFICATION_FAILED') return t('auth.humanVerificationFailed');
       if (err.code === 'EMAIL_NOT_VERIFIED') return t('auth.emailNotVerified');
+      if (err.code === 'MFA_REQUIRED') return t('auth.mfaRequired');
+      if (err.code === 'MFA_INVALID') return t('auth.mfaInvalid');
       if (err.code === 'INVALID_CREDENTIALS') return t('auth.loginFailed');
     }
     return t('auth.loginFailed');
@@ -102,8 +106,13 @@ const LoginScreen: React.FC = () => {
       return;
     }
 
+    if (needsMfaCode && !mfaCode.trim()) {
+      setError(t('auth.mfaRequired'));
+      return;
+    }
+
     try {
-      const success = await login(email, password, turnstileToken ?? undefined);
+      const success = await login(email, password, turnstileToken ?? undefined, mfaCode.trim());
       if (success) {
         window.location.hash = '#/app';
       } else {
@@ -111,6 +120,9 @@ const LoginScreen: React.FC = () => {
         resetTurnstile();
       }
     } catch (err) {
+      if (err instanceof ApiError && err.code === 'MFA_REQUIRED') {
+        setNeedsMfaCode(true);
+      }
       setError(mapAuthError(err));
       resetTurnstile();
     }
@@ -141,6 +153,22 @@ const LoginScreen: React.FC = () => {
                 required
               />
             </div>
+
+            {needsMfaCode && (
+              <div className="mb-6">
+                <label htmlFor="mfa" className="block text-sm font-medium text-text-secondary mb-2">
+                  {t('auth.mfaCode')}
+                </label>
+                <Input
+                  id="mfa"
+                  inputMode="numeric"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  placeholder="123456"
+                  required
+                />
+              </div>
+            )}
             <div className="mb-6">
               <label
                 htmlFor="password"

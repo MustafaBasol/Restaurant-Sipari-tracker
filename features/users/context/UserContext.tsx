@@ -19,6 +19,7 @@ interface UserContextData {
   ) => Promise<void>;
   updateUser: (user: User) => Promise<void>;
   changeUserPassword: (userId: string, newPassword: string) => Promise<void>;
+  disableUserMfa: (userId: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -66,9 +67,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // No refetch needed as the user list UI does not change.
   };
 
+  const disableUserMfa = (userId: string) => handleMutation(() => api.disableUserMfa(userId));
+
   return (
     <UserContext.Provider
-      value={{ users, isLoading, addUser, updateUser, changeUserPassword, refetch: fetchUsers }}
+      value={{
+        users,
+        isLoading,
+        addUser,
+        updateUser,
+        changeUserPassword,
+        disableUserMfa,
+        refetch: fetchUsers,
+      }}
     >
       {children}
     </UserContext.Provider>

@@ -913,6 +913,7 @@ export const login = async (
   email: string,
   passwordOrSlug: string,
   _turnstileToken?: string,
+  _mfaCode?: string,
 ): Promise<{ user: User; tenant: Tenant | null; sessionId: string; deviceId: string } | null> => {
   await simulateDelay();
   const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
