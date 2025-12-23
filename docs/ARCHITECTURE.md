@@ -1,0 +1,55 @@
+# Mimari Özet
+
+## Bileşenler
+
+- **Frontend:** React + Vite (hash router)
+- **Core API:** [services/api](../services/api) (Express 5 + TypeScript + Prisma)
+- **DB:** Postgres 16
+- **Stripe demo backend:** `server.cjs` (prod’da Caddy altında `/stripe/*`)
+- **Opsiyonel print server:** `printer-server.cjs` (prod deploy’da varsayılan olarak public’e açılmaz)
+
+## Frontend → API (mock/real switch)
+
+- Frontend runtime’da `VITE_API_BASE_URL` var mı diye kontrol eder.
+  - Yoksa mock API (`localStorage`) kullanır.
+  - Varsa `shared/lib/runtimeApi.ts` içindeki `apiFetch()` ile gerçek API’ye gider.
+
+### API base URL kuralları
+
+`VITE_API_BASE_URL` şunları kabul eder:
+
+- Same-origin path: `/api` (prod’da Caddy ile)
+- Absolute URL: `https://example.com/api` veya lokal için `http://localhost:4000/api`
+
+## Kimlik doğrulama (session)
+
+- Frontend, localStorage’daki `authState:<deviceId>` içinden `sessionId` okur.
+- Her API request’ine `x-session-id: <sessionId>` header’ı ekler.
+- API ayrıca alternatif olarak `Authorization: session <id>` formatını da kabul eder.
+
+## Tenant izolasyonu ve RBAC
+
+- API her request’te session’dan `tenantId` + `role` bağlamını çıkarır.
+- Tenant izolasyonu: tenant’a ait olmayan veriye erişim engellenir.
+- Yetkiler tenant bazlı override edilebilir; default izin seti + tenant override birleşimi ile karar verilir.
+
+## Deploy yönlendirme (Caddy)
+
+Prod deploy’da Caddy aynı origin altında route eder:
+
+- `/api/*` → core API (prefix strip ile API içinde `/health`, `/api/auth/...` gibi path’ler çalışır)
+- `/stripe/*` → stripe backend
+- `/health` → edge health (Caddy respond)
+- `/*` → frontend
+
+Caddy tanımı: [deploy/Caddyfile](../deploy/Caddyfile)
+
+## Health endpoint’leri
+
+- API liveness: `GET /health` → `ok`
+- API + DB readiness: `GET /health/db` → DB bağlıysa `ok`, değilse 503
+
+Prod’da Caddy altında:
+
+- `/api/health` → API `/health`
+- `/api/health/db` → API `/health/db`

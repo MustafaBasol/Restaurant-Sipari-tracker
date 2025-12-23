@@ -71,6 +71,13 @@ npm run preview
 npm run check
 ```
 
+## Dokümantasyon
+
+- Hızlı indeks: [docs/INDEX.md](docs/INDEX.md)
+- Prod go-live özeti: [docs/PRODUCTION.md](docs/PRODUCTION.md)
+- VPS deploy + ops adımları: [deploy/README.md](deploy/README.md)
+- Güvenlik checklist: [docs/SECURITY.md](docs/SECURITY.md)
+
 ## Demo Hesapları
 
 Uygulama ilk açılışta mock verilerle gelir.
