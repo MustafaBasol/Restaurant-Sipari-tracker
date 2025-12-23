@@ -11,6 +11,7 @@ import {
   getSubscriptionStatus,
   listInvoices,
   StripeInvoiceSummary,
+  type StripeSubscriptionStatusSummary,
 } from '../api';
 import { formatCurrency } from '../../../shared/lib/utils';
 
@@ -30,7 +31,8 @@ const SubscriptionManagement: React.FC = () => {
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [invoicesError, setInvoicesError] = useState('');
 
-  const [stripeSubscription, setStripeSubscription] = useState<any>(null);
+  const [stripeSubscription, setStripeSubscription] =
+    useState<StripeSubscriptionStatusSummary | null>(null);
 
   const tenant = authState?.tenant;
 
@@ -152,6 +154,23 @@ const SubscriptionManagement: React.FC = () => {
     } catch {
       return null;
     }
+  };
+
+  const openExternal = (url: string) => {
+    try {
+      window.open(url, '_blank', 'noreferrer');
+    } catch {
+      window.location.href = url;
+    }
+  };
+
+  const getInvoiceStatusVariant = (status?: string | null) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'paid') return 'green' as const;
+    if (s === 'open' || s === 'draft') return 'yellow' as const;
+    if (s === 'void') return 'gray' as const;
+    if (s === 'uncollectible') return 'red' as const;
+    return 'gray' as const;
   };
 
   if (!tenant) return null;
@@ -277,85 +296,116 @@ const SubscriptionManagement: React.FC = () => {
               {t('subscription.paymentHistoryTitle')}
             </h3>
 
-            <div className="bg-light-bg p-3 rounded-xl space-y-1">
-              {tenant.trialStartAt && (
-                <div className="text-sm text-text-secondary">
-                  {t('subscription.historyFreeStarted').replace(
-                    '{date}',
-                    formatMaybeDate(tenant.trialStartAt) || '-',
+            <div className="rounded-xl border border-border-color overflow-hidden">
+              <table className="min-w-full text-sm">
+                <thead className="bg-light-bg">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold text-text-secondary">
+                      {t('subscription.historyTableEvent')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-semibold text-text-secondary">
+                      {t('subscription.historyTableDate')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-color">
+                  {tenant.trialStartAt && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-text-primary">
+                        {t('subscription.historyEventFreeStarted')}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {formatMaybeDate(tenant.trialStartAt) || '-'}
+                      </td>
+                    </tr>
                   )}
-                </div>
-              )}
-              {tenant.trialEndAt && (
-                <div className="text-sm text-text-secondary">
-                  {t('subscription.historyFreeEnds').replace(
-                    '{date}',
-                    formatMaybeDate(tenant.trialEndAt) || '-',
+                  {tenant.trialEndAt && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-text-primary">
+                        {t('subscription.historyEventFreeEnds')}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {formatMaybeDate(tenant.trialEndAt) || '-'}
+                      </td>
+                    </tr>
                   )}
-                </div>
-              )}
+                  {stripeSubscription?.current_period_start && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-text-primary">
+                        {t('subscription.historyEventPaidStarted')}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {formatMaybeEpochDate(stripeSubscription.current_period_start) || '-'}
+                      </td>
+                    </tr>
+                  )}
 
-              {stripeSubscription?.current_period_start && (
-                <div className="text-sm text-text-secondary">
-                  {t('subscription.historyPaidStarted').replace(
-                    '{date}',
-                    formatMaybeEpochDate(stripeSubscription.current_period_start) || '-',
-                  )}
-                </div>
-              )}
-
-              {stripeSubscription?.cancel_at_period_end ? (
-                <>
-                  {stripeSubscription?.canceled_at && (
-                    <div className="text-sm text-text-secondary">
-                      {t('subscription.historyCanceledOn').replace(
-                        '{date}',
-                        formatMaybeEpochDate(stripeSubscription.canceled_at) || '-',
+                  {stripeSubscription?.cancel_at_period_end ? (
+                    <>
+                      {(stripeSubscription.canceled_at || stripeSubscription.cancel_at) && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-text-primary">
+                            {t('subscription.historyEventCanceledOn')}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary">
+                            {formatMaybeEpochDate(
+                              stripeSubscription.canceled_at || stripeSubscription.cancel_at,
+                            ) || '-'}
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                  )}
-                  {stripeSubscription?.current_period_end && (
-                    <div className="text-sm text-text-secondary">
-                      {t('subscription.historyAccessUntil').replace(
-                        '{date}',
-                        formatMaybeEpochDate(stripeSubscription.current_period_end) || '-',
+                      {stripeSubscription.current_period_end && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-text-primary">
+                            {t('subscription.historyEventAccessUntil')}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary">
+                            {formatMaybeEpochDate(stripeSubscription.current_period_end) || '-'}
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                  )}
-                </>
-              ) : stripeSubscription?.status === 'canceled' || stripeSubscription?.ended_at ? (
-                <>
-                  {(stripeSubscription?.ended_at || stripeSubscription?.canceled_at) && (
-                    <div className="text-sm text-text-secondary">
-                      {t('subscription.historyCanceledOn').replace(
-                        '{date}',
-                        formatMaybeEpochDate(
-                          stripeSubscription.ended_at || stripeSubscription.canceled_at,
-                        ) || '-',
+                    </>
+                  ) : stripeSubscription?.status === 'canceled' || stripeSubscription?.ended_at ? (
+                    <>
+                      {(stripeSubscription.ended_at || stripeSubscription.canceled_at) && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-text-primary">
+                            {t('subscription.historyEventCanceledOn')}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary">
+                            {formatMaybeEpochDate(
+                              stripeSubscription.ended_at || stripeSubscription.canceled_at,
+                            ) || '-'}
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                  )}
-                  {(stripeSubscription?.ended_at || stripeSubscription?.current_period_end) && (
-                    <div className="text-sm text-text-secondary">
-                      {t('subscription.historyAccessUntil').replace(
-                        '{date}',
-                        formatMaybeEpochDate(
-                          stripeSubscription.ended_at || stripeSubscription.current_period_end,
-                        ) || '-',
+                      {(stripeSubscription.ended_at || stripeSubscription.current_period_end) && (
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-text-primary">
+                            {t('subscription.historyEventAccessUntil')}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary">
+                            {formatMaybeEpochDate(
+                              stripeSubscription.ended_at || stripeSubscription.current_period_end,
+                            ) || '-'}
+                          </td>
+                        </tr>
                       )}
-                    </div>
+                    </>
+                  ) : (
+                    stripeSubscription?.current_period_end && (
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-text-primary">
+                          {t('subscription.historyEventNextPayment')}
+                        </td>
+                        <td className="px-4 py-3 text-text-secondary">
+                          {formatMaybeEpochDate(stripeSubscription.current_period_end) || '-'}
+                        </td>
+                      </tr>
+                    )
                   )}
-                </>
-              ) : (
-                stripeSubscription?.current_period_end && (
-                  <div className="text-sm text-text-secondary">
-                    {t('subscription.historyNextPayment').replace(
-                      '{date}',
-                      formatMaybeEpochDate(stripeSubscription.current_period_end) || '-',
-                    )}
-                  </div>
-                )
-              )}
+                </tbody>
+              </table>
             </div>
 
             {!stripeBackendUrl && (
@@ -389,55 +439,77 @@ const SubscriptionManagement: React.FC = () => {
                 {t('subscription.paymentHistoryEmpty')}
               </div>
             ) : (
-              <div className="space-y-2">
-                {invoices.map((inv) => {
-                  const createdDate = new Date(inv.created * 1000);
-                  const amountMajor = (inv.amount_paid || inv.amount_due || 0) / 100;
-                  const amountText = formatCurrency(
-                    amountMajor,
-                    (inv.currency || currency).toUpperCase(),
-                  );
+              <div className="rounded-xl border border-border-color overflow-hidden">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-light-bg">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-semibold text-text-secondary">
+                        {t('subscription.invoiceTableNumber')}
+                      </th>
+                      <th className="text-left px-4 py-3 font-semibold text-text-secondary">
+                        {t('subscription.invoiceTableDate')}
+                      </th>
+                      <th className="text-left px-4 py-3 font-semibold text-text-secondary">
+                        {t('subscription.invoiceTableAmount')}
+                      </th>
+                      <th className="text-left px-4 py-3 font-semibold text-text-secondary">
+                        {t('subscription.invoiceTableStatus')}
+                      </th>
+                      <th className="text-right px-4 py-3 font-semibold text-text-secondary">
+                        {t('subscription.invoiceTableInvoice')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-color">
+                    {invoices.map((inv) => {
+                      const createdDate = new Date(inv.created * 1000);
+                      const amountMajor = (inv.amount_paid || inv.amount_due || 0) / 100;
+                      const amountText = formatCurrency(
+                        amountMajor,
+                        (inv.currency || currency).toUpperCase(),
+                      );
 
-                  return (
-                    <div
-                      key={inv.id}
-                      className="bg-light-bg p-3 rounded-xl flex items-start justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-text-primary truncate">
-                          {inv.number || inv.id}
-                        </div>
-                        <div className="text-xs text-text-secondary">
-                          {createdDate.toLocaleDateString()} • {amountText}
-                          {inv.status ? ` • ${inv.status}` : ''}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {inv.hosted_invoice_url && (
-                          <a
-                            className="text-sm font-medium text-accent hover:text-accent-hover"
-                            href={inv.hosted_invoice_url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {t('subscription.invoiceOpen')}
-                          </a>
-                        )}
-                        {inv.invoice_pdf && (
-                          <a
-                            className="text-sm font-medium text-accent hover:text-accent-hover"
-                            href={inv.invoice_pdf}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {t('subscription.invoiceDownload')}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                      return (
+                        <tr key={inv.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-text-primary font-medium">
+                            {inv.number || inv.id}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary">
+                            {createdDate.toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary">{amountText}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant={getInvoiceStatusVariant(inv.status)}>
+                              {inv.status || '-'}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-2">
+                              {inv.hosted_invoice_url && (
+                                <Button
+                                  variant="ghost"
+                                  className="py-1 px-2 text-sm"
+                                  onClick={() => openExternal(inv.hosted_invoice_url as string)}
+                                >
+                                  {t('subscription.invoiceOpen')}
+                                </Button>
+                              )}
+                              {inv.invoice_pdf && (
+                                <Button
+                                  variant="secondary"
+                                  className="py-1 px-2 text-sm"
+                                  onClick={() => openExternal(inv.invoice_pdf as string)}
+                                >
+                                  {t('subscription.invoiceDownload')}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
