@@ -1,0 +1,49 @@
+{
+	# Global options
+	email {$ACME_EMAIL}
+	# Optional: avoid leaking server version
+	servers {
+		header {
+			-Server
+		}
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Basic security headers (tune CSP based on your needs)
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		X-Frame-Options "DENY"
+	}
+
+	# Stripe backend under same-origin prefix.
+	# Frontend should use: https://<domain>/stripe
+	handle_path /stripe/* {
+		reverse_proxy stripe-backend:4242 {
+			header_up x-api-key {$STRIPE_API_KEY}
+		}
+	}
+
+	# Print server under same-origin prefix.
+	# Frontend should use: https://<domain>/print
+	handle_path /print/* {
+		reverse_proxy print-server:4243 {
+			header_up x-api-key {$PRINT_API_KEY}
+		}
+	}
+
+	# Optional: basic health endpoint
+	handle /health {
+		respond "ok" 200
+	}
+
+	# Default: serve the frontend
+	handle {
+		reverse_proxy web:80
+	}
+}

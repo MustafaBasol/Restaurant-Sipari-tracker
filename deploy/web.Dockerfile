@@ -1,0 +1,31 @@
+# Build the Vite app
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Install deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy source
+COPY . .
+
+# Build-time Vite envs (baked into the bundle)
+ARG VITE_STRIPE_BACKEND_URL
+ARG VITE_PRINT_SERVER_URL
+ARG VITE_SERVICE_ORIGIN_ALLOWLIST
+ARG VITE_ALLOW_INSECURE_SERVICES
+
+ENV VITE_STRIPE_BACKEND_URL=$VITE_STRIPE_BACKEND_URL
+ENV VITE_PRINT_SERVER_URL=$VITE_PRINT_SERVER_URL
+ENV VITE_SERVICE_ORIGIN_ALLOWLIST=$VITE_SERVICE_ORIGIN_ALLOWLIST
+ENV VITE_ALLOW_INSECURE_SERVICES=$VITE_ALLOW_INSECURE_SERVICES
+
+RUN npm run build
+
+# Serve via Caddy (static)
+FROM caddy:2.8-alpine
+WORKDIR /srv
+COPY --from=build /app/dist /srv
+
+# Minimal static server config (reverse proxy happens in the edge Caddy)
+COPY deploy/web.Caddyfile /etc/caddy/Caddyfile

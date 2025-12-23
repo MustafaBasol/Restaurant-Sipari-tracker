@@ -1,0 +1,86 @@
+services:
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      # Optional: inject API keys to upstreams without exposing to browsers
+      STRIPE_API_KEY: ${STRIPE_API_KEY-}
+      PRINT_API_KEY: ${PRINT_API_KEY-}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - web
+      - stripe-backend
+      - print-server
+    networks:
+      - edge
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        VITE_STRIPE_BACKEND_URL: ${VITE_STRIPE_BACKEND_URL}
+        VITE_PRINT_SERVER_URL: ${VITE_PRINT_SERVER_URL-}
+        VITE_SERVICE_ORIGIN_ALLOWLIST: ${VITE_SERVICE_ORIGIN_ALLOWLIST-}
+        VITE_ALLOW_INSECURE_SERVICES: ${VITE_ALLOW_INSECURE_SERVICES-}
+    restart: unless-stopped
+    networks:
+      - edge
+
+  stripe-backend:
+    build:
+      context: ..
+      dockerfile: deploy/services.Dockerfile
+    command: ['node', 'server.cjs']
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4242
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PRICE_ID_MONTHLY: ${STRIPE_PRICE_ID_MONTHLY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET-}
+      # Allow only your app origin (no hash/path)
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      # Optional: if set, upstream expects x-api-key
+      API_KEY: ${STRIPE_API_KEY-}
+    expose:
+      - '4242'
+    networks:
+      - edge
+
+  print-server:
+    build:
+      context: ..
+      dockerfile: deploy/services.Dockerfile
+    command: ['node', 'printer-server.cjs']
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4243
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      # Optional: if set, upstream expects x-api-key
+      API_KEY: ${PRINT_API_KEY-}
+      PRINT_TRANSPORT: ${PRINT_TRANSPORT-stdout}
+      PRINTER_HOST: ${PRINTER_HOST-}
+      PRINTER_PORT: ${PRINTER_PORT-9100}
+      PRINTER_NAME: ${PRINTER_NAME-}
+    expose:
+      - '4243'
+    networks:
+      - edge
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  edge:
+    driver: bridge
