@@ -38,6 +38,15 @@ Bu doküman, repodaki eksikleri/yanlışları tespit edip düzeltirken ilerlemey
   - `authState` localStorage’a yazılırken `user.passwordHash` persist edilmez.
   - localStorage’dan okurken hydrate edilir ve `passwordHash` zorunlu olarak temizlenir.
 
+- ✅ Login/Kayıt için insan doğrulama (Cloudflare Turnstile)
+  - Frontend’de `VITE_TURNSTILE_SITE_KEY` set edilirse widget görünür.
+  - Core API’de `TURNSTILE_ENABLED=true` iken token doğrulaması zorunlu.
+  - Doğrulama hatalarında UI token’ı sıfırlayıp yeniden denemeyi kolaylaştırır.
+
+- ✅ API hata kodlarını UI’da daha net göster
+  - `apiFetch()` JSON `{error: "..."}` gövdesini ayrıştırıp `ApiError` ile taşır.
+  - Login/kayıt ekranları `HUMAN_VERIFICATION_*` gibi kodlara özel mesaj verir.
+
 - ✅ Örnek webhook sunucusu ESM/CJS uyumu + CORS kısıtlama
   - Repo `type: module` olduğu için örnek server `server.cjs` olarak tutulur.
   - CORS varsayılanı wildcard değil; `CORS_ORIGINS` env ile whitelist.

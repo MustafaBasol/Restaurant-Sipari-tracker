@@ -27,6 +27,17 @@
 - Her API request’ine `x-session-id: <sessionId>` header’ı ekler.
 - API ayrıca alternatif olarak `Authorization: session <id>` formatını da kabul eder.
 
+## İnsan doğrulama (Turnstile)
+
+- Frontend login/kayıt ekranlarında `VITE_TURNSTILE_SITE_KEY` set edilirse Turnstile widget’ı gösterir ve token üretir.
+- Token, auth request body içinde `turnstileToken` alanıyla API’ye gönderilir.
+- Core API’de `TURNSTILE_ENABLED=true` ise token doğrulaması zorunludur.
+
+## API hata modeli (frontend)
+
+Frontend `apiFetch()` gerçek API’den gelen `{ "error": "..." }` gövdesini ayrıştırır ve `ApiError` (status + code) olarak fırlatır.
+Login/kayıt ekranları bu `code` değerine göre daha net mesaj gösterir.
+
 ## Tenant izolasyonu ve RBAC
 
 - API her request’te session’dan `tenantId` + `role` bağlamını çıkarır.

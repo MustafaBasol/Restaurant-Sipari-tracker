@@ -41,6 +41,17 @@ Bu repo demo/POC odaklı olsa da, **prod ortamında** yanlış yapılandırma ka
 
 Örnek dosya: `.env.example`
 
+### Core API (`services/api`)
+
+- `DATABASE_URL` (zorunlu)
+- `CORS_ORIGINS` (zorunlu; origin allowlist)
+- `SESSION_TTL_DAYS` (opsiyonel)
+- `TURNSTILE_ENABLED` (opsiyonel)
+  - `true` ise, `POST /api/auth/login` ve `POST /api/auth/register-tenant` için insan doğrulaması zorunlu olur.
+- `TURNSTILE_SECRET_KEY` (TURNSTILE_ENABLED=true iken pratikte zorunlu)
+
+Not: `TURNSTILE_ENABLED=true` iken secret key yoksa API 500 döner (misconfiguration).
+
 ### Print Server (`printer-server.cjs`)
 
 - `CORS_ORIGINS` (zorunlu)

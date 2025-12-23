@@ -71,6 +71,20 @@ Login ve kayıt ekranlarında insan doğrulaması için Turnstile desteği vard�
 - Frontend: `VITE_TURNSTILE_SITE_KEY` set edilirse widget görünür ve token gönderilir.
 - Backend: `TURNSTILE_ENABLED=true` ve `TURNSTILE_SECRET_KEY` set edilirse token doğrulaması zorunlu olur.
 
+### Auth hata kodları (gerçek API)
+
+Core API, auth endpoint’lerinde hata durumunda JSON olarak `{ "error": "..." }` döner.
+Frontend tarafında `apiFetch()` bu kodu `ApiError.code` olarak taşır ve login/kayıt ekranları bu koda göre kullanıcıya mesaj gösterir.
+
+Öne çıkan kodlar:
+
+- `HUMAN_VERIFICATION_REQUIRED`: Turnstile token gönderilmedi.
+- `HUMAN_VERIFICATION_FAILED`: Turnstile doğrulaması başarısız.
+- `INVALID_CREDENTIALS`: Giriş bilgileri hatalı.
+- `ALREADY_EXISTS`: Kayıtta tenant slug veya e-posta zaten kullanımda.
+
+Not: Login/kayıt başarısız olursa Turnstile widget resetlenir.
+
 Sonra:
 
 ```bash
