@@ -33,6 +33,34 @@
 - Token, auth request body içinde `turnstileToken` alanıyla API’ye gönderilir.
 - Core API’de `TURNSTILE_ENABLED=true` ise token doğrulaması zorunludur.
 
+## E-posta doğrulama + şifre sıfırlama (MailerSend)
+
+Core API tenant kullanıcıları için e-posta doğrulaması uygular ve şifre sıfırlama akışı sunar.
+
+### Register (gerçek API modu)
+
+- `POST /api/auth/register-tenant` yeni tenant + admin kullanıcı oluşturur.
+- Kullanıcı için `emailVerificationTokenHash` + expiry set edilir (token DB’de plaintext tutulmaz).
+- MailerSend açıksa doğrulama e-postası gönderilir.
+- API, e-posta doğrulanana kadar session oluşturmaz ve `{ emailVerificationRequired: true }` döner.
+
+### Login
+
+- `POST /api/auth/login` tenant kullanıcılarında `emailVerifiedAt` yoksa `EMAIL_NOT_VERIFIED` döndürür.
+
+### Verify
+
+- Frontend linki: `/#/verify-email?token=...`
+- Frontend, `POST /api/auth/verify-email` ile doğrulama yapar.
+- API token’ı hash’leyip DB’deki hash ile karşılaştırır ve expiry kontrolü yapar.
+
+### Password reset
+
+- İstek ekranı: `/#/forgot-password` → `POST /api/auth/request-password-reset`
+  - Hesap var/yok ayrımı yapılmaz; her zaman OK döner.
+- Reset linki: `/#/reset-password?token=...` → `POST /api/auth/reset-password`
+  - Başarılı olursa kullanıcı şifresi güncellenir ve mevcut session’lar best-effort revoke edilir.
+
 ## API hata modeli (frontend)
 
 Frontend `apiFetch()` gerçek API’den gelen `{ "error": "..." }` gövdesini ayrıştırır ve `ApiError` (status + code) olarak fırlatır.

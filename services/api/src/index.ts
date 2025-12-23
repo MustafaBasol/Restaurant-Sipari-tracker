@@ -7,6 +7,8 @@ import pinoHttp from 'pino-http';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import { sendEmail } from './mailerSend.js';
 
 const prisma = new PrismaClient();
 
@@ -71,6 +73,10 @@ const PORT = Number(process.env.PORT ?? 4000);
 
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS ?? 30);
 
+const APP_PUBLIC_URL = (process.env.APP_PUBLIC_URL ?? '').trim();
+const EMAIL_VERIFICATION_TTL_MINUTES = Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? 60);
+const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 30);
+
 const TURNSTILE_ENABLED = (process.env.TURNSTILE_ENABLED ?? '').toLowerCase() === 'true';
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? '';
 
@@ -91,6 +97,35 @@ const verifyTurnstileToken = async (token: string, remoteIp?: string | null): Pr
   if (!resp.ok) return false;
   const data = (await resp.json().catch(() => null)) as null | { success?: boolean };
   return Boolean(data?.success);
+};
+
+const generateToken = (): string => crypto.randomBytes(32).toString('hex');
+const hashToken = (token: string): string =>
+  crypto.createHash('sha256').update(token).digest('hex');
+
+const buildHashRouteUrl = (route: string, params: Record<string, string>): string => {
+  if (!APP_PUBLIC_URL) {
+    throw new Error('APP_PUBLIC_URL_MISSING');
+  }
+  const q = new URLSearchParams(params);
+  const base = APP_PUBLIC_URL.replace(/\/+$/, '');
+  return `${base}/#/${route}?${q.toString()}`;
+};
+
+const sendVerificationEmail = async (user: { email: string; fullName: string }, token: string) => {
+  const url = buildHashRouteUrl('verify-email', { token });
+  const subject = 'E-posta doğrulama';
+  const text = `Merhaba ${user.fullName},\n\nHesabınızı doğrulamak için bu bağlantıyı açın: ${url}\n\nBu bağlantı belirli bir süre sonra geçersiz olur.`;
+  const html = `<p>Merhaba ${user.fullName},</p><p>Hesabınızı doğrulamak için aşağıdaki bağlantıyı açın:</p><p><a href="${url}">${url}</a></p><p>Bu bağlantı belirli bir süre sonra geçersiz olur.</p>`;
+  await sendEmail({ toEmail: user.email, toName: user.fullName, subject, text, html });
+};
+
+const sendPasswordResetEmail = async (user: { email: string; fullName: string }, token: string) => {
+  const url = buildHashRouteUrl('reset-password', { token });
+  const subject = 'Şifre sıfırlama';
+  const text = `Merhaba ${user.fullName},\n\nŞifrenizi sıfırlamak için bu bağlantıyı açın: ${url}\n\nEğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.`;
+  const html = `<p>Merhaba ${user.fullName},</p><p>Şifrenizi sıfırlamak için aşağıdaki bağlantıyı açın:</p><p><a href="${url}">${url}</a></p><p>Eğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>`;
+  await sendEmail({ toEmail: user.email, toName: user.fullName, subject, text, html });
 };
 
 const requireHumanVerification = async (
@@ -299,6 +334,12 @@ app.post('/api/auth/login', async (req, res) => {
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (!user) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
+  // Require verified email for tenant users.
+  // NOTE: Some editor TS setups may cache older Prisma Client types; keep this access resilient.
+  if (user.role !== 'SUPER_ADMIN' && !(user as any).emailVerifiedAt) {
+    return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED' });
+  }
+
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
@@ -344,7 +385,7 @@ app.post('/api/auth/register-tenant', async (req, res) => {
     adminFullName,
     adminEmail,
     adminPassword,
-    deviceId,
+    deviceId: _deviceId,
     turnstileToken,
   } = parsed.data;
 
@@ -359,6 +400,10 @@ app.post('/api/auth/register-tenant', async (req, res) => {
   trialEndAt.setDate(now.getDate() + 7);
 
   const passwordHash = await bcrypt.hash(adminPassword, 12);
+
+  const emailToken = generateToken();
+  const emailTokenHash = hashToken(emailToken);
+  const emailTokenExpiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000);
 
   const tenant = await prisma.tenant.create({
     data: {
@@ -380,22 +425,165 @@ app.post('/api/auth/register-tenant', async (req, res) => {
       fullName: adminFullName,
       email: adminEmail.toLowerCase(),
       passwordHash,
+      emailVerifiedAt: null,
+      emailVerificationTokenHash: emailTokenHash,
+      emailVerificationExpiresAt: emailTokenExpiresAt,
       role: 'ADMIN',
       isActive: true,
-    },
+    } as any,
   });
 
-  const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
-  const session = await prisma.userSession.create({
+  // Send verification email (registration is considered successful even if email sending fails).
+  try {
+    await sendVerificationEmail({ email: user.email, fullName: user.fullName }, emailToken);
+  } catch (e) {
+    req.log?.error({ err: e, msg: 'Failed to send verification email' });
+  }
+
+  // Do NOT create a session until email is verified.
+  return res.status(201).json({ emailVerificationRequired: true });
+});
+
+const resendVerificationSchema = z.object({
+  email: z.string().email(),
+});
+
+app.post('/api/auth/resend-verification', async (req, res) => {
+  const parsed = resendVerificationSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const email = parsed.data.email.toLowerCase();
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return res.json(true);
+  if (user.role === 'SUPER_ADMIN') return res.json(true);
+  if ((user as any).emailVerifiedAt) return res.json(true);
+
+  const token = generateToken();
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000);
+
+  await prisma.user.update({
+    where: { id: user.id },
     data: {
-      userId: user.id,
-      tenantId: tenant.id,
-      deviceId,
-      expiresAt,
-    },
+      emailVerificationTokenHash: tokenHash,
+      emailVerificationExpiresAt: expiresAt,
+    } as any,
   });
 
-  return res.json({ user, tenant, sessionId: session.id, deviceId });
+  try {
+    await sendVerificationEmail({ email: user.email, fullName: user.fullName }, token);
+  } catch (e) {
+    req.log?.error({ err: e, msg: 'Failed to resend verification email' });
+  }
+
+  return res.json(true);
+});
+
+const verifyEmailSchema = z.object({
+  token: z.string().min(10),
+});
+
+app.post('/api/auth/verify-email', async (req, res) => {
+  const parsed = verifyEmailSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const tokenHash = hashToken(parsed.data.token);
+  const user = await prisma.user.findFirst({
+    where: {
+      emailVerificationTokenHash: tokenHash,
+      emailVerificationExpiresAt: { gt: new Date() },
+    } as any,
+  });
+
+  if (!user) return res.status(400).json({ error: 'INVALID_OR_EXPIRED_TOKEN' });
+  if (user.role === 'SUPER_ADMIN') return res.json(true);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerifiedAt: new Date(),
+      emailVerificationTokenHash: null,
+      emailVerificationExpiresAt: null,
+    } as any,
+  });
+
+  return res.json(true);
+});
+
+const requestPasswordResetSchema = z.object({
+  email: z.string().email(),
+});
+
+app.post('/api/auth/request-password-reset', async (req, res) => {
+  const parsed = requestPasswordResetSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const email = parsed.data.email.toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Always return OK to avoid account enumeration.
+  if (!user) return res.json(true);
+  if (user.role === 'SUPER_ADMIN') return res.json(true);
+  if (!(user as any).emailVerifiedAt) return res.json(true);
+
+  const token = generateToken();
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: expiresAt,
+    } as any,
+  });
+
+  try {
+    await sendPasswordResetEmail({ email: user.email, fullName: user.fullName }, token);
+  } catch (e) {
+    req.log?.error({ err: e, msg: 'Failed to send password reset email' });
+  }
+
+  return res.json(true);
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(10),
+  newPassword: z.string().min(6),
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const tokenHash = hashToken(parsed.data.token);
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: { gt: new Date() },
+    } as any,
+  });
+  if (!user) return res.status(400).json({ error: 'INVALID_OR_EXPIRED_TOKEN' });
+  if (user.role === 'SUPER_ADMIN') return res.json(true);
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+    } as any,
+  });
+
+  // Best-effort: revoke all sessions for this user.
+  await prisma.userSession.updateMany({
+    where: { userId: user.id, revokedAt: null },
+    data: { revokedAt: new Date(), revokedByUserId: user.id },
+  });
+
+  return res.json(true);
 });
 
 app.post('/api/auth/sessions/:sessionId/logout', requireAuth, async (req, res) => {

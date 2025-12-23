@@ -85,6 +85,41 @@ Frontend tarafında `apiFetch()` bu kodu `ApiError.code` olarak taşır ve login
 
 Not: Login/kayıt başarısız olursa Turnstile widget resetlenir.
 
+## E-posta doğrulama + şifre sıfırlama (MailerSend)
+
+Gerçek API modunda (yani `VITE_API_BASE_URL` set ise) kayıt ve giriş akışı şu şekilde işler:
+
+- `POST /api/auth/register-tenant` başarılı olursa API **session oluşturmaz** ve `{ emailVerificationRequired: true }` döner.
+- Kullanıcıya bir doğrulama e-postası gönderilir; kullanıcı linke tıklayınca `#/verify-email?token=...` sayfası doğrulama yapar.
+- Doğrulanmamış kullanıcı login olmaya çalışırsa API `EMAIL_NOT_VERIFIED` döndürür.
+
+Bu özellikleri test etmek için MailerSend’i konfigüre etmeniz gerekir; token’lar DB’de sadece **hash** olarak tutulduğu için (güvenlik) e-postanın gönderilmesi pratikte zorunludur.
+
+### Core API env (MailerSend)
+
+Örnek dosya: `services/api/.env.example`
+
+- `MAILERSEND_ENABLED=true`
+- `MAILERSEND_API_KEY=...`
+- `MAILERSEND_FROM_EMAIL=no-reply@...`
+- `MAILERSEND_FROM_NAME=Kitchorify` (opsiyonel)
+- `APP_PUBLIC_URL=http://localhost:3000`
+- `EMAIL_VERIFICATION_TTL_MINUTES=60` (opsiyonel)
+- `PASSWORD_RESET_TTL_MINUTES=30` (opsiyonel)
+
+### Frontend akışı (hash router)
+
+- Doğrulama linki: `/#/verify-email?token=...`
+- Şifre sıfırlama isteği: `/#/forgot-password`
+- Şifre sıfırlama linki: `/#/reset-password?token=...`
+
+### Yeni auth endpoint’leri (Core API)
+
+- `POST /api/auth/resend-verification` (`{ email }`)
+- `POST /api/auth/verify-email` (`{ token }`)
+- `POST /api/auth/request-password-reset` (`{ email }`)
+- `POST /api/auth/reset-password` (`{ token, newPassword }`)
+
 Sonra:
 
 ```bash

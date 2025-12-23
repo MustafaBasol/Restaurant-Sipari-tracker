@@ -52,6 +52,27 @@ Bu repo demo/POC odaklı olsa da, **prod ortamında** yanlış yapılandırma ka
 
 Not: `TURNSTILE_ENABLED=true` iken secret key yoksa API 500 döner (misconfiguration).
 
+#### E-posta (MailerSend) — doğrulama + şifre sıfırlama
+
+Core API, tenant kullanıcıları için e-posta doğrulaması ve şifre sıfırlama akışı destekler.
+
+- `MAILERSEND_ENABLED` (opsiyonel)
+  - `true` ise MailerSend üzerinden e-posta gönderilir.
+- `MAILERSEND_API_KEY` (MAILERSEND_ENABLED=true iken pratikte zorunlu)
+- `MAILERSEND_FROM_EMAIL` (MAILERSEND_ENABLED=true iken pratikte zorunlu)
+- `MAILERSEND_FROM_NAME` (opsiyonel)
+- `APP_PUBLIC_URL` (MAILERSEND_ENABLED=true iken pratikte zorunlu)
+  - E-posta linklerinin yönleneceği frontend base URL.
+  - Hash router kullandığımız için linkler `/#/verify-email?token=...` ve `/#/reset-password?token=...` şeklinde üretilir.
+- `EMAIL_VERIFICATION_TTL_MINUTES` (opsiyonel, varsayılan 60)
+- `PASSWORD_RESET_TTL_MINUTES` (opsiyonel, varsayılan 30)
+
+Güvenlik notları:
+
+- Tokenlar DB’de **hash’li** saklanır; plaintext token yalnızca e-posta linkinde bulunur.
+- `request-password-reset` endpoint’i hesap var/yok bilgisini sızdırmamak için her zaman başarı döner (enumeration azaltma).
+- Şifre sıfırlama başarılı olursa mevcut session’lar best-effort revoke edilir.
+
 ### Print Server (`printer-server.cjs`)
 
 - `CORS_ORIGINS` (zorunlu)

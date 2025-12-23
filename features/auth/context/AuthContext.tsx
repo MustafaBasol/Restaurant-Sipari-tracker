@@ -134,13 +134,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       const response = await api.registerTenant(payload);
-      if (response) {
-        const sanitized = sanitizeAuthStateForStorage(response);
-        setAuthState(sanitized);
-        localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
+      if (!response) return false;
+
+      // Real API mode may require email verification and return no session.
+      if ((response as any).emailVerificationRequired) {
         return true;
       }
-      return false;
+
+      const sanitized = sanitizeAuthStateForStorage(response as any);
+      setAuthState(sanitized);
+      localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
+      return true;
     } finally {
       setIsLoading(false);
     }

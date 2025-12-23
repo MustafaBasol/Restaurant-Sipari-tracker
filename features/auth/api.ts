@@ -4,6 +4,10 @@ import { getDeviceId } from '../../shared/lib/device';
 
 export type RegisterPayload = mockApi.RegisterPayload;
 
+export type RegisterResult =
+  | ({ emailVerificationRequired: true } & Record<string, unknown>)
+  | (Awaited<ReturnType<typeof mockApi.registerTenant>> extends infer R ? R : never);
+
 export const login: typeof mockApi.login = async (email, passwordOrSlug, turnstileToken) => {
   if (!isRealApiEnabled()) return mockApi.login(email, passwordOrSlug, turnstileToken);
   const response = await apiFetch<any>('/auth/login', {
@@ -19,14 +23,60 @@ export const login: typeof mockApi.login = async (email, passwordOrSlug, turnsti
   return response;
 };
 
-export const registerTenant: typeof mockApi.registerTenant = async (payload) => {
+export const registerTenant = async (payload: RegisterPayload): Promise<RegisterResult> => {
   if (!isRealApiEnabled()) return mockApi.registerTenant(payload);
   const response = await apiFetch<any>('/auth/register-tenant', {
     method: 'POST',
     body: JSON.stringify({ ...payload, deviceId: getDeviceId() }),
     skipAuth: true,
   });
-  return response;
+
+  // Real API mode: register returns no session; it requires email verification.
+  if (
+    response &&
+    typeof response === 'object' &&
+    (response as any).emailVerificationRequired === true
+  ) {
+    return { emailVerificationRequired: true };
+  }
+
+  return response as RegisterResult;
+};
+
+export const resendVerificationEmail = async (email: string): Promise<boolean> => {
+  if (!isRealApiEnabled()) return true;
+  return apiFetch<boolean>('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    skipAuth: true,
+  });
+};
+
+export const verifyEmail = async (token: string): Promise<boolean> => {
+  if (!isRealApiEnabled()) return true;
+  return apiFetch<boolean>('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+    skipAuth: true,
+  });
+};
+
+export const requestPasswordReset = async (email: string): Promise<boolean> => {
+  if (!isRealApiEnabled()) return true;
+  return apiFetch<boolean>('/auth/request-password-reset', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    skipAuth: true,
+  });
+};
+
+export const resetPassword = async (token: string, newPassword: string): Promise<boolean> => {
+  if (!isRealApiEnabled()) return true;
+  return apiFetch<boolean>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+    skipAuth: true,
+  });
 };
 
 export const logoutSession: typeof mockApi.logoutSession = async (sessionId) => {

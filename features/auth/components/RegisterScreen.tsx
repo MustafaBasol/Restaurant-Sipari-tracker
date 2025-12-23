@@ -7,6 +7,7 @@ import { Card } from '../../../shared/components/ui/Card';
 import AuthHeader from './AuthHeader';
 import { loadTurnstile } from '../../../shared/lib/turnstile';
 import { ApiError } from '../../../shared/lib/runtimeApi';
+import { isRealApiEnabled } from '../../../shared/lib/runtimeApi';
 
 const RegisterScreen: React.FC = () => {
   const { register, isLoading } = useAuth();
@@ -17,6 +18,14 @@ const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const setAuthFlash = (messageKey: string) => {
+    try {
+      localStorage.setItem('authFlash', messageKey);
+    } catch {
+      // ignore
+    }
+  };
 
   const turnstileSiteKey = useMemo(() => import.meta.env.VITE_TURNSTILE_SITE_KEY, []);
   const isHumanVerificationEnabled = Boolean(turnstileSiteKey);
@@ -116,7 +125,12 @@ const RegisterScreen: React.FC = () => {
       });
 
       if (success) {
-        window.location.hash = '#/app';
+        if (isRealApiEnabled()) {
+          setAuthFlash('auth.checkEmailForVerification');
+          window.location.hash = '#/login';
+        } else {
+          window.location.hash = '#/app';
+        }
       } else {
         setError(t('auth.register.failed'));
         resetTurnstile();

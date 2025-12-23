@@ -47,6 +47,11 @@ Bu doküman, repodaki eksikleri/yanlışları tespit edip düzeltirken ilerlemey
   - `apiFetch()` JSON `{error: "..."}` gövdesini ayrıştırıp `ApiError` ile taşır.
   - Login/kayıt ekranları `HUMAN_VERIFICATION_*` gibi kodlara özel mesaj verir.
 
+- ✅ E-posta doğrulama + şifre sıfırlama (MailerSend)
+  - Register sonrası session verilmez; e-posta doğrulaması zorunludur.
+  - Şifre sıfırlama isteği hesap var/yok sızdırmaz (enumeration azaltma).
+  - Tokenlar DB’de hash’li saklanır; TTL ile expire olur.
+
 - ✅ Örnek webhook sunucusu ESM/CJS uyumu + CORS kısıtlama
   - Repo `type: module` olduğu için örnek server `server.cjs` olarak tutulur.
   - CORS varsayılanı wildcard değil; `CORS_ORIGINS` env ile whitelist.

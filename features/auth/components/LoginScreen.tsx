@@ -15,12 +15,24 @@ const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('waiter@sunsetbistro.com');
   const [password, setPassword] = useState('sunset-bistro');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   const turnstileSiteKey = useMemo(() => import.meta.env.VITE_TURNSTILE_SITE_KEY, []);
   const isHumanVerificationEnabled = Boolean(turnstileSiteKey);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const key = localStorage.getItem('authFlash');
+      if (!key) return;
+      localStorage.removeItem('authFlash');
+      setInfo(t(key));
+    } catch {
+      // ignore
+    }
+  }, [t]);
 
   useEffect(() => {
     if (!isHumanVerificationEnabled) return;
@@ -76,6 +88,7 @@ const LoginScreen: React.FC = () => {
     if (err instanceof ApiError) {
       if (err.code === 'HUMAN_VERIFICATION_REQUIRED') return t('auth.humanVerificationRequired');
       if (err.code === 'HUMAN_VERIFICATION_FAILED') return t('auth.humanVerificationFailed');
+      if (err.code === 'EMAIL_NOT_VERIFIED') return t('auth.emailNotVerified');
       if (err.code === 'INVALID_CREDENTIALS') return t('auth.loginFailed');
     }
     return t('auth.loginFailed');
@@ -146,7 +159,17 @@ const LoginScreen: React.FC = () => {
               <p className="text-xs text-text-secondary mt-1">
                 Hint: Use tenant slug as password for demo.
               </p>
+              <div className="mt-2 text-right">
+                <button
+                  type="button"
+                  className="text-sm text-accent hover:underline"
+                  onClick={() => (window.location.hash = '#/forgot-password')}
+                >
+                  {t('auth.forgotPassword')}
+                </button>
+              </div>
             </div>
+            {info && <p className="text-sm text-text-secondary mb-4 text-center">{info}</p>}
             {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
 
             {isHumanVerificationEnabled && (

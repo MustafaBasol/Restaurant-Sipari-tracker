@@ -136,6 +136,14 @@ model User {
   fullName   String
   email      String   @unique
   passwordHash String
+
+  emailVerifiedAt DateTime?
+  emailVerificationTokenHash String?
+  emailVerificationExpiresAt DateTime?
+
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+
   role       UserRole
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())

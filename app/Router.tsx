@@ -18,6 +18,13 @@ const getStoredLanguagePreference = (): 'en' | 'tr' | 'fr' | null => {
 // Lazy load components for better performance
 const LoginScreen = React.lazy(() => import('../features/auth/components/LoginScreen'));
 const RegisterScreen = React.lazy(() => import('../features/auth/components/RegisterScreen'));
+const VerifyEmailScreen = React.lazy(() => import('../features/auth/components/VerifyEmailScreen'));
+const ForgotPasswordScreen = React.lazy(
+  () => import('../features/auth/components/ForgotPasswordScreen'),
+);
+const ResetPasswordScreen = React.lazy(
+  () => import('../features/auth/components/ResetPasswordScreen'),
+);
 const MainDashboard = React.lazy(() => import('../features/dashboard/components/MainDashboard'));
 const SuperAdminDashboard = React.lazy(
   () => import('../features/super-admin/components/SuperAdminDashboard'),
@@ -145,8 +152,11 @@ const AppRoutes: React.FC = () => {
       const allowed =
         canAccessLegalPage ||
         currentHash === '#/' ||
-        currentHash === '#/login' ||
-        currentHash === '#/register';
+        currentHash.startsWith('#/login') ||
+        currentHash.startsWith('#/register') ||
+        currentHash.startsWith('#/verify-email') ||
+        currentHash.startsWith('#/forgot-password') ||
+        currentHash.startsWith('#/reset-password');
 
       if (!allowed) {
         next = '#/';
@@ -212,6 +222,9 @@ const AppRoutes: React.FC = () => {
   }
   if (currentHash === '#/login') return <LoginScreen />;
   if (currentHash === '#/register') return <RegisterScreen />;
+  if (currentHash.startsWith('#/verify-email')) return <VerifyEmailScreen />;
+  if (currentHash.startsWith('#/forgot-password')) return <ForgotPasswordScreen />;
+  if (currentHash.startsWith('#/reset-password')) return <ResetPasswordScreen />;
   return <HomePage />;
 };
 
