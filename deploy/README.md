@@ -4,15 +4,19 @@ Bu klasör, Ubuntu 24.04 VPS üzerinde güvenli (TLS/HTTPS) şekilde çalıştı
 
 ## Mimari
 
-- `caddy` (edge): 80/443 dinler, TLS sertifikasını otomatik alır, `/stripe/*` ve `/print/*` isteklerini iç servislerine proxy’ler.
+- `caddy` (edge): 80/443 dinler, TLS sertifikasını otomatik alır ve `/stripe/*` isteklerini iç servislerine proxy’ler.
 - `web`: Vite build çıktısını statik olarak servis eder.
 - `stripe-backend`: `server.cjs` (Stripe demo backend)
-- `print-server`: `printer-server.cjs` (opsiyonel)
+- `print-server`: `printer-server.cjs` (opsiyonel, varsayılan kapalı)
 
 Önerilen yaklaşım: frontend servis URL’lerini **same-origin path** olarak ayarlamak:
 
 - `VITE_STRIPE_BACKEND_URL=https://<domain>/stripe`
-- `VITE_PRINT_SERVER_URL=https://<domain>/print`
+
+Print Server için:
+
+- Önerilen: Print Server’ı restoran LAN/VPN içinde çalıştırın.
+- VPS üzerinde varsayılan olarak **public route yoktur** (internet üzerinden erişmez).
 
 Bu sayede frontend’deki origin allowlist varsayılanı (prod’da same-origin) ile uyumlu olur.
 
@@ -21,6 +25,7 @@ Bu sayede frontend’deki origin allowlist varsayılanı (prod’da same-origin)
 Aşağıdakileri bilmeniz gerekiyor:
 
 - Domain: `app.example.com`
+- Domain: `kitchorify.com`
 - TLS için e-posta: `admin@example.com`
 - Stripe secret key + price id
 
@@ -69,8 +74,27 @@ nano .env.production
 
 Opsiyonel güvenlik:
 
-- `STRIPE_API_KEY`, `PRINT_API_KEY` set ederseniz Caddy bu anahtarları upstream’e enjekte eder.
+- `STRIPE_API_KEY` set ederseniz Caddy bu anahtarı upstream’e enjekte eder.
   - Böylece browser tarafına secret gitmeden endpoint’ler korunur.
+
+## Print Server (opsiyonel)
+
+Print Server’ın internetten erişilebilir olmasına gerek yoksa (önerilen):
+
+- Print Server’ı restoran içindeki bir cihazda/LAN’da çalıştırın.
+- Gerekirse cihazlarda `VITE_PRINT_SERVER_URL` tenant ayarı ile LAN URL’sine yönlendirin.
+
+Eğer VPS üzerinde **bilinçli olarak** çalıştırmak isterseniz:
+
+1. Compose ile `print` profilini açın:
+
+```bash
+docker compose --env-file .env.production --profile print up -d --build
+```
+
+2. Reverse proxy ile `/print/*` route’unu açmanız gerekir (bu repo içindeki [deploy/Caddyfile](deploy/Caddyfile) içinde varsayılan kapalıdır).
+
+3. Frontend’e `VITE_PRINT_SERVER_URL=https://<domain>/print` verin.
 
 ## 4) Çalıştır
 

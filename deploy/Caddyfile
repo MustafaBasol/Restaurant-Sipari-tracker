@@ -29,13 +29,9 @@
 		}
 	}
 
-	# Print server under same-origin prefix.
-	# Frontend should use: https://<domain>/print
-	handle_path /print/* {
-		reverse_proxy print-server:4243 {
-			header_up x-api-key {$PRINT_API_KEY}
-		}
-	}
+	# NOTE: Print server is intentionally NOT exposed by default.
+	# If you want remote printing, consider running the print server on a private network/VPN.
+	# Only expose it publicly if you fully understand the security implications.
 
 	# Optional: basic health endpoint
 	handle /health {
