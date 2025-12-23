@@ -30,18 +30,50 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildOriginMatcher = (patterns) => {
+  const exact = new Set();
+  const wildcards = [];
+
+  for (const raw of patterns) {
+    const p = String(raw || '').trim();
+    if (!p) continue;
+    if (p.includes('*')) {
+      const rx = new RegExp(`^${escapeRegExp(p).replace(/\\\*/g, '.*')}$`);
+      wildcards.push(rx);
+    } else {
+      exact.add(p);
+    }
+  }
+
+  return (origin) => {
+    if (!origin) return true;
+    if (exact.has(origin)) return true;
+    return wildcards.some((rx) => rx.test(origin));
+  };
+};
+
+const allowedOriginPatterns = (process.env.CORS_ORIGINS || 'http://localhost:3000')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
+
+const isOriginAllowed = buildOriginMatcher(allowedOriginPatterns);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow non-browser requests (no Origin header), e.g., Stripe webhooks.
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      if (isOriginAllowed(origin)) return callback(null, true);
+      return callback(
+        new Error(
+          `CORS blocked for origin: ${origin}. Allowed origins/patterns: ${allowedOriginPatterns.join(
+            ', ',
+          )}`,
+        ),
+      );
     },
   }),
 );

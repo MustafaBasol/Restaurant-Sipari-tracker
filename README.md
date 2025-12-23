@@ -203,6 +203,9 @@ VITE_STRIPE_BACKEND_URL=https://<codespace>-4242.app.github.dev
   - ✅ `https://<codespace>-3000.app.github.dev`
   - ❌ `https://<codespace>-3000.app.github.dev/#/app`
 
+- (Demo kolaylığı) `server.cjs`, `CORS_ORIGINS` için `*` wildcard destekler:
+  - Örn: `CORS_ORIGINS=https://*.app.github.dev`
+
 ### Demo Aktivasyon Notu
 
 - Ödeme dönüşü (success) sonrasında tenant’ı ACTIVE yapan kısım şu an **demo amaçlı mock**tur.
