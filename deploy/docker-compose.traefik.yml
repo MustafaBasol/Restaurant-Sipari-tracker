@@ -23,7 +23,7 @@ services:
       - traefik.http.routers.kitchorify-web.entrypoints=websecure
       - traefik.http.routers.kitchorify-web.tls=true
       - traefik.http.routers.kitchorify-web.tls.certresolver=mytlschallenge
-      - traefik.http.routers.kitchorify-web.priority=1
+      - traefik.http.routers.kitchorify-web.priority=1000
       - traefik.http.services.kitchorify-web.loadbalancer.server.port=80
     logging:
       driver: json-file
