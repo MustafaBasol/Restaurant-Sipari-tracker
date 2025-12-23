@@ -2,6 +2,10 @@
 
 Bu klasör, Ubuntu 24.04 VPS üzerinde güvenli (TLS/HTTPS) şekilde çalıştırmak için örnek bir kurulum sağlar.
 
+> Not: VPS'inizde zaten Traefik (veya başka bir reverse proxy) 80/443'ü kullanıyorsa,
+> bu klasördeki varsayılan `docker-compose.yml` (Caddy) 80/443'e bind etmeye çalışacağı için çakışır.
+> Bu durumda Caddy yerine Traefik ile çalışan alternatif compose dosyasını kullanın: `docker-compose.traefik.yml`.
+
 ## Mimari
 
 - `caddy` (edge): 80/443 dinler, TLS sertifikasını otomatik alır ve `/stripe/*` isteklerini iç servislerine proxy’ler.
@@ -118,6 +122,27 @@ docker compose --env-file .env.production --profile print up -d --build
 ```bash
 docker compose --env-file .env.production up -d --build
 ```
+
+## Traefik ile kurulum (80/443 zaten Traefik'te ise)
+
+Ön koşullar:
+
+- Traefik'in Docker provider'ı açık olmalı ve `exposedbydefault=false` ise container'lar için `traefik.enable=true` label'ı gerekir.
+- Traefik'in bağlı olduğu docker network adı bilinmeli. Bu repodaki Traefik compose örneği için varsayılan: `traefik-net`.
+- Bu repo `deploy/docker-compose.traefik.yml` dosyası Traefik'in `mytlschallenge` resolver adını kullanır.
+  - Sizde farklıysa, dosyada `tls.certresolver=` değerini mevcut resolver adınızla değiştirin.
+
+Çalıştırma:
+
+```bash
+# aynı env dosyası kullanılabilir
+docker compose -f docker-compose.traefik.yml --env-file .env.production up -d --build
+```
+
+Notlar:
+
+- Bu modda hiçbir servis `ports:` ile host'a publish edilmez; routing tamamen Traefik label'larıyla yapılır.
+- `DOMAIN` değişkeni Traefik router rule'larında Host() için kullanılır (örn: `kitchorify.com`).
 
 Not: Compose dosyasında (json-file driver) container log’ları için temel bir rotation ayarı vardır (diskin log ile dolma riskini azaltmak için). İsterseniz `deploy/docker-compose.yml` içindeki `max-size/max-file` değerlerini kendi ihtiyacınıza göre ayarlayın.
 

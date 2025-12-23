@@ -117,6 +117,10 @@ Bu repo artık iki modda çalışabilir:
 - `deploy/README.md` içindeki komutlarla:
   - `docker compose --env-file .env.production up -d --build`
 
+> Eğer VPS'inizde 80/443 zaten Traefik tarafından kullanılıyorsa (aynı host'ta başka siteler/n8n vb.),
+> Caddy'li compose yerine Traefik'le çalışan alternatif dosyayı kullanın:
+> `docker compose -f deploy/docker-compose.traefik.yml --env-file deploy/.env.production up -d --build`
+
 5. Sağlık kontrol
 
 - `https://kitchorify.com/health` → `ok`
