@@ -284,6 +284,7 @@
     "menu": {
       "addCategory": "Kategori Ekle",
       "editCategory": "Kategoriyi Düzenle",
+      "confirmDeleteCategory": "Bu kategoriyi silmek istiyor musunuz?",
       "categoryName": "Kategori Adı",
       "addItem": "Menü Öğesi Ekle",
       "editItem": "Menü Öğesini Düzenle",

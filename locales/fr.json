@@ -278,6 +278,7 @@
     "menu": {
       "addCategory": "Ajouter une Catégorie",
       "editCategory": "Modifier la Catégorie",
+      "confirmDeleteCategory": "Supprimer cette catégorie ?",
       "categoryName": "Nom de la Catégorie",
       "addItem": "Ajouter un Plat",
       "editItem": "Modifier le Plat",

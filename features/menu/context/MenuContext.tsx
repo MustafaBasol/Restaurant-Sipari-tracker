@@ -16,6 +16,7 @@ interface MenuContextData {
   isLoading: boolean;
   addCategory: (name: string) => Promise<void>;
   updateCategory: (category: MenuCategory) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
   addMenuItem: (item: Omit<MenuItem, 'id' | 'tenantId'>) => Promise<void>;
   updateMenuItem: (item: MenuItem) => Promise<void>;
   refetch: () => Promise<void>;
@@ -87,6 +88,8 @@ export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     handleMutation(() => api.addCategory(authState!.tenant!.id, name));
   const updateCategory = (category: MenuCategory) =>
     handleMutation(() => api.updateCategory(category));
+  const deleteCategory = (categoryId: string) =>
+    handleMutation(() => api.deleteCategory(categoryId));
   const addMenuItem = (item: Omit<MenuItem, 'id' | 'tenantId'>) =>
     handleMutation(() => api.addMenuItem(authState!.tenant!.id, item));
   const updateMenuItem = (item: MenuItem) => handleMutation(() => api.updateMenuItem(item));
@@ -99,6 +102,7 @@ export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         addCategory,
         updateCategory,
+        deleteCategory,
         addMenuItem,
         updateMenuItem,
         refetch: fetchMenuData,

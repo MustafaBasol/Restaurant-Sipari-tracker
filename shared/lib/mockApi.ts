@@ -55,6 +55,7 @@ type OutboxItem = {
   op:
     | 'addData'
     | 'updateData'
+    | 'deleteData'
     | 'internalUpdateTableStatus'
     | 'internalCreateOrder'
     | 'internalUpdateOrderItemStatus'
@@ -1081,6 +1082,31 @@ export const updateData = async <T extends { id: string }>(
   throw new Error('Item not found');
 };
 
+export const deleteData = async (dataType: keyof MockDB, id: string): Promise<{ id: string }> => {
+  await simulateDelay();
+  const table = db[dataType] as unknown as { id: string }[];
+  const index = table.findIndex((i) => i.id === id);
+  if (index === -1) throw new Error('Item not found');
+
+  table.splice(index, 1);
+
+  if (db.__meta) {
+    db.__meta.mutationCounter = (db.__meta.mutationCounter ?? 0) + 1;
+  }
+  saveDb();
+
+  if (!getIsOnline() && !isFlushingOutbox) {
+    appendOutbox({
+      id: `out_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      op: 'deleteData',
+      args: [dataType, id],
+    });
+  }
+
+  return { id };
+};
+
 // Complex mutations
 export const internalCreateOrder = async (
   tenantId: string,
@@ -2102,6 +2128,10 @@ export const flushOutbox = async (): Promise<{
         }
         case 'updateData': {
           await updateData(item.args[0] as any, item.args[1] as any);
+          break;
+        }
+        case 'deleteData': {
+          await deleteData(item.args[0] as any, item.args[1] as any);
           break;
         }
         case 'internalUpdateTableStatus': {

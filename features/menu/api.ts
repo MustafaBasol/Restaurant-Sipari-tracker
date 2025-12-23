@@ -1,4 +1,4 @@
-import { getDataByTenant, addData, updateData } from '../../shared/lib/mockApi';
+import { getDataByTenant, addData, updateData, deleteData } from '../../shared/lib/mockApi';
 import { MenuCategory, MenuItem } from './types';
 
 export const getMenuCategories = (tenantId: string) =>
@@ -11,6 +11,8 @@ export const addCategory = (tenantId: string, name: string) => {
 };
 
 export const updateCategory = (category: MenuCategory) => updateData('menuCategories', category);
+
+export const deleteCategory = (categoryId: string) => deleteData('menuCategories', categoryId);
 
 export const addMenuItem = (tenantId: string, item: Omit<MenuItem, 'id' | 'tenantId'>) => {
   const newMenuItem: MenuItem = { id: `item${Date.now()}`, tenantId, ...item };

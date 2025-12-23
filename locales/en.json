@@ -278,6 +278,7 @@
     "menu": {
       "addCategory": "Add Category",
       "editCategory": "Edit Category",
+      "confirmDeleteCategory": "Delete this category?",
       "categoryName": "Category Name",
       "addItem": "Add Menu Item",
       "editItem": "Edit Menu Item",

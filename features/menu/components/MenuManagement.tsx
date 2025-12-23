@@ -297,11 +297,20 @@ const ModifierOptionsEditor: React.FC<{
 };
 
 const MenuManagement: React.FC = () => {
-  const { menuCategories, menuItems, addCategory, addMenuItem, updateMenuItem } = useMenu();
+  const {
+    menuCategories,
+    menuItems,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addMenuItem,
+    updateMenuItem,
+  } = useMenu();
   const { t } = useLanguage();
   const { authState } = useAuth();
   const currency = authState?.tenant?.currency || 'USD';
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [newMenuItem, setNewMenuItem] = useState<Partial<MenuItem>>({
     name: '',
     description: '',
@@ -320,11 +329,36 @@ const MenuManagement: React.FC = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<MenuItem | null>(null);
 
-  const handleAddCategory = async () => {
-    if (newCategoryName.trim()) {
-      await addCategory(newCategoryName);
-      setNewCategoryName('');
+  const cancelCategoryEdit = () => {
+    setEditingCategoryId(null);
+    setNewCategoryName('');
+  };
+
+  const handleSaveCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+
+    if (editingCategoryId) {
+      const category = menuCategories.find((c) => c.id === editingCategoryId);
+      if (!category) {
+        cancelCategoryEdit();
+        return;
+      }
+      await updateCategory({ ...category, name });
+      cancelCategoryEdit();
+      return;
     }
+
+    await addCategory(name);
+    setNewCategoryName('');
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!editingCategoryId) return;
+    const ok = window.confirm(t('admin.menu.confirmDeleteCategory', 'Delete this category?'));
+    if (!ok) return;
+    await deleteCategory(editingCategoryId);
+    cancelCategoryEdit();
   };
 
   const handleAddMenuItem = async () => {
@@ -413,14 +447,49 @@ const MenuManagement: React.FC = () => {
               placeholder={t('admin.menu.categoryName')}
             />
           </div>
-          <Button onClick={handleAddCategory} className="w-full py-2">
-            {t('admin.menu.addCategory')}
-          </Button>
+          {editingCategoryId ? (
+            <div className="flex gap-2">
+              <Button onClick={handleSaveCategory} className="flex-1 py-2">
+                {t('general.save')}
+              </Button>
+              <Button onClick={handleDeleteCategory} variant="secondary" className="py-2">
+                {t('general.delete', 'Delete')}
+              </Button>
+              <Button onClick={cancelCategoryEdit} variant="secondary" className="py-2">
+                {t('general.cancel')}
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={handleSaveCategory} className="w-full py-2">
+              {t('admin.menu.addCategory')}
+            </Button>
+          )}
         </div>
         <ul className="mt-4 space-y-2">
           {menuCategories.map((cat) => (
             <li key={cat.id} className="bg-gray-100 p-3 rounded-lg text-sm">
-              {getMenuCategoryLabel(cat.name, t)}
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  className="text-left flex-1 text-text-primary hover:text-text-primary"
+                  onClick={() => {
+                    setEditingCategoryId(cat.id);
+                    setNewCategoryName(cat.name);
+                  }}
+                >
+                  {getMenuCategoryLabel(cat.name, t)}
+                </button>
+                <Button
+                  variant="secondary"
+                  className="py-1 px-2 text-xs"
+                  onClick={() => {
+                    setEditingCategoryId(cat.id);
+                    setNewCategoryName(cat.name);
+                  }}
+                >
+                  {t('general.edit')}
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
