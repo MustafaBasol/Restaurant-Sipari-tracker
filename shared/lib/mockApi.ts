@@ -842,6 +842,8 @@ export interface RegisterPayload {
   adminFullName: string;
   adminEmail: string;
   adminPassword: string;
+  // Human verification token (used only in real API mode)
+  turnstileToken?: string;
 }
 
 export const registerTenant = async (
@@ -910,6 +912,7 @@ export const registerTenant = async (
 export const login = async (
   email: string,
   passwordOrSlug: string,
+  _turnstileToken?: string,
 ): Promise<{ user: User; tenant: Tenant | null; sessionId: string; deviceId: string } | null> => {
   await simulateDelay();
   const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());

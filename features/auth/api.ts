@@ -4,11 +4,16 @@ import { getDeviceId } from '../../shared/lib/device';
 
 export type RegisterPayload = mockApi.RegisterPayload;
 
-export const login: typeof mockApi.login = async (email, passwordOrSlug) => {
-  if (!isRealApiEnabled()) return mockApi.login(email, passwordOrSlug);
+export const login: typeof mockApi.login = async (email, passwordOrSlug, turnstileToken) => {
+  if (!isRealApiEnabled()) return mockApi.login(email, passwordOrSlug, turnstileToken);
   const response = await apiFetch<any>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password: passwordOrSlug, deviceId: getDeviceId() }),
+    body: JSON.stringify({
+      email,
+      password: passwordOrSlug,
+      deviceId: getDeviceId(),
+      turnstileToken: turnstileToken ?? undefined,
+    }),
     skipAuth: true,
   });
   return response;

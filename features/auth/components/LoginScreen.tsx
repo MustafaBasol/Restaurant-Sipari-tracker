@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
@@ -6,6 +6,8 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
 import AuthHeader from './AuthHeader';
+import { loadTurnstile } from '../../../shared/lib/turnstile';
+import { ApiError } from '../../../shared/lib/runtimeApi';
 
 const LoginScreen: React.FC = () => {
   const { login, isLoading } = useAuth();
@@ -14,14 +16,90 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('sunset-bistro');
   const [error, setError] = useState('');
 
+  const turnstileSiteKey = useMemo(() => import.meta.env.VITE_TURNSTILE_SITE_KEY, []);
+  const isHumanVerificationEnabled = Boolean(turnstileSiteKey);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isHumanVerificationEnabled) return;
+    let cancelled = false;
+    let renderedWidgetId: string | null = null;
+
+    loadTurnstile()
+      .then(() => {
+        if (cancelled) return;
+        const container = turnstileContainerRef.current;
+        if (!container || !window.turnstile || !turnstileSiteKey) return;
+
+        container.innerHTML = '';
+        renderedWidgetId = window.turnstile.render(container, {
+          sitekey: turnstileSiteKey,
+          theme: 'light',
+          callback: (token) => setTurnstileToken(token),
+          'expired-callback': () => setTurnstileToken(null),
+          'error-callback': () => setTurnstileToken(null),
+        });
+
+        turnstileWidgetIdRef.current = renderedWidgetId;
+      })
+      .catch(() => {
+        setTurnstileToken(null);
+      });
+
+    return () => {
+      cancelled = true;
+      try {
+        if (renderedWidgetId && window.turnstile?.remove) {
+          window.turnstile.remove(renderedWidgetId);
+        }
+      } catch {
+        // ignore
+      }
+    };
+  }, [isHumanVerificationEnabled, turnstileSiteKey]);
+
+  const resetTurnstile = () => {
+    if (!isHumanVerificationEnabled) return;
+    try {
+      const widgetId = turnstileWidgetIdRef.current ?? undefined;
+      window.turnstile?.reset?.(widgetId);
+    } catch {
+      // ignore
+    } finally {
+      setTurnstileToken(null);
+    }
+  };
+
+  const mapAuthError = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      if (err.code === 'HUMAN_VERIFICATION_REQUIRED') return t('auth.humanVerificationRequired');
+      if (err.code === 'HUMAN_VERIFICATION_FAILED') return t('auth.humanVerificationFailed');
+      if (err.code === 'INVALID_CREDENTIALS') return t('auth.loginFailed');
+    }
+    return t('auth.loginFailed');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = await login(email, password);
-    if (success) {
-      window.location.hash = '#/app';
-    } else {
-      setError(t('auth.loginFailed'));
+    if (isHumanVerificationEnabled && !turnstileToken) {
+      setError(t('auth.humanVerificationRequired'));
+      return;
+    }
+
+    try {
+      const success = await login(email, password, turnstileToken ?? undefined);
+      if (success) {
+        window.location.hash = '#/app';
+      } else {
+        setError(t('auth.loginFailed'));
+        resetTurnstile();
+      }
+    } catch (err) {
+      setError(mapAuthError(err));
+      resetTurnstile();
     }
   };
 
@@ -70,6 +148,13 @@ const LoginScreen: React.FC = () => {
               </p>
             </div>
             {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+
+            {isHumanVerificationEnabled && (
+              <div className="mb-4 flex justify-center">
+                <div ref={turnstileContainerRef} />
+              </div>
+            )}
+
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? '...' : t('auth.signIn')}
             </Button>

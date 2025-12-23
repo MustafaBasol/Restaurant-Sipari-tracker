@@ -18,6 +18,20 @@ export const getApiBaseUrl = (): string | null => {
 
 export const isRealApiEnabled = (): boolean => Boolean(getApiBaseUrl());
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly payload?: unknown;
+
+  constructor(status: number, code: string, message?: string, payload?: unknown) {
+    super(message ?? code);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.payload = payload;
+  }
+}
+
 export type StoredAuthState = {
   sessionId?: string;
 };
@@ -60,8 +74,15 @@ export const apiFetch = async <T>(
   });
 
   if (!resp.ok) {
+    const contentType = resp.headers.get('content-type') ?? '';
+    if (contentType.includes('application/json')) {
+      const json = (await resp.json().catch(() => null)) as any;
+      const code = typeof json?.error === 'string' ? json.error : `HTTP_${resp.status}`;
+      throw new ApiError(resp.status, code, code, json);
+    }
+
     const text = await resp.text().catch(() => '');
-    throw new Error(text || `HTTP ${resp.status}`);
+    throw new ApiError(resp.status, text || `HTTP_${resp.status}`, text || `HTTP ${resp.status}`);
   }
 
   // 204

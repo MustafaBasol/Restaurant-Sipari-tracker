@@ -22,7 +22,12 @@ if (isProd) app.set('trust proxy', 1);
 app.use(
   pinoHttp({
     redact: {
-      paths: ['req.headers.authorization', 'req.headers["x-session-id"]', 'req.body.password'],
+      paths: [
+        'req.headers.authorization',
+        'req.headers["x-session-id"]',
+        'req.body.password',
+        'req.body.turnstileToken',
+      ],
       remove: true,
     },
   }),
@@ -65,6 +70,53 @@ app.use(
 const PORT = Number(process.env.PORT ?? 4000);
 
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS ?? 30);
+
+const TURNSTILE_ENABLED = (process.env.TURNSTILE_ENABLED ?? '').toLowerCase() === 'true';
+const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? '';
+
+const verifyTurnstileToken = async (token: string, remoteIp?: string | null): Promise<boolean> => {
+  if (!token) return false;
+
+  const body = new URLSearchParams();
+  body.set('secret', TURNSTILE_SECRET_KEY);
+  body.set('response', token);
+  if (remoteIp) body.set('remoteip', remoteIp);
+
+  const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+
+  if (!resp.ok) return false;
+  const data = (await resp.json().catch(() => null)) as null | { success?: boolean };
+  return Boolean(data?.success);
+};
+
+const requireHumanVerification = async (
+  req: express.Request,
+  res: express.Response,
+  turnstileToken?: string,
+): Promise<boolean> => {
+  if (!TURNSTILE_ENABLED) return true;
+  if (!TURNSTILE_SECRET_KEY) {
+    req.log?.error({ msg: 'TURNSTILE_ENABLED but TURNSTILE_SECRET_KEY missing' });
+    res.status(500).json({ error: 'SERVER_MISCONFIGURED' });
+    return false;
+  }
+  if (!turnstileToken) {
+    res.status(400).json({ error: 'HUMAN_VERIFICATION_REQUIRED' });
+    return false;
+  }
+
+  const ok = await verifyTurnstileToken(turnstileToken, req.ip);
+  if (!ok) {
+    res.status(403).json({ error: 'HUMAN_VERIFICATION_FAILED' });
+    return false;
+  }
+
+  return true;
+};
 
 type AuthContext = {
   sessionId: string;
@@ -233,13 +285,17 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   deviceId: z.string().min(1),
+  turnstileToken: z.string().min(1).optional(),
 });
 
 app.post('/api/auth/login', async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
 
-  const { email, password, deviceId } = parsed.data;
+  const { email, password, deviceId, turnstileToken } = parsed.data;
+
+  if (!(await requireHumanVerification(req, res, turnstileToken))) return;
+
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (!user) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
@@ -275,14 +331,24 @@ const registerTenantSchema = z.object({
   adminEmail: z.string().email(),
   adminPassword: z.string().min(6),
   deviceId: z.string().min(1),
+  turnstileToken: z.string().min(1).optional(),
 });
 
 app.post('/api/auth/register-tenant', async (req, res) => {
   const parsed = registerTenantSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
 
-  const { tenantName, tenantSlug, adminFullName, adminEmail, adminPassword, deviceId } =
-    parsed.data;
+  const {
+    tenantName,
+    tenantSlug,
+    adminFullName,
+    adminEmail,
+    adminPassword,
+    deviceId,
+    turnstileToken,
+  } = parsed.data;
+
+  if (!(await requireHumanVerification(req, res, turnstileToken))) return;
 
   const existingTenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
   const existingUser = await prisma.user.findUnique({ where: { email: adminEmail.toLowerCase() } });

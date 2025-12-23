@@ -69,7 +69,7 @@ const hydrateAuthStateFromStorage = (raw: unknown): AuthState => {
 interface AuthContextData {
   authState: AuthState | null;
   isLoading: boolean;
-  login: (email: string, passwordOrSlug: string) => Promise<boolean>;
+  login: (email: string, passwordOrSlug: string, turnstileToken?: string) => Promise<boolean>;
   logout: () => void;
   register: (payload: api.RegisterPayload) => Promise<boolean>;
   updateTenantInState: (tenant: Tenant) => void;
@@ -114,18 +114,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, passwordOrSlug: string) => {
+  const login = async (email: string, passwordOrSlug: string, turnstileToken?: string) => {
     setIsLoading(true);
     try {
-      const response = await api.login(email, passwordOrSlug);
+      const response = await api.login(email, passwordOrSlug, turnstileToken);
       if (response) {
         const sanitized = sanitizeAuthStateForStorage(response);
         setAuthState(sanitized);
         localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
         return true;
       }
-      return false;
-    } catch {
       return false;
     } finally {
       setIsLoading(false);
@@ -142,8 +140,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
         return true;
       }
-      return false;
-    } catch {
       return false;
     } finally {
       setIsLoading(false);

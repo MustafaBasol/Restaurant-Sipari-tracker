@@ -91,6 +91,8 @@
       "ORDER_CREATED": "Commande créée",
       "ORDER_ITEM_STATUS_UPDATED": "Statut de l'article mis à jour",
       "ORDER_NOTE_UPDATED": "Note de commande mise à jour",
+      "humanVerificationRequired": "Veuillez compléter la vérification humaine.",
+      "humanVerificationFailed": "Échec de la vérification humaine. Veuillez réessayer.",
       "PAYMENT_ADDED": "Paiement ajouté",
       "ORDER_DISCOUNT_UPDATED": "Remise mise à jour",
       "ORDER_ITEM_COMPLIMENTARY_UPDATED": "Offert mis à jour",

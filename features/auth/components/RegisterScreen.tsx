@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
 import AuthHeader from './AuthHeader';
+import { loadTurnstile } from '../../../shared/lib/turnstile';
+import { ApiError } from '../../../shared/lib/runtimeApi';
 
 const RegisterScreen: React.FC = () => {
   const { register, isLoading } = useAuth();
@@ -15,6 +17,71 @@ const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const turnstileSiteKey = useMemo(() => import.meta.env.VITE_TURNSTILE_SITE_KEY, []);
+  const isHumanVerificationEnabled = Boolean(turnstileSiteKey);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isHumanVerificationEnabled) return;
+    let cancelled = false;
+    let renderedWidgetId: string | null = null;
+
+    loadTurnstile()
+      .then(() => {
+        if (cancelled) return;
+        const container = turnstileContainerRef.current;
+        if (!container || !window.turnstile || !turnstileSiteKey) return;
+
+        container.innerHTML = '';
+        renderedWidgetId = window.turnstile.render(container, {
+          sitekey: turnstileSiteKey,
+          theme: 'light',
+          callback: (token) => setTurnstileToken(token),
+          'expired-callback': () => setTurnstileToken(null),
+          'error-callback': () => setTurnstileToken(null),
+        });
+
+        turnstileWidgetIdRef.current = renderedWidgetId;
+      })
+      .catch(() => {
+        setTurnstileToken(null);
+      });
+
+    return () => {
+      cancelled = true;
+      try {
+        if (renderedWidgetId && window.turnstile?.remove) {
+          window.turnstile.remove(renderedWidgetId);
+        }
+      } catch {
+        // ignore
+      }
+    };
+  }, [isHumanVerificationEnabled, turnstileSiteKey]);
+
+  const resetTurnstile = () => {
+    if (!isHumanVerificationEnabled) return;
+    try {
+      const widgetId = turnstileWidgetIdRef.current ?? undefined;
+      window.turnstile?.reset?.(widgetId);
+    } catch {
+      // ignore
+    } finally {
+      setTurnstileToken(null);
+    }
+  };
+
+  const mapRegisterError = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      if (err.code === 'HUMAN_VERIFICATION_REQUIRED') return t('auth.humanVerificationRequired');
+      if (err.code === 'HUMAN_VERIFICATION_FAILED') return t('auth.humanVerificationFailed');
+      if (err.code === 'ALREADY_EXISTS') return t('auth.register.failed');
+    }
+    return t('auth.register.failed');
+  };
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -33,18 +100,30 @@ const RegisterScreen: React.FC = () => {
       return;
     }
 
-    const success = await register({
-      tenantName,
-      tenantSlug,
-      adminFullName: fullName,
-      adminEmail: email,
-      adminPassword: password,
-    });
+    if (isHumanVerificationEnabled && !turnstileToken) {
+      setError(t('auth.humanVerificationRequired'));
+      return;
+    }
 
-    if (success) {
-      window.location.hash = '#/app';
-    } else {
-      setError(t('auth.register.failed'));
+    try {
+      const success = await register({
+        tenantName,
+        tenantSlug,
+        adminFullName: fullName,
+        adminEmail: email,
+        adminPassword: password,
+        turnstileToken: turnstileToken ?? undefined,
+      });
+
+      if (success) {
+        window.location.hash = '#/app';
+      } else {
+        setError(t('auth.register.failed'));
+        resetTurnstile();
+      }
+    } catch (err) {
+      setError(mapRegisterError(err));
+      resetTurnstile();
     }
   };
 
@@ -122,6 +201,12 @@ const RegisterScreen: React.FC = () => {
             </div>
 
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
+            {isHumanVerificationEnabled && (
+              <div className="flex justify-center">
+                <div ref={turnstileContainerRef} />
+              </div>
+            )}
 
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? '...' : t('auth.register.createAccountBtn')}

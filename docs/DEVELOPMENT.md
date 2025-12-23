@@ -44,6 +44,7 @@ npx prisma migrate dev
 # API’yi başlat
 DATABASE_URL='postgresql://kitchorify:change-me@localhost:5432/kitchorify' \
 CORS_ORIGINS='http://localhost:3000' \
+TURNSTILE_ENABLED='false' \
 NODE_ENV=development \
 npm run dev
 ```
@@ -58,7 +59,17 @@ Frontend env örneği (`.env.local`):
 
 ```bash
 VITE_API_BASE_URL=http://localhost:4000/api
+
+# (Opsiyonel) İnsan doğrulama (Cloudflare Turnstile)
+# VITE_TURNSTILE_SITE_KEY=0x4AAAAAA...
 ```
+
+## İnsan doğrulama (Cloudflare Turnstile)
+
+Login ve kayıt ekranlarında insan doğrulaması için Turnstile desteği vardır.
+
+- Frontend: `VITE_TURNSTILE_SITE_KEY` set edilirse widget görünür ve token gönderilir.
+- Backend: `TURNSTILE_ENABLED=true` ve `TURNSTILE_SECRET_KEY` set edilirse token doğrulaması zorunlu olur.
 
 Sonra:
 
