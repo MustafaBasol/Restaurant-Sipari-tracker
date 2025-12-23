@@ -31,7 +31,7 @@
 
 	# Core app API (Postgres-backed) under same-origin prefix.
 	# Frontend should use: https://<domain>/api  (or simply /api)
-	handle_path /api/* {
+	handle /api/* {
 		reverse_proxy api:4000
 	}
 

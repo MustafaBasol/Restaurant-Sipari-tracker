@@ -331,7 +331,20 @@ app.get('/health', (_req, res) => {
   res.status(200).send('ok');
 });
 
+app.get('/api/health', (_req, res) => {
+  res.status(200).send('ok');
+});
+
 app.get('/health/db', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return res.status(200).send('ok');
+  } catch {
+    return res.status(503).json({ error: 'DB_UNAVAILABLE' });
+  }
+});
+
+app.get('/api/health/db', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return res.status(200).send('ok');

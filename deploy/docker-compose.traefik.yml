@@ -118,14 +118,12 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik-net
 
-      # Core API under same-origin prefix: /api/* (strip prefix before proxy)
-      - traefik.http.middlewares.kitchorify-api-strip.stripprefix.prefixes=/api
+      # Core API under same-origin prefix: /api/*
       - traefik.http.routers.kitchorify-api.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/api`)
       - traefik.http.routers.kitchorify-api.entrypoints=websecure
       - traefik.http.routers.kitchorify-api.tls=true
       - traefik.http.routers.kitchorify-api.tls.certresolver=mytlschallenge
       - traefik.http.routers.kitchorify-api.priority=110
-      - traefik.http.routers.kitchorify-api.middlewares=kitchorify-api-strip
       - traefik.http.services.kitchorify-api.loadbalancer.server.port=4000
 
       # Optional root health check: /health -> api:/health
