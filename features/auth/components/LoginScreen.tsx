@@ -7,13 +7,14 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
 import AuthHeader from './AuthHeader';
 import { loadTurnstile } from '../../../shared/lib/turnstile';
-import { ApiError } from '../../../shared/lib/runtimeApi';
+import { ApiError, isRealApiEnabled } from '../../../shared/lib/runtimeApi';
 
 const LoginScreen: React.FC = () => {
   const { login, isLoading } = useAuth();
   const { t } = useLanguage();
-  const [email, setEmail] = useState('waiter@sunsetbistro.com');
-  const [password, setPassword] = useState('sunset-bistro');
+  const isDemoMode = useMemo(() => !isRealApiEnabled(), []);
+  const [email, setEmail] = useState(() => (isDemoMode ? 'waiter@sunsetbistro.com' : ''));
+  const [password, setPassword] = useState(() => (isDemoMode ? 'sunset-bistro' : ''));
   const [mfaCode, setMfaCode] = useState('');
   const [needsMfaCode, setNeedsMfaCode] = useState(false);
   const [error, setError] = useState('');
@@ -149,7 +150,7 @@ const LoginScreen: React.FC = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="waiter@sunsetbistro.com"
+                placeholder={isDemoMode ? 'waiter@sunsetbistro.com' : undefined}
                 required
               />
             </div>
@@ -181,12 +182,14 @@ const LoginScreen: React.FC = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="sunset-bistro"
+                placeholder={isDemoMode ? 'sunset-bistro' : undefined}
                 required
               />
-              <p className="text-xs text-text-secondary mt-1">
-                Hint: Use tenant slug as password for demo.
-              </p>
+              {isDemoMode && (
+                <p className="text-xs text-text-secondary mt-1">
+                  Hint: Use tenant slug as password for demo.
+                </p>
+              )}
               <div className="mt-2 text-right">
                 <button
                   type="button"
