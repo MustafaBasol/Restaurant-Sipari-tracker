@@ -62,7 +62,7 @@ services:
       - traefik.http.routers.kitchorify-stripe.entrypoints=websecure
       - traefik.http.routers.kitchorify-stripe.tls=true
       - traefik.http.routers.kitchorify-stripe.tls.certresolver=mytlschallenge
-      - traefik.http.routers.kitchorify-stripe.priority=100
+      - traefik.http.routers.kitchorify-stripe.priority=2000
       - traefik.http.routers.kitchorify-stripe.middlewares=kitchorify-stripe-strip
       - traefik.http.services.kitchorify-stripe.loadbalancer.server.port=4242
     logging:
@@ -123,7 +123,7 @@ services:
       - traefik.http.routers.kitchorify-api.entrypoints=websecure
       - traefik.http.routers.kitchorify-api.tls=true
       - traefik.http.routers.kitchorify-api.tls.certresolver=mytlschallenge
-      - traefik.http.routers.kitchorify-api.priority=110
+      - traefik.http.routers.kitchorify-api.priority=2100
       - traefik.http.services.kitchorify-api.loadbalancer.server.port=4000
 
       # Optional root health check: /health -> api:/health
@@ -131,7 +131,7 @@ services:
       - traefik.http.routers.kitchorify-health.entrypoints=websecure
       - traefik.http.routers.kitchorify-health.tls=true
       - traefik.http.routers.kitchorify-health.tls.certresolver=mytlschallenge
-      - traefik.http.routers.kitchorify-health.priority=200
+      - traefik.http.routers.kitchorify-health.priority=2200
       - traefik.http.routers.kitchorify-health.service=kitchorify-api
     logging:
       driver: json-file
