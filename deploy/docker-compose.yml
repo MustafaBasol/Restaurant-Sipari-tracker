@@ -35,6 +35,7 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL-}
         VITE_STRIPE_BACKEND_URL: ${VITE_STRIPE_BACKEND_URL}
         VITE_PRINT_SERVER_URL: ${VITE_PRINT_SERVER_URL-}
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY-}
         VITE_SERVICE_ORIGIN_ALLOWLIST: ${VITE_SERVICE_ORIGIN_ALLOWLIST-}
         VITE_ALLOW_INSECURE_SERVICES: ${VITE_ALLOW_INSECURE_SERVICES-}
     restart: unless-stopped
@@ -84,6 +85,25 @@ services:
       # Origin allowlist for non-same-origin access (same-origin proxy requests usually have no Origin)
       CORS_ORIGINS: ${CORS_ORIGINS}
       SESSION_TTL_DAYS: ${SESSION_TTL_DAYS-30}
+
+      # Public URL used for email links (no trailing slash recommended)
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL-}
+
+      # Email verification / reset
+      EMAIL_VERIFICATION_TTL_MINUTES: ${EMAIL_VERIFICATION_TTL_MINUTES-60}
+      PASSWORD_RESET_TTL_MINUTES: ${PASSWORD_RESET_TTL_MINUTES-30}
+
+      # MailerSend
+      MAILERSEND_API_KEY: ${MAILERSEND_API_KEY-}
+      MAILERSEND_SENDER_EMAIL: ${MAILERSEND_SENDER_EMAIL-}
+      MAILERSEND_SENDER_NAME: ${MAILERSEND_SENDER_NAME-}
+
+      # Cloudflare Turnstile
+      TURNSTILE_ENABLED: ${TURNSTILE_ENABLED-false}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY-}
+
+      # MFA (TOTP)
+      MFA_ISSUER: ${MFA_ISSUER-Kitchorify}
     expose:
       - '4000'
     healthcheck:

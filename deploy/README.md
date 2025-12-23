@@ -76,7 +76,12 @@ nano .env.production
 - `DOMAIN`, `ACME_EMAIL`, `CORS_ORIGINS`
 - `VITE_API_BASE_URL=/api`
 - `VITE_STRIPE_BACKEND_URL=https://<domain>/stripe`
+- (opsiyonel) `VITE_TURNSTILE_SITE_KEY=...` (login/register bot koruması için)
 - `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_MONTHLY`
+- `APP_PUBLIC_URL=https://<domain>` (email linkleri için zorunlu)
+- `MAILERSEND_API_KEY`, `MAILERSEND_SENDER_EMAIL`, `MAILERSEND_SENDER_NAME`
+- (opsiyonel) `TURNSTILE_ENABLED=true|false`, `TURNSTILE_SECRET_KEY=...`
+- (opsiyonel) `MFA_ISSUER=Kitchorify`
 - `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_USER`, `DATABASE_URL`
 
 Yedekleme (önerilir):

@@ -88,13 +88,25 @@ Bu repo artık iki modda çalışabilir:
   - `ACME_EMAIL=...`
   - `CORS_ORIGINS=https://kitchorify.com`
   - `VITE_API_BASE_URL=/api`
+  - `VITE_TURNSTILE_SITE_KEY=...` (opsiyonel; login/register bot koruması için)
   - `POSTGRES_PASSWORD=...` (uzun/rasgele)
   - `DATABASE_URL=postgresql://...@postgres:5432/...`
+  - `APP_PUBLIC_URL=https://kitchorify.com` (email linkleri için zorunlu)
   - `VITE_STRIPE_BACKEND_URL=https://kitchorify.com/stripe`
   - `STRIPE_SECRET_KEY=...`
   - `STRIPE_PRICE_ID_MONTHLY=...`
   - (önerilir) `STRIPE_WEBHOOK_SECRET=...`
   - (opsiyonel) `STRIPE_API_KEY=...` (Caddy upstream’e header enjekte eder)
+
+  Email + güvenlik (core API):
+  - `MAILERSEND_API_KEY=...`
+  - `MAILERSEND_SENDER_EMAIL=...`
+  - `MAILERSEND_SENDER_NAME=...`
+  - `EMAIL_VERIFICATION_TTL_MINUTES=60`
+  - `PASSWORD_RESET_TTL_MINUTES=30`
+  - `TURNSTILE_ENABLED=true|false`
+  - `TURNSTILE_SECRET_KEY=...` (Turnstile aktifse zorunlu)
+  - `MFA_ISSUER=Kitchorify`
 
   Yedekleme için (varsayılanlar önerilir):
   - `PG_BACKUP_SCHEDULE=@daily`
