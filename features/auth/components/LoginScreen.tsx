@@ -129,6 +129,7 @@ const LoginScreen: React.FC = () => {
       if (err.code === 'MFA_INVALID') return t('auth.mfaInvalid');
       if (err.code === 'INVALID_CREDENTIALS') return t('auth.loginFailed');
       if (err.code === 'INVALID_INPUT') return t('auth.invalidInput');
+      if (err.status === 400) return t('auth.invalidInput');
     }
     return t('auth.loginFailed');
   };
@@ -179,7 +180,12 @@ const LoginScreen: React.FC = () => {
     }
 
     try {
-      const success = await login(email, password, turnstileToken ?? undefined, mfaCode.trim());
+      const success = await login(
+        email,
+        password,
+        turnstileToken ?? undefined,
+        needsMfaCode ? mfaCode.trim() : undefined,
+      );
       if (success) {
         window.location.hash = '#/app';
       } else {
@@ -300,6 +306,7 @@ const LoginScreen: React.FC = () => {
         isOpen={verificationModalOpen}
         onClose={closeVerificationModal}
         title={t('auth.register.successTitle')}
+        size="sm"
       >
         <div className="p-6 space-y-4">
           <p className="text-text-secondary">{t('auth.register.successMessage')}</p>

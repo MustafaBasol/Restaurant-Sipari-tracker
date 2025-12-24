@@ -18,7 +18,7 @@ const getInitialLanguage = (): Language => {
 interface LanguageContextData {
   lang: Language;
   setLang: (lang: Language) => void;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string, varsOrFallback?: Record<string, unknown> | string, fallback?: string) => string;
 }
 
 export const LanguageContext = createContext<LanguageContextData | undefined>(undefined);
@@ -44,9 +44,20 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [lang]);
 
   const t = useCallback(
-    (key: string, fallback?: string): string => {
+    (key: string, varsOrFallback?: Record<string, unknown> | string, fallback?: string): string => {
       const value = resolve(key, translations);
-      return value || fallback || key;
+
+      const vars =
+        typeof varsOrFallback === 'object' && varsOrFallback !== null ? varsOrFallback : undefined;
+      const resolvedFallback = typeof varsOrFallback === 'string' ? varsOrFallback : fallback;
+
+      const template = (typeof value === 'string' ? value : undefined) || resolvedFallback || key;
+      if (!vars) return template;
+
+      return template.replace(/\{(\w+)\}/g, (match, name: string) => {
+        const v = (vars as any)[name];
+        return v === undefined || v === null ? match : String(v);
+      });
     },
     [translations],
   );

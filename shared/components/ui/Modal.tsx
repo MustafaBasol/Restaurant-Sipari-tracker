@@ -6,12 +6,16 @@ interface ModalProps {
   title: string;
   onClose: () => void;
   isOpen: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export const Modal: React.FC<ModalProps> = ({ children, title, onClose, isOpen }) => {
+export const Modal: React.FC<ModalProps> = ({ children, title, onClose, isOpen, size = 'lg' }) => {
   if (!isOpen) {
     return null;
   }
+
+  const sizeClass =
+    size === 'sm' ? 'max-w-lg' : size === 'md' ? 'max-w-2xl' : 'max-w-lg sm:max-w-2xl lg:max-w-6xl';
 
   return (
     <div
@@ -19,7 +23,7 @@ export const Modal: React.FC<ModalProps> = ({ children, title, onClose, isOpen }
       onClick={onClose}
     >
       <div
-        className="bg-light-bg w-full max-w-lg sm:max-w-2xl lg:max-w-6xl max-h-[90vh] rounded-2xl shadow-medium flex flex-col overflow-hidden"
+        className={`bg-light-bg w-full ${sizeClass} max-h-[90vh] rounded-2xl shadow-medium flex flex-col overflow-hidden`}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
         <header className="flex items-center justify-between p-4 border-b border-border-color bg-card-bg">

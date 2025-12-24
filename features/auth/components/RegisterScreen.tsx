@@ -138,7 +138,6 @@ const RegisterScreen: React.FC = () => {
     }
   };
 
-
   return (
     <div className="relative flex items-center justify-center min-h-screen bg-light-bg p-4">
       <AuthHeader />

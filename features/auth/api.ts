@@ -22,7 +22,7 @@ export const login: typeof mockApi.login = async (
       password: passwordOrSlug,
       deviceId: getDeviceId(),
       turnstileToken: turnstileToken ?? undefined,
-      mfaCode: mfaCode ?? undefined,
+      mfaCode: mfaCode?.trim() ? mfaCode.trim() : undefined,
     }),
     skipAuth: true,
   });

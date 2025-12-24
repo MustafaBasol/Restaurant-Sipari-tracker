@@ -370,8 +370,14 @@ const loginSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
   deviceId: z.string().min(1),
-  turnstileToken: z.string().min(1).optional(),
-  mfaCode: z.string().min(1).optional(),
+  turnstileToken: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().min(1).optional(),
+  ),
+  mfaCode: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().min(1).optional(),
+  ),
 });
 
 app.post('/api/auth/login', async (req, res) => {
