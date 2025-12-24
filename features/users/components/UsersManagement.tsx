@@ -8,6 +8,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
 import { Badge } from '../../../shared/components/ui/Badge';
+import { ApiError } from '../../../shared/lib/runtimeApi';
 import {
   Table,
   TableHeader,
@@ -18,6 +19,7 @@ import {
 } from '../../../shared/components/ui/Table';
 import ChangePasswordModal from './ChangePasswordModal';
 import UserSessionsModal from './UserSessionsModal';
+import EditUserModal from './EditUserModal';
 
 const UsersManagement: React.FC = () => {
   const { users, addUser, updateUser, changeUserPassword, disableUserMfa } = useUsers();
@@ -32,10 +34,40 @@ const UsersManagement: React.FC = () => {
     role: UserRole.WAITER,
   });
   const [editingPasswordForUser, setEditingPasswordForUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [viewingSessionsForUser, setViewingSessionsForUser] = useState<User | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [successCopyValue, setSuccessCopyValue] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  const handleEditSave = async (updated: User) => {
+    setErrorMessage('');
+    try {
+      await updateUser(updated);
+      setSuccessMessage(t('admin.users.userUpdatedSuccess'));
+      setSuccessCopyValue(null);
+      setCopyStatus('idle');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      setEditingUser(null);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.code === 'EMAIL_ALREADY_USED') {
+          setErrorMessage(t('admin.users.emailAlreadyUsed'));
+          return;
+        }
+        if (e.code === 'INVALID_INPUT') {
+          setErrorMessage(t('admin.users.invalidUserInput'));
+          return;
+        }
+        if (e.code === 'FORBIDDEN' || e.code === 'UNAUTHORIZED' || e.code === 'UNAUTHENTICATED') {
+          setErrorMessage(t('admin.users.notAllowed'));
+          return;
+        }
+      }
+      setErrorMessage(t('general.somethingWentWrong'));
+    }
+  };
 
   const canManageSessions =
     authState?.user.role === UserRole.ADMIN || authState?.user.role === UserRole.SUPER_ADMIN;
@@ -45,12 +77,37 @@ const UsersManagement: React.FC = () => {
 
   const handleAddUser = async () => {
     if (newUser.fullName && newUser.email) {
-      const result = await addUser({
-        fullName: newUser.fullName,
-        email: newUser.email,
-        role: newUser.role,
-        password: newUser.password && newUser.password.trim() ? newUser.password : undefined,
-      } as any);
+      setErrorMessage('');
+      setSuccessMessage('');
+      setSuccessCopyValue(null);
+      setCopyStatus('idle');
+
+      let result: any;
+      try {
+        result = await addUser({
+          fullName: newUser.fullName,
+          email: newUser.email,
+          role: newUser.role,
+          password: newUser.password && newUser.password.trim() ? newUser.password : undefined,
+        } as any);
+      } catch (e) {
+        if (e instanceof ApiError) {
+          if (e.code === 'EMAIL_ALREADY_USED') {
+            setErrorMessage(t('admin.users.emailAlreadyUsed'));
+            return;
+          }
+          if (e.code === 'INVALID_INPUT') {
+            setErrorMessage(t('admin.users.invalidUserInput'));
+            return;
+          }
+          if (e.code === 'FORBIDDEN' || e.code === 'UNAUTHORIZED' || e.code === 'UNAUTHENTICATED') {
+            setErrorMessage(t('admin.users.notAllowed'));
+            return;
+          }
+        }
+        setErrorMessage(t('general.somethingWentWrong'));
+        return;
+      }
 
       const generatedPassword = (result as any)?.generatedPassword as string | null | undefined;
       if (generatedPassword) {
@@ -96,7 +153,26 @@ const UsersManagement: React.FC = () => {
   };
 
   const handleToggleActive = async (user: User) => {
-    await updateUser({ ...user, isActive: !user.isActive });
+    setErrorMessage('');
+    try {
+      await updateUser({ ...user, isActive: !user.isActive });
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.code === 'EMAIL_ALREADY_USED') {
+          setErrorMessage(t('admin.users.emailAlreadyUsed'));
+          return;
+        }
+        if (e.code === 'INVALID_INPUT') {
+          setErrorMessage(t('admin.users.invalidUserInput'));
+          return;
+        }
+        if (e.code === 'FORBIDDEN' || e.code === 'UNAUTHORIZED' || e.code === 'UNAUTHENTICATED') {
+          setErrorMessage(t('admin.users.notAllowed'));
+          return;
+        }
+      }
+      setErrorMessage(t('general.somethingWentWrong'));
+    }
   };
 
   const handlePasswordSave = async (userId: string, newPassword: string) => {
@@ -148,6 +224,12 @@ const UsersManagement: React.FC = () => {
                   : t('general.copy')}
             </Button>
           )}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
+          {errorMessage}
         </div>
       )}
 
@@ -236,6 +318,12 @@ const UsersManagement: React.FC = () => {
                 <TableCell align="right">
                   <div className="flex flex-wrap gap-2 justify-end">
                     <button
+                      onClick={() => setEditingUser(user)}
+                      className="text-accent hover:text-accent-hover text-sm font-medium"
+                    >
+                      {t('admin.users.edit')}
+                    </button>
+                    <button
                       onClick={() => setEditingPasswordForUser(user)}
                       className="text-accent hover:text-accent-hover text-sm font-medium"
                     >
@@ -281,6 +369,15 @@ const UsersManagement: React.FC = () => {
           user={editingPasswordForUser}
           onClose={() => setEditingPasswordForUser(null)}
           onSave={handlePasswordSave}
+        />
+      )}
+
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSave={handleEditSave}
+          canEditActive={editingUser.role !== UserRole.ADMIN && editingUser.role !== UserRole.SUPER_ADMIN}
         />
       )}
 

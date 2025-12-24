@@ -1198,23 +1198,33 @@ app.post('/api/users', requireAuth, requireTenant, async (req, res) => {
   const passwordPlain = suppliedPassword || generatedPassword;
   if (!passwordPlain) return res.status(400).json({ error: 'INVALID_INPUT' });
 
-  const passwordHash = await bcrypt.hash(passwordPlain, 12);
-  const now = new Date();
-  const user = await prisma.user.create({
-    data: {
-      tenantId,
-      fullName: parsed.data.fullName.trim(),
-      email: parsed.data.email.toLowerCase(),
-      role: parsed.data.role,
-      passwordHash,
-      // Admin-created users are allowed to log in immediately.
-      emailVerifiedAt: now,
-      emailVerificationTokenHash: null,
-      emailVerificationExpiresAt: null,
-      isActive: true,
-    } as any,
-  });
-  return res.json({ user: sanitizeUserForResponse(user), generatedPassword });
+  try {
+    const passwordHash = await bcrypt.hash(passwordPlain, 12);
+    const now = new Date();
+    const user = await prisma.user.create({
+      data: {
+        tenantId,
+        fullName: parsed.data.fullName.trim(),
+        email: parsed.data.email.toLowerCase(),
+        role: parsed.data.role,
+        passwordHash,
+        // Admin-created users are allowed to log in immediately.
+        emailVerifiedAt: now,
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
+        isActive: true,
+      } as any,
+    });
+    return res.json({ user: sanitizeUserForResponse(user), generatedPassword });
+  } catch (e: any) {
+    const code = typeof e?.code === 'string' ? e.code : '';
+    const target = Array.isArray(e?.meta?.target) ? (e.meta.target as string[]) : [];
+    if (code === 'P2002' && target.includes('email')) {
+      return res.status(409).json({ error: 'EMAIL_ALREADY_USED' });
+    }
+    req.log?.error({ err: e, msg: 'Failed to create user' });
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
 });
 
 const userUpdateSchema = z.object({
@@ -1232,16 +1242,37 @@ app.put('/api/users/:id', requireAuth, requireTenant, async (req, res) => {
   const tenantId = req.auth!.tenantId!;
   const existing = await prisma.user.findFirst({ where: { id: req.params.id, tenantId } });
   if (!existing) return res.status(404).json({ error: 'NOT_FOUND' });
-  const updated = await prisma.user.update({
-    where: { id: existing.id },
-    data: {
-      fullName: parsed.data.fullName.trim(),
-      email: parsed.data.email.toLowerCase(),
-      role: parsed.data.role as any,
-      isActive: parsed.data.isActive,
-    },
-  });
-  return res.json(sanitizeUserForResponse(updated));
+  try {
+    const updated = await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        fullName: parsed.data.fullName.trim(),
+        email: parsed.data.email.toLowerCase(),
+        role: parsed.data.role as any,
+        isActive: parsed.data.isActive,
+      },
+    });
+    return res.json(sanitizeUserForResponse(updated));
+  } catch (e: any) {
+    const code = typeof e?.code === 'string' ? e.code : '';
+    const target = Array.isArray(e?.meta?.target) ? (e.meta.target as string[]) : [];
+    if (code === 'P2002' && target.includes('email')) {
+      return res.status(409).json({ error: 'EMAIL_ALREADY_USED' });
+    }
+    req.log?.error({ err: e, msg: 'Failed to update user' });
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// Final error handler: always return JSON (avoid HTML error bodies that break clients).
+app.use((err: any, req: any, res: any, next: any) => {
+  try {
+    req.log?.error({ err, msg: 'Unhandled error' });
+  } catch {
+    // ignore
+  }
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ error: 'INTERNAL_ERROR' });
 });
 
 const changePasswordSchema = z.object({ newPassword: z.string().min(6) });

@@ -31,7 +31,8 @@
     "loading": "Chargement...",
     "copy": "Copier",
     "copied": "Copié",
-    "copyFailed": "Copie échouée"
+    "copyFailed": "Échec de la copie",
+    "somethingWentWrong": "Une erreur est survenue. Veuillez réessayer."
   },
   "customers": {
     "none": "Aucun client enregistré",
@@ -375,6 +376,10 @@
       "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",
       "userCreatedSuccess": "Utilisateur créé.",
       "userCreatedWithPassword": "Utilisateur créé. Mot de passe : {password}",
+      "userUpdatedSuccess": "Utilisateur mis à jour.",
+      "emailAlreadyUsed": "Cette adresse e-mail est déjà utilisée.",
+      "invalidUserInput": "Veuillez vérifier les informations de l'utilisateur.",
+      "notAllowed": "Vous n'êtes pas autorisé à effectuer cette action.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
       "changePasswordTitle": "Changer le mot de passe pour {userName}",

@@ -15,8 +15,42 @@ const LoginScreen: React.FC = () => {
   const { login, isLoading } = useAuth();
   const { t } = useLanguage();
   const isDemoMode = useMemo(() => !isRealApiEnabled(), []);
-  const [email, setEmail] = useState(() => (isDemoMode ? 'waiter@sunsetbistro.com' : ''));
-  const [password, setPassword] = useState(() => (isDemoMode ? 'sunset-bistro' : ''));
+
+  const DRAFT_EMAIL_KEY = 'loginDraftEmail';
+  const DRAFT_PASSWORD_KEY = 'loginDraftPassword';
+  const LAST_ERROR_KEY = 'loginLastError';
+
+  const safeSessionGet = (key: string): string => {
+    try {
+      return sessionStorage.getItem(key) ?? '';
+    } catch {
+      return '';
+    }
+  };
+
+  const safeSessionSet = (key: string, value: string) => {
+    try {
+      if (!value) sessionStorage.removeItem(key);
+      else sessionStorage.setItem(key, value);
+    } catch {
+      // ignore
+    }
+  };
+
+  const safeSessionRemove = (key: string) => {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  };
+
+  const [email, setEmail] = useState(() =>
+    isDemoMode ? 'waiter@sunsetbistro.com' : safeSessionGet(DRAFT_EMAIL_KEY),
+  );
+  const [password, setPassword] = useState(() =>
+    isDemoMode ? 'sunset-bistro' : safeSessionGet(DRAFT_PASSWORD_KEY),
+  );
   const [mfaCode, setMfaCode] = useState('');
   const [needsMfaCode, setNeedsMfaCode] = useState(false);
   const [error, setError] = useState('');
@@ -35,6 +69,12 @@ const LoginScreen: React.FC = () => {
   const turnstileWidgetIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (isDemoMode) return;
+    const lastError = safeSessionGet(LAST_ERROR_KEY);
+    if (lastError) {
+      setError(lastError);
+      safeSessionRemove(LAST_ERROR_KEY);
+    }
     try {
       const key = localStorage.getItem('authFlash');
       if (!key) return;
@@ -60,6 +100,16 @@ const LoginScreen: React.FC = () => {
       // ignore
     }
   }, [t]);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+    safeSessionSet(DRAFT_EMAIL_KEY, email);
+  }, [email, isDemoMode]);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+    safeSessionSet(DRAFT_PASSWORD_KEY, password);
+  }, [password, isDemoMode]);
 
   useEffect(() => {
     if (!verificationModalOpen) return;
@@ -190,13 +240,22 @@ const LoginScreen: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!isDemoMode) {
+      safeSessionSet(DRAFT_EMAIL_KEY, email);
+      safeSessionSet(DRAFT_PASSWORD_KEY, password);
+      safeSessionRemove(LAST_ERROR_KEY);
+    }
     if (isHumanVerificationEnabled && !turnstileToken) {
-      setError(t('auth.humanVerificationRequired'));
+      const msg = t('auth.humanVerificationRequired');
+      setError(msg);
+      if (!isDemoMode) safeSessionSet(LAST_ERROR_KEY, msg);
       return;
     }
 
     if (needsMfaCode && !mfaCode.trim()) {
-      setError(t('auth.mfaRequired'));
+      const msg = t('auth.mfaRequired');
+      setError(msg);
+      if (!isDemoMode) safeSessionSet(LAST_ERROR_KEY, msg);
       return;
     }
 
@@ -208,9 +267,16 @@ const LoginScreen: React.FC = () => {
         needsMfaCode ? mfaCode.trim() : undefined,
       );
       if (success) {
+        if (!isDemoMode) {
+          safeSessionRemove(DRAFT_EMAIL_KEY);
+          safeSessionRemove(DRAFT_PASSWORD_KEY);
+          safeSessionRemove(LAST_ERROR_KEY);
+        }
         window.location.hash = '#/app';
       } else {
-        setError(t('auth.loginFailed'));
+        const msg = t('auth.loginFailed');
+        setError(msg);
+        if (!isDemoMode) safeSessionSet(LAST_ERROR_KEY, msg);
         resetTurnstile();
       }
     } catch (err) {
@@ -219,13 +285,17 @@ const LoginScreen: React.FC = () => {
       }
 
       if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
-        setError(t('auth.emailNotVerified'));
+        const msg = t('auth.emailNotVerified');
+        setError(msg);
+        if (!isDemoMode) safeSessionSet(LAST_ERROR_KEY, msg);
         openVerificationModalForEmail(email);
         resetTurnstile();
         return;
       }
 
-      setError(mapAuthError(err));
+      const msg = mapAuthError(err);
+      setError(msg);
+      if (!isDemoMode) safeSessionSet(LAST_ERROR_KEY, msg);
       resetTurnstile();
     }
   };

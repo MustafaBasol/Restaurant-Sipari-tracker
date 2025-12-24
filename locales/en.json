@@ -31,7 +31,8 @@
     "loading": "Loading...",
     "copy": "Copy",
     "copied": "Copied",
-    "copyFailed": "Copy failed"
+    "copyFailed": "Copy failed",
+    "somethingWentWrong": "Something went wrong. Please try again."
   },
   "customers": {
     "none": "No registered customer",
@@ -369,6 +370,10 @@
       "passwordUpdateSuccess": "Password updated successfully.",
       "userCreatedSuccess": "User created.",
       "userCreatedWithPassword": "User created. Password: {password}",
+      "userUpdatedSuccess": "User updated.",
+      "emailAlreadyUsed": "This email address is already in use.",
+      "invalidUserInput": "Please check the user details.",
+      "notAllowed": "You are not allowed to perform this action.",
       "passwordMismatch": "Passwords do not match.",
       "passwordTooShort": "Password must be at least 6 characters.",
       "changePasswordTitle": "Change Password for {userName}",

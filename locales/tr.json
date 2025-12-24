@@ -37,7 +37,8 @@
     "loading": "Yükleniyor...",
     "copy": "Kopyala",
     "copied": "Kopyalandı",
-    "copyFailed": "Kopyalanamadı"
+    "copyFailed": "Kopyalanamadı",
+    "somethingWentWrong": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
   },
   "customers": {
     "none": "Kayıtlı müşteri yok",
@@ -376,6 +377,10 @@
       "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",
       "userCreatedSuccess": "Kullanıcı oluşturuldu.",
       "userCreatedWithPassword": "Kullanıcı oluşturuldu. Şifre: {password}",
+      "userUpdatedSuccess": "Kullanıcı güncellendi.",
+      "emailAlreadyUsed": "Bu e-posta adresi zaten kullanılıyor.",
+      "invalidUserInput": "Lütfen kullanıcı bilgilerini kontrol edin.",
+      "notAllowed": "Bu işlem için yetkiniz yok.",
       "passwordMismatch": "Şifreler eşleşmiyor.",
       "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
       "changePasswordTitle": "{userName} için Şifre Değiştir",
