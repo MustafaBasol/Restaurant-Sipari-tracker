@@ -20,7 +20,7 @@ import { getMenuItems } from '../../menu/api';
 const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
   <Card className="text-center">
     <p className="text-sm font-medium text-text-secondary">{title}</p>
-    <p className="text-3xl font-bold text-text-primary mt-1">{value}</p>
+    <p className="text-2xl sm:text-3xl font-bold text-text-primary mt-1 break-words">{value}</p>
   </Card>
 );
 

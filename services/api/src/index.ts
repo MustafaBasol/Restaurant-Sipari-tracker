@@ -80,6 +80,15 @@ const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES
 
 const MFA_ISSUER = (process.env.MFA_ISSUER ?? 'Kitchorify').trim() || 'Kitchorify';
 
+const STRIPE_API_KEY = (process.env.STRIPE_API_KEY ?? '').trim();
+
+const requireStripeApiKey: express.RequestHandler = (req, res, next) => {
+  if (!STRIPE_API_KEY) return res.status(500).json({ error: 'STRIPE_API_KEY_NOT_CONFIGURED' });
+  const provided = String(req.header('x-api-key') ?? '').trim();
+  if (!provided || provided !== STRIPE_API_KEY) return res.status(401).json({ error: 'UNAUTHORIZED' });
+  return next();
+};
+
 // TOTP: allow small clock drift.
 authenticator.options = { window: 1 };
 
@@ -103,6 +112,14 @@ const sanitizeUserForResponse = (user: any) => {
 
 const TURNSTILE_ENABLED = (process.env.TURNSTILE_ENABLED ?? '').toLowerCase() === 'true';
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? '';
+
+// Stripe subscription -> app SubscriptionStatus mapping.
+const mapStripeStatusToSubscriptionStatus = (stripeStatus: string) => {
+  const s = String(stripeStatus || '').toLowerCase();
+  if (s === 'active' || s === 'trialing') return 'ACTIVE';
+  if (s === 'canceled' || s === 'incomplete_expired') return 'CANCELED';
+  return 'EXPIRED';
+};
 
 const verifyTurnstileToken = async (token: string, remoteIp?: string | null): Promise<boolean> => {
   if (!token) return false;
@@ -364,6 +381,41 @@ app.get('/api/health/db', async (_req, res) => {
   }
 });
 
+// --- Internal (Stripe backend -> API) ---
+
+const stripeSubscriptionUpdateSchema = z.object({
+  tenantId: z.string().min(1),
+  stripeStatus: z.string().min(1),
+  currentPeriodEnd: z.number().int().positive().optional(),
+  cancelAtPeriodEnd: z.boolean().optional(),
+});
+
+app.post('/api/internal/stripe/subscription-updated', requireStripeApiKey, async (req, res) => {
+  const parsed = stripeSubscriptionUpdateSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const { tenantId, stripeStatus, currentPeriodEnd, cancelAtPeriodEnd } = parsed.data;
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  if (!tenant) return res.status(404).json({ error: 'TENANT_NOT_FOUND' });
+
+  const subscriptionStatus = mapStripeStatusToSubscriptionStatus(stripeStatus);
+  const subscriptionCurrentPeriodEndAt = currentPeriodEnd
+    ? new Date(currentPeriodEnd * 1000)
+    : null;
+
+  const updated = await prisma.tenant.update({
+    where: { id: tenantId },
+    data: {
+      subscriptionStatus: subscriptionStatus as any,
+      subscriptionCancelAtPeriodEnd: typeof cancelAtPeriodEnd === 'boolean' ? cancelAtPeriodEnd : null,
+      subscriptionCurrentPeriodEndAt,
+    } as any,
+  });
+
+  return res.json({ ok: true, tenant: updated });
+});
+
 // --- Auth ---
 
 const loginSchema = z.object({
@@ -430,6 +482,21 @@ app.post('/api/auth/login', async (req, res) => {
     tenant,
     sessionId: session.id,
     deviceId,
+  });
+});
+
+// Return the current authenticated user + tenant.
+app.get('/api/auth/me', requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.auth!.userId } });
+  if (!user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+
+  const tenant = user.tenantId
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    : null;
+
+  return res.json({
+    user: sanitizeUserForResponse(user),
+    tenant,
   });
 });
 

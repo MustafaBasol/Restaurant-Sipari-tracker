@@ -28,7 +28,10 @@ const AppHeader: React.FC = () => {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <span className="text-xl font-bold text-text-primary">{t('branding.name')}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <img src="/Logo.png" alt={t('branding.name')} className="h-8 w-8" />
+              <span className="text-xl font-bold text-text-primary">{t('branding.name')}</span>
+            </div>
             <span className="hidden sm:block text-text-secondary">|</span>
             <span className="hidden sm:block text-lg font-medium text-text-secondary truncate min-w-0">
               {tenant ? tenant.name : t('superAdmin.title')}

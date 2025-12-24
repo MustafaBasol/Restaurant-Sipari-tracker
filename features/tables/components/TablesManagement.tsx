@@ -93,22 +93,22 @@ const TablesManagement: React.FC = () => {
         <label className="block text-sm font-medium text-text-secondary mb-1">
           {t('admin.tables.name')}
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             type="text"
             value={newTableName}
             onChange={(e) => setNewTableName(e.target.value)}
             placeholder={t('admin.tables.name')}
-            className="flex-grow"
+            className="w-full sm:flex-grow"
           />
-          <Button onClick={handleAddTable} className="px-4 py-2">
+          <Button onClick={handleAddTable} className="px-4 py-2 w-full sm:w-auto">
             {t('admin.tables.add')}
           </Button>
           {canCreateCustomers && (
             <Button
               onClick={() => setIsCustomerModalOpen(true)}
               variant="secondary"
-              className="px-4 py-2"
+              className="px-4 py-2 w-full sm:w-auto"
             >
               {t('customers.addNew')}
             </Button>
@@ -206,7 +206,7 @@ const TablesManagement: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell align="right">
-                  <div className="flex gap-4 justify-end items-center">
+                  <div className="flex flex-wrap gap-2 justify-end items-center">
                     {activeOrder && (
                       <button
                         onClick={() => setViewingOrder(activeOrder)}

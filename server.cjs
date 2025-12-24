@@ -126,6 +126,51 @@ app.get('/', (_req, res) => {
   res.send('Kitchorify Backend Server is running.');
 });
 
+const INTERNAL_API_BASE_URL = (process.env.INTERNAL_API_BASE_URL || 'http://api:4000/api').replace(
+  /\/+$/,
+  '',
+);
+
+const pushSubscriptionUpdateToApi = async ({
+  tenantId,
+  stripeStatus,
+  currentPeriodEnd,
+  cancelAtPeriodEnd,
+}) => {
+  const apiKey = String(process.env.API_KEY || '').trim();
+  if (!apiKey) {
+    console.warn('[stripe] API_KEY not configured; cannot notify API.');
+    return;
+  }
+  if (!tenantId) {
+    console.warn('[stripe] Missing tenantId; cannot notify API.');
+    return;
+  }
+
+  try {
+    const resp = await fetch(`${INTERNAL_API_BASE_URL}/internal/stripe/subscription-updated`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        tenantId,
+        stripeStatus,
+        currentPeriodEnd,
+        cancelAtPeriodEnd,
+      }),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      console.error('[stripe] Failed to notify API', resp.status, text);
+    }
+  } catch (e) {
+    console.error('[stripe] Failed to notify API', e);
+  }
+};
+
 // Stripe webhooks must use express.raw for signature verification.
 app.post(
   '/stripe-webhook',
@@ -154,16 +199,48 @@ app.post(
 
     console.log(`✅ Success: Verified webhook event: ${event.id}`);
 
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-        console.log('TODO: Update database subscription status for the customer.');
-        break;
+    const handleAsync = async () => {
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object;
+          const tenantId = session.client_reference_id || session?.metadata?.tenantId || '';
+
+          if (!session.subscription) {
+            console.log('[stripe] checkout.session.completed without subscription; ignoring');
+            break;
+          }
+
+          const sub = await stripe.subscriptions.retrieve(session.subscription);
+
+          await pushSubscriptionUpdateToApi({
+            tenantId,
+            stripeStatus: sub.status,
+            currentPeriodEnd: sub.current_period_end,
+            cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+          });
+
+          break;
+        }
+        case 'customer.subscription.updated':
+        case 'customer.subscription.deleted': {
+          const sub = event.data.object;
+          const tenantId = sub?.metadata?.tenantId || '';
+          await pushSubscriptionUpdateToApi({
+            tenantId,
+            stripeStatus: sub.status,
+            currentPeriodEnd: sub.current_period_end,
+            cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+          });
+          break;
+        }
+        default:
+          console.log(`Unhandled event type ${event.type}`);
       }
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
+    };
+
+    handleAsync().catch((e) => {
+      console.error('[stripe] Webhook handler failed', e);
+    });
 
     response.send();
   },

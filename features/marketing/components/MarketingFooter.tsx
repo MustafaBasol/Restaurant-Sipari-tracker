@@ -9,7 +9,10 @@ const MarketingFooter: React.FC = () => {
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           <div>
-            <h3 className="text-xl font-bold">{t('branding.name')}</h3>
+            <div className="flex items-center gap-2">
+              <img src="/Logo.png" alt={t('branding.name')} className="h-8 w-8" />
+              <h3 className="text-xl font-bold">{t('branding.name')}</h3>
+            </div>
             <p className="text-text-secondary mt-2 text-sm max-w-xs">{t('branding.tagline')}</p>
             <p className="text-text-secondary mt-3 text-sm">
               <span className="font-medium text-text-primary">{t('marketing.footer.contact')}</span>{' '}

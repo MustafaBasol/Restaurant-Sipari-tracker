@@ -43,6 +43,25 @@ const UserSessionsModal: React.FC<Props> = ({ user, isOpen, onClose }) => {
   );
   const timezone = authState?.tenant?.timezone ?? 'UTC';
 
+  const renderDateAndTime = (value: Date | string) => {
+    const dateText = formatDateTime(value, timezone, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const timeText = formatDateTime(value, timezone, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return (
+      <div className="flex flex-col leading-tight">
+        <div>{dateText}</div>
+        <div className="text-xs text-text-secondary">{timeText}</div>
+      </div>
+    );
+  };
+
   const load = useCallback(async () => {
     if (!tenantId || !actor) return;
     setIsLoading(true);
@@ -124,8 +143,8 @@ const UserSessionsModal: React.FC<Props> = ({ user, isOpen, onClose }) => {
                     <div className="font-medium">{s.deviceId}</div>
                     <div className="text-xs text-text-secondary">{s.id}</div>
                   </TableCell>
-                  <TableCell>{formatDateTime(s.createdAt, timezone)}</TableCell>
-                  <TableCell>{formatDateTime(s.lastSeenAt, timezone)}</TableCell>
+                  <TableCell>{renderDateAndTime(s.createdAt)}</TableCell>
+                  <TableCell>{renderDateAndTime(s.lastSeenAt)}</TableCell>
                   <TableCell>{t(`sessions.statuses.${statusKey}`)}</TableCell>
                   <TableCell align="right">
                     <button

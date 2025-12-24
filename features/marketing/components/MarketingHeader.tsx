@@ -13,9 +13,10 @@ const MarketingHeader: React.FC = () => {
         <div className="flex items-center gap-x-8">
           <button
             onClick={() => (window.location.hash = '#/')}
-            className="text-xl font-bold text-text-primary"
+            className="flex items-center gap-2 text-xl font-bold text-text-primary"
           >
-            {t('branding.name')}
+            <img src="/Logo.png" alt={t('branding.name')} className="h-8 w-8" />
+            <span>{t('branding.name')}</span>
           </button>
         </div>
         <div className="flex items-center gap-x-4">

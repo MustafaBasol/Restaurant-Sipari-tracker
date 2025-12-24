@@ -40,7 +40,7 @@ const VariantsEditor: React.FC<{
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-text-secondary">{t('admin.menu.variants')}</p>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -60,6 +60,7 @@ const VariantsEditor: React.FC<{
             setPrice(0);
           }}
           variant="secondary"
+          className="w-full sm:w-auto"
         >
           {t('admin.menu.addVariant')}
         </Button>
@@ -127,7 +128,7 @@ const ModifiersEditor: React.FC<{
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-text-secondary">{t('admin.menu.modifiers')}</p>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           value={modifierName}
           onChange={(e) => setModifierName(e.target.value)}
@@ -143,6 +144,7 @@ const ModifiersEditor: React.FC<{
             setModifierName('');
           }}
           variant="secondary"
+          className="w-full sm:w-auto"
         >
           {t('admin.menu.addModifier')}
         </Button>
@@ -202,7 +204,7 @@ const ModifierOptionsEditor: React.FC<{
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           value={optionName}
           onChange={(e) => setOptionName(e.target.value)}
@@ -228,6 +230,7 @@ const ModifierOptionsEditor: React.FC<{
             setPriceDelta(0);
           }}
           variant="secondary"
+          className="w-full sm:w-auto"
         >
           {t('admin.menu.addOption')}
         </Button>
@@ -448,14 +451,22 @@ const MenuManagement: React.FC = () => {
             />
           </div>
           {editingCategoryId ? (
-            <div className="flex gap-2">
-              <Button onClick={handleSaveCategory} className="flex-1 py-2">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={handleSaveCategory} className="w-full sm:flex-1 py-2">
                 {t('general.save')}
               </Button>
-              <Button onClick={handleDeleteCategory} variant="secondary" className="py-2">
+              <Button
+                onClick={handleDeleteCategory}
+                variant="secondary"
+                className="py-2 w-full sm:w-auto"
+              >
                 {t('general.delete', 'Delete')}
               </Button>
-              <Button onClick={cancelCategoryEdit} variant="secondary" className="py-2">
+              <Button
+                onClick={cancelCategoryEdit}
+                variant="secondary"
+                className="py-2 w-full sm:w-auto"
+              >
                 {t('general.cancel')}
               </Button>
             </div>
@@ -872,11 +883,15 @@ const MenuManagement: React.FC = () => {
                     onChange={(next) => setEditDraft((p) => (p ? { ...p, modifiers: next } : p))}
                   />
 
-                  <div className="flex gap-2">
-                    <Button onClick={saveEdit} className="py-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={saveEdit} className="py-2 w-full sm:w-auto">
                       {t('general.save')}
                     </Button>
-                    <Button onClick={cancelEdit} variant="secondary" className="py-2">
+                    <Button
+                      onClick={cancelEdit}
+                      variant="secondary"
+                      className="py-2 w-full sm:w-auto"
+                    >
                       {t('general.cancel')}
                     </Button>
                   </div>

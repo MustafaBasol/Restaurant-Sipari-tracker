@@ -37,8 +37,6 @@ const UsersManagement: React.FC = () => {
 
   const canManageSessions = authState?.user.role === UserRole.ADMIN;
   const canManageMfa = authState?.user.role === UserRole.ADMIN;
-
-  const activeAdminCount = users.filter((u) => u.role === UserRole.ADMIN && u.isActive).length;
   const visibleUsers = users.filter((u) => (showArchived ? !u.isActive : u.isActive));
 
   const handleAddUser = async () => {
@@ -68,15 +66,15 @@ const UsersManagement: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6 flex justify-end gap-2">
+      <div className="mb-6 flex flex-col sm:flex-row sm:justify-end gap-2">
         <Button
           onClick={() => setShowArchived((p) => !p)}
           variant="secondary"
-          className="px-4 py-2"
+          className="px-4 py-2 w-full sm:w-auto"
         >
           {showArchived ? t('admin.users.showActive') : t('admin.users.showArchive')}
         </Button>
-        <Button onClick={() => setIsAdding(!isAdding)} className="px-4 py-2">
+        <Button onClick={() => setIsAdding(!isAdding)} className="px-4 py-2 w-full sm:w-auto">
           {isAdding ? t('general.cancel') : t('admin.users.add')}
         </Button>
       </div>
@@ -84,12 +82,6 @@ const UsersManagement: React.FC = () => {
       {successMessage && (
         <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm">
           {successMessage}
-        </div>
-      )}
-
-      {activeAdminCount <= 1 && (
-        <div className="mb-4 rounded-xl border border-border-color bg-card-bg px-4 py-3 text-sm text-text-secondary">
-          {t('admin.users.cannotDeactivateLastAdmin')}
         </div>
       )}
 
@@ -161,8 +153,7 @@ const UsersManagement: React.FC = () => {
         </TableHeader>
         <TableBody>
           {visibleUsers.map((user) => {
-            const isLastActiveAdmin =
-              user.role === UserRole.ADMIN && user.isActive && activeAdminCount <= 1;
+            const canToggleActive = user.role !== UserRole.ADMIN && user.role !== UserRole.SUPER_ADMIN;
 
             return (
               <TableRow key={user.id}>
@@ -177,7 +168,7 @@ const UsersManagement: React.FC = () => {
                   </Badge>
                 </TableCell>
                 <TableCell align="right">
-                  <div className="flex gap-4 justify-end">
+                  <div className="flex flex-wrap gap-2 justify-end">
                     <button
                       onClick={() => setEditingPasswordForUser(user)}
                       className="text-accent hover:text-accent-hover text-sm font-medium"
@@ -202,23 +193,16 @@ const UsersManagement: React.FC = () => {
                         {t('admin.users.disableMfa')}
                       </button>
                     )}
-                    <button
-                      disabled={isLastActiveAdmin}
-                      title={
-                        isLastActiveAdmin ? t('admin.users.cannotDeactivateLastAdmin') : undefined
-                      }
-                      onClick={() => {
-                        if (isLastActiveAdmin) return;
-                        void handleToggleActive(user);
-                      }}
-                      className={
-                        isLastActiveAdmin
-                          ? 'text-gray-400 text-sm font-medium cursor-not-allowed'
-                          : 'text-accent hover:text-accent-hover text-sm font-medium'
-                      }
-                    >
-                      {user.isActive ? t('admin.users.deactivate') : t('admin.users.activate')}
-                    </button>
+                    {canToggleActive && (
+                      <button
+                        onClick={() => {
+                          void handleToggleActive(user);
+                        }}
+                        className="text-accent hover:text-accent-hover text-sm font-medium"
+                      >
+                        {user.isActive ? t('admin.users.deactivate') : t('admin.users.activate')}
+                      </button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

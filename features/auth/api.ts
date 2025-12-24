@@ -131,6 +131,11 @@ export const validateSession: typeof mockApi.validateSession = async (_sessionId
   }
 };
 
+export const getMe = async (): Promise<{ user: any; tenant: any | null } | null> => {
+  if (!isRealApiEnabled()) return null;
+  return apiFetch<{ user: any; tenant: any | null }>('/auth/me', { method: 'GET' });
+};
+
 export const bootstrapSession: typeof mockApi.bootstrapSession = async (userId, tenantId) => {
   // Only used for legacy localStorage auth states; never in real API mode.
   if (!isRealApiEnabled()) return mockApi.bootstrapSession(userId, tenantId);

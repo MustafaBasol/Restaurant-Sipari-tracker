@@ -106,9 +106,9 @@ const AuditLogsManagement: React.FC = () => {
 
   return (
     <Card>
-      <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4">
         <h2 className="text-2xl font-bold text-text-primary">{t('admin.auditLogs.title')}</h2>
-        <div className="text-sm text-text-secondary">
+        <div className="text-sm text-text-secondary sm:text-right">
           {isLoading ? t('general.loading') : `${t('admin.auditLogs.count')}: ${filtered.length}`}
         </div>
       </div>
@@ -185,7 +185,7 @@ const AuditLogsManagement: React.FC = () => {
                     {l.entityType}: {l.entityId}
                   </TableCell>
                   <TableCell>
-                    <span className="block max-w-[28rem] truncate" title={details}>
+                    <span className="block max-w-[12rem] sm:max-w-[28rem] truncate" title={details}>
                       {details}
                     </span>
                   </TableCell>

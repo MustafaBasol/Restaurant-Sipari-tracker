@@ -2,14 +2,17 @@ import React, { useMemo, useState, useEffect } from 'react';
 import * as api from '../api';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { useAuth } from '../../auth/hooks/useAuth';
+import * as authApi from '../../auth/api';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { formatCurrency } from '../../../shared/lib/utils';
+import { SubscriptionStatus } from '../../../shared/types';
 import {
   getServiceOriginAllowlist,
   isTrustedServiceBaseUrl,
   shouldAllowInsecureServices,
 } from '../../../shared/lib/urlSecurity';
+import { isRealApiEnabled } from '../../../shared/lib/runtimeApi';
 
 const stripeBackendUrl = (import.meta as any).env?.VITE_STRIPE_BACKEND_URL as string | undefined;
 
@@ -69,15 +72,40 @@ const CheckoutPage: React.FC = () => {
       setMessage(t('subscription.checkout.verifying'));
 
       try {
-        // Demo activation: in a real app, a webhook updates the DB.
-        const updatedTenant = await api.confirmPaymentSuccess(authState.tenant.id);
+        if (!isRealApiEnabled()) {
+          // Demo activation: in a real app, a webhook updates the DB.
+          const updatedTenant = await api.confirmPaymentSuccess(authState.tenant.id);
 
-        setStatus('activating');
-        setMessage(t('subscription.checkout.activating'));
-        updateTenantInState(updatedTenant);
-        setTimeout(() => {
-          window.location.hash = '#/app';
-        }, 800);
+          setStatus('activating');
+          setMessage(t('subscription.checkout.activating'));
+          updateTenantInState(updatedTenant);
+          setTimeout(() => {
+            window.location.hash = '#/app';
+          }, 800);
+          return;
+        }
+
+        // Real API mode: Stripe webhook should update the DB. Poll /auth/me until tenant reflects it.
+        const startedAt = Date.now();
+        const timeoutMs = 30000;
+        const intervalMs = 1500;
+
+        while (Date.now() - startedAt < timeoutMs) {
+          const me = await authApi.getMe();
+          const tenant = me?.tenant ?? null;
+          if (tenant?.subscriptionStatus === SubscriptionStatus.ACTIVE) {
+            setStatus('activating');
+            setMessage(t('subscription.checkout.activating'));
+            updateTenantInState(tenant);
+            setTimeout(() => {
+              window.location.hash = '#/app';
+            }, 800);
+            return;
+          }
+          await new Promise((r) => setTimeout(r, intervalMs));
+        }
+
+        throw new Error('Timed out waiting for subscription activation');
       } catch (error) {
         console.error('Failed to activate subscription after checkout', error);
         setStatus('error');
