@@ -13,9 +13,14 @@ import { useMenu } from '../../menu/hooks/useMenu';
 const KitchenDashboard: React.FC = () => {
   const { orders } = useOrders();
   const { t } = useLanguage();
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [stationFilter, setStationFilter] = useState<'ALL' | KitchenStation>('ALL');
   const { menuItems } = useMenu();
+
+  const selectedOrder = useMemo(() => {
+    if (!selectedOrderId) return null;
+    return (orders ?? []).find((o) => o.id === selectedOrderId) ?? null;
+  }, [orders, selectedOrderId]);
 
   const getItemStation = useCallback(
     (menuItemId: string): KitchenStation => {
@@ -42,11 +47,11 @@ const KitchenDashboard: React.FC = () => {
   }, [orders, stationFilter, getItemStation]);
 
   const handleSelectOrder = (order: Order) => {
-    setSelectedOrder(order);
+    setSelectedOrderId(order.id);
   };
 
   const handleCloseModal = () => {
-    setSelectedOrder(null);
+    setSelectedOrderId(null);
   };
 
   return (

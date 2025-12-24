@@ -19,6 +19,8 @@ const LoginScreen: React.FC = () => {
   const DRAFT_EMAIL_KEY = 'loginDraftEmail';
   const DRAFT_PASSWORD_KEY = 'loginDraftPassword';
   const LAST_ERROR_KEY = 'loginLastError';
+  const NEEDS_MFA_KEY = 'loginNeedsMfaCode';
+  const NEEDS_MFA_EMAIL_KEY = 'loginNeedsMfaEmail';
 
   const safeSessionGet = (key: string): string => {
     try {
@@ -75,6 +77,18 @@ const LoginScreen: React.FC = () => {
       setError(lastError);
       safeSessionRemove(LAST_ERROR_KEY);
     }
+
+    // Eğer önceki giriş denemesinde MFA istendiyse ve kullanıcı tekrar login ekranına düştüyse
+    // (refresh / yeniden yönlendirme vb.), kod alanını tekrar göster.
+    const storedNeedsMfa = safeSessionGet(NEEDS_MFA_KEY) === '1';
+    const storedNeedsMfaEmail = safeSessionGet(NEEDS_MFA_EMAIL_KEY);
+    if (storedNeedsMfa) {
+      const normalizedEmail = email.trim();
+      if (!storedNeedsMfaEmail || storedNeedsMfaEmail === normalizedEmail) {
+        setNeedsMfaCode(true);
+      }
+    }
+
     try {
       const key = localStorage.getItem('authFlash');
       if (!key) return;
@@ -100,6 +114,21 @@ const LoginScreen: React.FC = () => {
       // ignore
     }
   }, [t]);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+    if (!needsMfaCode) return;
+
+    // Kullanıcı email'i değiştirirse MFA akışını sıfırla (eski kullanıcı için MFA istenmiş olabilir).
+    const storedNeedsMfaEmail = safeSessionGet(NEEDS_MFA_EMAIL_KEY);
+    const normalizedEmail = email.trim();
+    if (storedNeedsMfaEmail && storedNeedsMfaEmail !== normalizedEmail) {
+      setNeedsMfaCode(false);
+      setMfaCode('');
+      safeSessionRemove(NEEDS_MFA_KEY);
+      safeSessionRemove(NEEDS_MFA_EMAIL_KEY);
+    }
+  }, [email, isDemoMode, needsMfaCode]);
 
   useEffect(() => {
     if (isDemoMode) return;
@@ -271,6 +300,8 @@ const LoginScreen: React.FC = () => {
           safeSessionRemove(DRAFT_EMAIL_KEY);
           safeSessionRemove(DRAFT_PASSWORD_KEY);
           safeSessionRemove(LAST_ERROR_KEY);
+          safeSessionRemove(NEEDS_MFA_KEY);
+          safeSessionRemove(NEEDS_MFA_EMAIL_KEY);
         }
         window.location.hash = '#/app';
       } else {
@@ -280,8 +311,12 @@ const LoginScreen: React.FC = () => {
         resetTurnstile();
       }
     } catch (err) {
-      if (err instanceof ApiError && err.code === 'MFA_REQUIRED') {
+      if (err instanceof ApiError && (err.code === 'MFA_REQUIRED' || err.code === 'MFA_INVALID')) {
         setNeedsMfaCode(true);
+        if (!isDemoMode) {
+          safeSessionSet(NEEDS_MFA_KEY, '1');
+          safeSessionSet(NEEDS_MFA_EMAIL_KEY, email.trim());
+        }
       }
 
       if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
@@ -337,6 +372,8 @@ const LoginScreen: React.FC = () => {
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value)}
                   placeholder="123456"
+                  autoFocus
+                  maxLength={8}
                   required
                 />
               </div>
