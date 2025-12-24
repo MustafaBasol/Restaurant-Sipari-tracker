@@ -139,12 +139,10 @@ const pushSubscriptionUpdateToApi = async ({
 }) => {
   const apiKey = String(process.env.API_KEY || '').trim();
   if (!apiKey) {
-    console.warn('[stripe] API_KEY not configured; cannot notify API.');
-    return;
+    throw new Error('API_KEY_NOT_CONFIGURED');
   }
   if (!tenantId) {
-    console.warn('[stripe] Missing tenantId; cannot notify API.');
-    return;
+    throw new Error('TENANT_ID_MISSING');
   }
 
   try {
@@ -164,11 +162,19 @@ const pushSubscriptionUpdateToApi = async ({
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '');
-      console.error('[stripe] Failed to notify API', resp.status, text);
+      throw new Error(`API_NOTIFY_FAILED:${resp.status}:${text}`);
     }
   } catch (e) {
     console.error('[stripe] Failed to notify API', e);
+    throw e;
   }
+};
+
+const getLatestSubscriptionForCustomer = async (customerId) => {
+  if (!customerId) return null;
+  const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 10 });
+  const latest = (subs.data || []).sort((a, b) => (b.created || 0) - (a.created || 0))[0] || null;
+  return latest;
 };
 
 // Stripe webhooks must use express.raw for signature verification.
@@ -300,6 +306,42 @@ app.use(express.json({ limit: '256kb' }));
 // Protect API endpoints (webhook excluded above)
 app.use(apiLimiter);
 app.use(requireApiKeyIfConfigured);
+
+// Manual sync fallback (useful if webhook delivery is delayed/misconfigured).
+// Client should call this with Stripe's checkout `session_id` after redirect.
+app.post('/sync-after-checkout', async (req, res) => {
+  try {
+    const sessionId = String(req.body?.sessionId || '').trim();
+    if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' });
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['subscription'],
+    });
+
+    const tenantId = session.client_reference_id || session?.metadata?.tenantId || '';
+
+    let sub = session.subscription;
+    if (!sub && session.customer) {
+      sub = await getLatestSubscriptionForCustomer(session.customer);
+    }
+
+    if (!sub) {
+      return res.status(409).json({ error: 'Subscription not ready for this session yet' });
+    }
+
+    await pushSubscriptionUpdateToApi({
+      tenantId: tenantId || sub?.metadata?.tenantId || '',
+      stripeStatus: sub.status,
+      currentPeriodEnd: sub.current_period_end,
+      cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+    });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to sync after checkout', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.post('/create-checkout-session', async (req, res) => {
   try {

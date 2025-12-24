@@ -67,6 +67,11 @@ export type ListInvoicesParams = {
   limit?: number;
 };
 
+export type SyncAfterCheckoutParams = {
+  backendUrl: string;
+  sessionId: string;
+};
+
 export const createBillingPortalSession = async (
   params: CreateBillingPortalSessionParams,
 ): Promise<{ url: string }> => {
@@ -112,6 +117,23 @@ export const createSubscriptionCheckoutSession = async (
 
   const data = (await res.json()) as any;
   return { url: data?.url, sessionId: data?.sessionId };
+};
+
+export const syncAfterCheckout = async (params: SyncAfterCheckoutParams): Promise<{ ok: true }> => {
+  const baseUrl = getStripeBackendBaseUrl(params.backendUrl);
+  const endpoint = `${baseUrl.replace(/\/$/, '')}/sync-after-checkout`;
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: params.sessionId }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to sync after checkout (${res.status}): ${text}`);
+  }
+
+  return { ok: true };
 };
 
 export const listInvoices = async (

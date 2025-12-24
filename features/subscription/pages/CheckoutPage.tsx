@@ -30,6 +30,16 @@ const parseCheckoutStatusFromHash = (hash: string): 'success' | 'cancel' | null 
   return null;
 };
 
+const parseCheckoutSessionIdFromHash = (hash: string): string | null => {
+  if (!hash.startsWith('#/checkout')) return null;
+  const idx = hash.indexOf('?');
+  if (idx === -1) return null;
+  const query = hash.slice(idx + 1);
+  const params = new URLSearchParams(query);
+  const sessionId = params.get('session_id');
+  return sessionId && sessionId.trim() ? sessionId.trim() : null;
+};
+
 const CheckoutPage: React.FC = () => {
   const { t } = useLanguage();
   const { authState, updateTenantInState } = useAuth();
@@ -61,6 +71,8 @@ const CheckoutPage: React.FC = () => {
       return;
     }
 
+    const checkoutSessionId = parseCheckoutSessionIdFromHash(window.location.hash);
+
     const activateAfterSuccess = async () => {
       if (!authState?.tenant?.id) {
         setStatus('error');
@@ -85,7 +97,21 @@ const CheckoutPage: React.FC = () => {
           return;
         }
 
-        // Real API mode: Stripe webhook should update the DB. Poll /auth/me until tenant reflects it.
+        // Real API mode: Prefer a best-effort sync using Stripe checkout session_id,
+        // then poll /auth/me until tenant reflects it.
+        if (stripeBackendUrl && checkoutSessionId) {
+          try {
+            await api.syncAfterCheckout({
+              backendUrl: stripeBackendUrl,
+              sessionId: checkoutSessionId,
+            });
+          } catch (e) {
+            // Don't fail the UX on sync issues; polling may still succeed via webhook.
+            console.warn('Failed to sync subscription after checkout', e);
+          }
+        }
+
+        // Poll /auth/me until tenant reflects activation.
         const startedAt = Date.now();
         const timeoutMs = 30000;
         const intervalMs = 1500;
@@ -150,7 +176,7 @@ const CheckoutPage: React.FC = () => {
 
     try {
       const baseUrl = `${window.location.origin}${window.location.pathname}`;
-      const successUrl = `${baseUrl}#/checkout?status=success`;
+      const successUrl = `${baseUrl}#/checkout?status=success&session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${baseUrl}#/checkout?status=cancel`;
 
       const { url } = await api.createSubscriptionCheckoutSession({
