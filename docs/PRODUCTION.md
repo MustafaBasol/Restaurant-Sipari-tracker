@@ -99,9 +99,10 @@ Bu repo artık iki modda çalışabilir:
   - (opsiyonel) `STRIPE_API_KEY=...` (Caddy upstream’e header enjekte eder)
 
   Email + güvenlik (core API):
+  - `MAILERSEND_ENABLED=true`
   - `MAILERSEND_API_KEY=...`
-  - `MAILERSEND_SENDER_EMAIL=...`
-  - `MAILERSEND_SENDER_NAME=...`
+  - `MAILERSEND_FROM_EMAIL=...`
+  - `MAILERSEND_FROM_NAME=...`
   - `EMAIL_VERIFICATION_TTL_MINUTES=60`
   - `PASSWORD_RESET_TTL_MINUTES=30`
   - `TURNSTILE_ENABLED=true|false`

@@ -565,6 +565,18 @@ app.post('/api/auth/resend-verification', async (req, res) => {
   if (user.role === 'SUPER_ADMIN') return res.json(true);
   if ((user as any).emailVerifiedAt) return res.json(true);
 
+  // Basic anti-spam: allow at most one resend per minute.
+  // We infer last send time from the existing token expiry.
+  const prevExpiresAt = (user as any).emailVerificationExpiresAt as Date | null | undefined;
+  if (prevExpiresAt) {
+    const createdAtMs = prevExpiresAt.getTime() - EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000;
+    const elapsedMs = Date.now() - createdAtMs;
+    const minIntervalMs = 60_000;
+    if (elapsedMs >= 0 && elapsedMs < minIntervalMs) {
+      return res.status(429).json({ error: 'TOO_MANY_REQUESTS' });
+    }
+  }
+
   const token = generateToken();
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000);

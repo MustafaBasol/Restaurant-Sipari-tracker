@@ -157,7 +157,13 @@
       "createAccountBtn": "Hesap Oluştur",
       "haveAccount": "Zaten bir hesabınız var mı?",
       "allFieldsRequired": "Tüm alanlar zorunludur.",
-      "failed": "Kayıt başarısız. Restoran URL'si veya e-posta zaten alınmış olabilir."
+      "failed": "Kayıt başarısız. Restoran URL'si veya e-posta zaten alınmış olabilir.",
+      "successTitle": "Kayıt başarıyla oluşturuldu",
+      "successMessage": "Doğrulama e-postası gönderildi. Lütfen e-postanıza gelen doğrulama bağlantısını açın.",
+      "resendCountdown": "Tekrar mail gönderebilmek için {seconds} saniye bekleyin.",
+      "resendReady": "Doğrulama mailini yeniden gönderebilirsiniz.",
+      "resendButton": "Tekrar mail gönder",
+      "resendFailed": "E-posta tekrar gönderilemedi. Lütfen tekrar deneyin."
     }
   },
   "roles": {

@@ -154,7 +154,13 @@
       "createAccountBtn": "Créer un compte",
       "haveAccount": "Vous avez déjà un compte?",
       "allFieldsRequired": "Tous les champs sont requis.",
-      "failed": "Échec de l'enregistrement. L'URL du restaurant ou l'e-mail est peut-être déjà pris."
+      "failed": "Échec de l'enregistrement. L'URL du restaurant ou l'e-mail est peut-être déjà pris.",
+      "successTitle": "Compte créé",
+      "successMessage": "Un e-mail de vérification a été envoyé. Veuillez ouvrir le lien de vérification dans votre boîte de réception.",
+      "resendCountdown": "Veuillez attendre {seconds} secondes pour renvoyer l’e-mail.",
+      "resendReady": "Vous pouvez renvoyer l’e-mail de vérification.",
+      "resendButton": "Renvoyer l’e-mail",
+      "resendFailed": "Impossible de renvoyer l’e-mail. Veuillez réessayer."
     }
   },
   "roles": {

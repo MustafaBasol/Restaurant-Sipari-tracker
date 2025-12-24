@@ -151,7 +151,13 @@
       "createAccountBtn": "Create Account",
       "haveAccount": "Already have an account?",
       "allFieldsRequired": "All fields are required.",
-      "failed": "Registration failed. The restaurant URL or email might already be taken."
+      "failed": "Registration failed. The restaurant URL or email might already be taken.",
+      "successTitle": "Account created",
+      "successMessage": "A verification email has been sent. Please open the verification link in your inbox.",
+      "resendCountdown": "Please wait {seconds} seconds to resend the email.",
+      "resendReady": "You can resend the verification email.",
+      "resendButton": "Resend email",
+      "resendFailed": "Could not resend the email. Please try again."
     }
   },
   "roles": {

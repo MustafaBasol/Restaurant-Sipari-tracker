@@ -6,10 +6,22 @@ type MailerSendEmailRequest = {
   html?: string;
 };
 
-const MAILERSEND_ENABLED = (process.env.MAILERSEND_ENABLED ?? '').toLowerCase() === 'true';
+const MAILERSEND_ENABLED_RAW = (process.env.MAILERSEND_ENABLED ?? '').toLowerCase();
 const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY ?? '';
-const MAILERSEND_FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL ?? '';
-const MAILERSEND_FROM_NAME = process.env.MAILERSEND_FROM_NAME ?? 'Kitchorify';
+
+// Backward-compatible env names:
+// - preferred: MAILERSEND_FROM_EMAIL / MAILERSEND_FROM_NAME
+// - legacy:   MAILERSEND_SENDER_EMAIL / MAILERSEND_SENDER_NAME
+const MAILERSEND_FROM_EMAIL =
+  process.env.MAILERSEND_FROM_EMAIL ?? process.env.MAILERSEND_SENDER_EMAIL ?? '';
+const MAILERSEND_FROM_NAME =
+  process.env.MAILERSEND_FROM_NAME ?? process.env.MAILERSEND_SENDER_NAME ?? 'Kitchorify';
+
+// Ergonomic default: if user provided an API key and didn't explicitly disable, consider enabled.
+const MAILERSEND_ENABLED =
+  MAILERSEND_ENABLED_RAW.length > 0
+    ? MAILERSEND_ENABLED_RAW === 'true'
+    : Boolean(MAILERSEND_API_KEY);
 
 export const isMailerSendEnabled = (): boolean => {
   if (!MAILERSEND_ENABLED) return false;

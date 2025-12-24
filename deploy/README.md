@@ -83,7 +83,8 @@ nano .env.production
 - (opsiyonel) `VITE_TURNSTILE_SITE_KEY=...` (login/register bot koruması için)
 - `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_MONTHLY`
 - `APP_PUBLIC_URL=https://<domain>` (email linkleri için zorunlu)
-- `MAILERSEND_API_KEY`, `MAILERSEND_SENDER_EMAIL`, `MAILERSEND_SENDER_NAME`
+- `MAILERSEND_ENABLED=true` (prod'da gerçek email için)
+- `MAILERSEND_API_KEY`, `MAILERSEND_FROM_EMAIL`, `MAILERSEND_FROM_NAME`
 - (opsiyonel) `TURNSTILE_ENABLED=true|false`, `TURNSTILE_SECRET_KEY=...`
 - (opsiyonel) `MFA_ISSUER=Kitchorify`
 - `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_USER`, `DATABASE_URL`
