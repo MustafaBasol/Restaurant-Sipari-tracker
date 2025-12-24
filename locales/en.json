@@ -110,6 +110,7 @@
     "emailNotVerified": "Your email is not verified. Please check your inbox.",
     "mfaRequired": "Two-factor authentication code required.",
     "mfaInvalid": "Invalid two-factor authentication code.",
+    "verificationRequiredMessage": "Your email is not verified. Please open the verification link sent to your email.",
     "mfaCode": "2FA Code",
     "mfaSetupTitle": "Enable Two-Factor Authentication",
     "mfaSetupIntro": "Scan the secret in your authenticator app and enter the 6-digit code.",

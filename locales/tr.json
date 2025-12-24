@@ -114,6 +114,7 @@
     "humanVerificationRequired": "Lütfen insan doğrulamasını tamamlayın.",
     "humanVerificationFailed": "İnsan doğrulaması başarısız. Lütfen tekrar deneyin.",
     "emailNotVerified": "E-postanız doğrulanmamış. Lütfen e-postanızı doğrulayın.",
+    "verificationRequiredMessage": "E-postanız doğrulanmamış. Lütfen e-postanıza gelen doğrulama bağlantısını açın.",
     "forgotPassword": "Şifremi unuttum",
     "backToLogin": "Giriş ekranına dön",
     "checkEmailForVerification": "Kayıt tamamlandı. Lütfen e-postanıza gelen doğrulama bağlantısını açın.",

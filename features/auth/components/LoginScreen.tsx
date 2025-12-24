@@ -138,6 +138,27 @@ const LoginScreen: React.FC = () => {
     setVerificationModalOpen(false);
   };
 
+  const openVerificationModalForEmail = (targetEmail: string) => {
+    const normalized = targetEmail.trim();
+    setPendingVerificationEmail(normalized);
+    setResendError('');
+
+    try {
+      const storedAtRaw = localStorage.getItem('pendingVerificationResendAt') ?? '';
+      const storedAt = Number(storedAtRaw);
+      const now = Date.now();
+      const secondsLeft =
+        Number.isFinite(storedAt) && storedAt > 0
+          ? Math.max(0, 60 - Math.floor((now - storedAt) / 1000))
+          : 0;
+      setResendSecondsLeft(secondsLeft);
+    } catch {
+      setResendSecondsLeft(0);
+    }
+
+    setVerificationModalOpen(true);
+  };
+
   const handleResendVerification = async () => {
     const targetEmail = (pendingVerificationEmail || email).trim();
     if (!targetEmail) return;
@@ -196,6 +217,14 @@ const LoginScreen: React.FC = () => {
       if (err instanceof ApiError && err.code === 'MFA_REQUIRED') {
         setNeedsMfaCode(true);
       }
+
+      if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
+        setError(t('auth.emailNotVerified'));
+        openVerificationModalForEmail(email);
+        resetTurnstile();
+        return;
+      }
+
       setError(mapAuthError(err));
       resetTurnstile();
     }
@@ -305,11 +334,11 @@ const LoginScreen: React.FC = () => {
       <Modal
         isOpen={verificationModalOpen}
         onClose={closeVerificationModal}
-        title={t('auth.register.successTitle')}
+        title={t('auth.verifyEmail.title')}
         size="sm"
       >
         <div className="p-6 space-y-4">
-          <p className="text-text-secondary">{t('auth.register.successMessage')}</p>
+          <p className="text-text-secondary">{t('auth.verificationRequiredMessage')}</p>
           <p className="text-sm text-text-secondary">
             {resendSecondsLeft > 0
               ? t('auth.register.resendCountdown', { seconds: resendSecondsLeft })
