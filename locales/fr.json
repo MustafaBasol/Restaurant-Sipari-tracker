@@ -140,7 +140,7 @@
     "mfaSetupTitle": "Activer l’authentification à deux facteurs",
     "mfaSetupIntro": "Ajoutez le secret dans votre application d’authentification et saisissez le code à 6 chiffres.",
     "mfaSetupSecretLabel": "Secret",
-    "mfaSetupUriLabel": "URI otpauth",
+    "mfaSetupUriLabel": "Code QR",
     "mfaSetupCodeLabel": "Code",
     "mfaSetupVerify": "Vérifier et activer",
     "mfaSetupSkip": "Plus tard",

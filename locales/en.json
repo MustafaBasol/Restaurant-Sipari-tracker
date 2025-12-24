@@ -115,7 +115,7 @@
     "mfaSetupTitle": "Enable Two-Factor Authentication",
     "mfaSetupIntro": "Scan the secret in your authenticator app and enter the 6-digit code.",
     "mfaSetupSecretLabel": "Secret",
-    "mfaSetupUriLabel": "otpauth URI",
+    "mfaSetupUriLabel": "QR code",
     "mfaSetupCodeLabel": "Code",
     "mfaSetupVerify": "Verify & Enable",
     "mfaSetupSkip": "Later",

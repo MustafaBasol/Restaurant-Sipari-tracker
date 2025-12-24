@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import * as QRCode from 'qrcode';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
@@ -17,6 +18,7 @@ interface Props {
 const MfaSetupModal: React.FC<Props> = ({ isOpen, onClose, onEnabled }) => {
   const { t } = useLanguage();
   const [setup, setSetup] = useState<SetupState | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -55,6 +57,31 @@ const MfaSetupModal: React.FC<Props> = ({ isOpen, onClose, onEnabled }) => {
     };
   }, [isOpen, setup]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!setup?.otpauthUri) {
+      setQrDataUrl('');
+      return;
+    }
+
+    let cancelled = false;
+    setQrDataUrl('');
+
+    QRCode.toDataURL(setup.otpauthUri, { margin: 1, width: 220 })
+      .then((dataUrl) => {
+        if (cancelled) return;
+        setQrDataUrl(dataUrl);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setQrDataUrl('');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, setup?.otpauthUri]);
+
   const handleVerify = async () => {
     setError('');
     const trimmed = code.trim();
@@ -69,6 +96,7 @@ const MfaSetupModal: React.FC<Props> = ({ isOpen, onClose, onEnabled }) => {
       onEnabled(res.mfaEnabledAt);
       setCode('');
       setSetup(null);
+      setQrDataUrl('');
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -98,7 +126,13 @@ const MfaSetupModal: React.FC<Props> = ({ isOpen, onClose, onEnabled }) => {
               <label className="block text-sm font-medium text-text-secondary mb-1">
                 {t('auth.mfaSetupUriLabel')}
               </label>
-              <Input value={setup.otpauthUri} readOnly />
+              <div className="flex items-center justify-center rounded-xl border border-border-color bg-card-bg p-4">
+                {qrDataUrl ? (
+                  <img src={qrDataUrl} alt="QR" className="h-[220px] w-[220px]" draggable={false} />
+                ) : (
+                  <div className="text-sm text-text-secondary">...</div>
+                )}
+              </div>
             </div>
           </div>
         )}
