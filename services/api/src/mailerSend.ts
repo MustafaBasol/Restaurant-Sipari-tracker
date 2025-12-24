@@ -63,7 +63,21 @@ export const sendEmail = async (params: {
   });
 
   if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(text || `MAILERSEND_HTTP_${resp.status}`);
+    const bodyText = await resp.text().catch(() => '');
+    const snippet = bodyText.trim().slice(0, 2000);
+    const requestId =
+      resp.headers.get('x-request-id') ??
+      resp.headers.get('x-requestid') ??
+      resp.headers.get('x-correlation-id') ??
+      resp.headers.get('cf-ray') ??
+      '';
+
+    const suffix = [requestId ? `requestId=${requestId}` : '', snippet ? `body=${snippet}` : '']
+      .filter(Boolean)
+      .join(' ');
+
+    throw new Error(
+      suffix ? `MAILERSEND_HTTP_${resp.status}: ${suffix}` : `MAILERSEND_HTTP_${resp.status}`,
+    );
   }
 };
