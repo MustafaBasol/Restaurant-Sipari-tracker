@@ -175,7 +175,7 @@ const pushSubscriptionUpdateToApi = async ({
 app.post(
   '/stripe-webhook',
   express.raw({ type: 'application/json', limit: '1mb' }),
-  (request, response) => {
+  async (request, response) => {
     console.log('Webhook received!');
 
     const sig = request.headers['stripe-signature'];
@@ -212,6 +212,14 @@ app.post(
 
           const sub = await stripe.subscriptions.retrieve(session.subscription);
 
+          console.log('[stripe] checkout.session.completed', {
+            tenantId,
+            subscriptionId: sub.id,
+            status: sub.status,
+            current_period_end: sub.current_period_end,
+            cancel_at_period_end: sub.cancel_at_period_end,
+          });
+
           await pushSubscriptionUpdateToApi({
             tenantId,
             stripeStatus: sub.status,
@@ -225,6 +233,15 @@ app.post(
         case 'customer.subscription.deleted': {
           const sub = event.data.object;
           const tenantId = sub?.metadata?.tenantId || '';
+
+          console.log(`[stripe] ${event.type}`, {
+            tenantId,
+            subscriptionId: sub.id,
+            status: sub.status,
+            current_period_end: sub.current_period_end,
+            cancel_at_period_end: sub.cancel_at_period_end,
+          });
+
           await pushSubscriptionUpdateToApi({
             tenantId,
             stripeStatus: sub.status,
@@ -233,16 +250,47 @@ app.post(
           });
           break;
         }
+        case 'invoice.paid': {
+          const invoice = event.data.object;
+          const subscriptionId = invoice.subscription;
+          if (!subscriptionId) {
+            console.log('[stripe] invoice.paid without subscription; ignoring');
+            break;
+          }
+
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          const tenantId = sub?.metadata?.tenantId || '';
+
+          console.log('[stripe] invoice.paid', {
+            tenantId,
+            subscriptionId: sub.id,
+            status: sub.status,
+            current_period_end: sub.current_period_end,
+            cancel_at_period_end: sub.cancel_at_period_end,
+          });
+
+          await pushSubscriptionUpdateToApi({
+            tenantId,
+            stripeStatus: sub.status,
+            currentPeriodEnd: sub.current_period_end,
+            cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+          });
+
+          break;
+        }
         default:
           console.log(`Unhandled event type ${event.type}`);
       }
     };
 
-    handleAsync().catch((e) => {
+    try {
+      await handleAsync();
+      response.status(200).send('ok');
+    } catch (e) {
       console.error('[stripe] Webhook handler failed', e);
-    });
-
-    response.send();
+      // Return non-2xx so Stripe retries.
+      response.status(500).send('handler_failed');
+    }
   },
 );
 
