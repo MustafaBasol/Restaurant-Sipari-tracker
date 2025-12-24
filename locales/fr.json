@@ -154,6 +154,7 @@
       "createAccountBtn": "Créer un compte",
       "haveAccount": "Vous avez déjà un compte?",
       "allFieldsRequired": "Tous les champs sont requis.",
+      "emailTaken": "Cet e-mail est déjà utilisé. Veuillez essayer un autre e-mail.",
       "failed": "Échec de l'enregistrement. L'URL du restaurant ou l'e-mail est peut-être déjà pris.",
       "successTitle": "Compte créé",
       "successMessage": "Un e-mail de vérification a été envoyé. Veuillez ouvrir le lien de vérification dans votre boîte de réception.",

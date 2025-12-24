@@ -838,7 +838,6 @@ const _internalActivateSubscription = (tenantId: string): Tenant => {
 
 export interface RegisterPayload {
   tenantName: string;
-  tenantSlug: string;
   adminFullName: string;
   adminEmail: string;
   adminPassword: string;
@@ -846,14 +845,33 @@ export interface RegisterPayload {
   turnstileToken?: string;
 }
 
+const slugifyTenant = (value: string): string => {
+  const base = value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]+/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return base || 'restaurant';
+};
+
+const generateUniqueTenantSlug = (tenantName: string): string => {
+  const base = slugifyTenant(tenantName);
+  let candidate = base;
+  let n = 2;
+  while (db.tenants.some((t) => t.slug === candidate)) {
+    candidate = `${base}-${n}`;
+    n += 1;
+  }
+  return candidate;
+};
+
 export const registerTenant = async (
   payload: RegisterPayload,
 ): Promise<{ user: User; tenant: Tenant; sessionId: string; deviceId: string } | null> => {
   await simulateDelay();
-  if (
-    db.tenants.some((t) => t.slug === payload.tenantSlug) ||
-    db.users.some((u) => u.email.toLowerCase() === payload.adminEmail.toLowerCase())
-  ) {
+  if (db.users.some((u) => u.email.toLowerCase() === payload.adminEmail.toLowerCase())) {
     return null;
   }
 
@@ -864,7 +882,7 @@ export const registerTenant = async (
   const newTenant: Tenant = {
     id: `t${Date.now()}`,
     name: payload.tenantName,
-    slug: payload.tenantSlug,
+    slug: generateUniqueTenantSlug(payload.tenantName),
     defaultLanguage: 'en',
     subscriptionStatus: SubscriptionStatus.TRIAL,
     createdAt: now,

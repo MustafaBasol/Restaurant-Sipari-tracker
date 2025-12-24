@@ -157,6 +157,7 @@
       "createAccountBtn": "Hesap Oluştur",
       "haveAccount": "Zaten bir hesabınız var mı?",
       "allFieldsRequired": "Tüm alanlar zorunludur.",
+      "emailTaken": "Bu e-posta daha önce kullanıldı. Lütfen farklı bir e-posta deneyin.",
       "failed": "Kayıt başarısız. Restoran URL'si veya e-posta zaten alınmış olabilir.",
       "successTitle": "Kayıt başarıyla oluşturuldu",
       "successMessage": "Doğrulama e-postası gönderildi. Lütfen e-postanıza gelen doğrulama bağlantısını açın.",

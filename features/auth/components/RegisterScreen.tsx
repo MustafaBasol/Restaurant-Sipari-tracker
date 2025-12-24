@@ -15,7 +15,6 @@ const RegisterScreen: React.FC = () => {
   const { register, isLoading } = useAuth();
   const { t } = useLanguage();
   const [tenantName, setTenantName] = useState('');
-  const [tenantSlug, setTenantSlug] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -94,25 +93,17 @@ const RegisterScreen: React.FC = () => {
     if (err instanceof ApiError) {
       if (err.code === 'HUMAN_VERIFICATION_REQUIRED') return t('auth.humanVerificationRequired');
       if (err.code === 'HUMAN_VERIFICATION_FAILED') return t('auth.humanVerificationFailed');
+      if (err.code === 'EMAIL_ALREADY_USED') return t('auth.register.emailTaken');
       if (err.code === 'ALREADY_EXISTS') return t('auth.register.failed');
     }
     return t('auth.register.failed');
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const slug = value
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]+/g, '');
-    setTenantSlug(slug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setResendError('');
-    if (!tenantName || !tenantSlug || !fullName || !email || !password) {
+    if (!tenantName || !fullName || !email || !password) {
       setError(t('auth.register.allFieldsRequired'));
       return;
     }
@@ -125,7 +116,6 @@ const RegisterScreen: React.FC = () => {
     try {
       const success = await register({
         tenantName,
-        tenantSlug,
         adminFullName: fullName,
         adminEmail: email,
         adminPassword: password,
@@ -211,18 +201,6 @@ const RegisterScreen: React.FC = () => {
                 value={tenantName}
                 onChange={(e) => setTenantName(e.target.value)}
                 placeholder="e.g., Sunset Bistro"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                {t('auth.register.restaurantUrl')}
-              </label>
-              <Input
-                type="text"
-                value={tenantSlug}
-                onChange={handleSlugChange}
-                placeholder="sunset-bistro"
                 required
               />
             </div>

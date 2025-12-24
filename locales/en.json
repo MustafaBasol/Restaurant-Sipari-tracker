@@ -151,6 +151,7 @@
       "createAccountBtn": "Create Account",
       "haveAccount": "Already have an account?",
       "allFieldsRequired": "All fields are required.",
+      "emailTaken": "This email is already used. Please try a different email.",
       "failed": "Registration failed. The restaurant URL or email might already be taken.",
       "successTitle": "Account created",
       "successMessage": "A verification email has been sent. Please open the verification link in your inbox.",

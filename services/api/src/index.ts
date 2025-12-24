@@ -129,6 +129,17 @@ const generateToken = (): string => crypto.randomBytes(32).toString('hex');
 const hashToken = (token: string): string =>
   crypto.createHash('sha256').update(token).digest('hex');
 
+const slugifyTenant = (value: string): string => {
+  const base = value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]+/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return base || 'restaurant';
+};
+
 const buildHashRouteUrl = (route: string, params: Record<string, string>): string => {
   if (!APP_PUBLIC_URL) {
     throw new Error('APP_PUBLIC_URL_MISSING');
@@ -418,7 +429,9 @@ app.post('/api/auth/login', async (req, res) => {
 
 const registerTenantSchema = z.object({
   tenantName: z.string().min(2),
-  tenantSlug: z.string().min(2),
+  // tenantSlug is intentionally NOT user-provided in production.
+  // We keep it optional for backward compatibility with older clients.
+  tenantSlug: z.string().min(2).optional(),
   adminFullName: z.string().min(2),
   adminEmail: z.string().email(),
   adminPassword: z.string().min(6),
@@ -432,7 +445,6 @@ app.post('/api/auth/register-tenant', async (req, res) => {
 
   const {
     tenantName,
-    tenantSlug,
     adminFullName,
     adminEmail,
     adminPassword,
@@ -442,9 +454,9 @@ app.post('/api/auth/register-tenant', async (req, res) => {
 
   if (!(await requireHumanVerification(req, res, turnstileToken))) return;
 
-  const existingTenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
-  const existingUser = await prisma.user.findUnique({ where: { email: adminEmail.toLowerCase() } });
-  if (existingTenant || existingUser) return res.status(409).json({ error: 'ALREADY_EXISTS' });
+  const normalizedEmail = adminEmail.toLowerCase();
+  const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (existingUser) return res.status(409).json({ error: 'EMAIL_ALREADY_USED' });
 
   const now = new Date();
   const trialEndAt = new Date(now);
@@ -456,35 +468,72 @@ app.post('/api/auth/register-tenant', async (req, res) => {
   const emailTokenHash = hashToken(emailToken);
   const emailTokenExpiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000);
 
-  const tenant = await prisma.tenant.create({
-    data: {
-      name: tenantName,
-      slug: tenantSlug,
-      defaultLanguage: 'en',
-      subscriptionStatus: 'TRIAL',
-      createdAt: now,
-      currency: 'USD',
-      timezone: 'Europe/Istanbul',
-      trialStartAt: now,
-      trialEndAt,
-    },
-  });
+  const baseSlug = slugifyTenant(tenantName);
 
-  const user = await prisma.user.create({
-    data: {
-      tenantId: tenant.id,
-      fullName: adminFullName,
-      email: adminEmail.toLowerCase(),
-      passwordHash,
-      emailVerifiedAt: null,
-      emailVerificationTokenHash: emailTokenHash,
-      emailVerificationExpiresAt: emailTokenExpiresAt,
-      mfaEnabledAt: null,
-      mfaSecret: null,
-      role: 'ADMIN',
-      isActive: true,
-    } as any,
-  });
+  let tenant: any = null;
+  let user: any = null;
+  const maxAttempts = 50;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const createdTenant = await tx.tenant.create({
+          data: {
+            name: tenantName,
+            slug: candidateSlug,
+            defaultLanguage: 'en',
+            subscriptionStatus: 'TRIAL',
+            createdAt: now,
+            currency: 'USD',
+            timezone: 'Europe/Istanbul',
+            trialStartAt: now,
+            trialEndAt,
+          },
+        });
+
+        const createdUser = await tx.user.create({
+          data: {
+            tenantId: createdTenant.id,
+            fullName: adminFullName,
+            email: normalizedEmail,
+            passwordHash,
+            emailVerifiedAt: null,
+            emailVerificationTokenHash: emailTokenHash,
+            emailVerificationExpiresAt: emailTokenExpiresAt,
+            mfaEnabledAt: null,
+            mfaSecret: null,
+            role: 'ADMIN',
+            isActive: true,
+          } as any,
+        });
+
+        return { tenant: createdTenant, user: createdUser };
+      });
+
+      tenant = result.tenant;
+      user = result.user;
+      break;
+    } catch (e: any) {
+      // Prisma unique constraint: retry on slug collision, report email collision.
+      const code = typeof e?.code === 'string' ? e.code : '';
+      const target = Array.isArray(e?.meta?.target) ? (e.meta.target as string[]) : [];
+      if (code === 'P2002') {
+        if (target.includes('email')) {
+          return res.status(409).json({ error: 'EMAIL_ALREADY_USED' });
+        }
+        if (target.includes('slug')) {
+          continue;
+        }
+      }
+      req.log?.error({ err: e, msg: 'Failed to register tenant' });
+      return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    }
+  }
+
+  if (!tenant || !user) {
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
 
   // Send verification email (registration is considered successful even if email sending fails).
   try {
