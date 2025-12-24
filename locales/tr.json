@@ -438,6 +438,8 @@
       "mfaCode": "Doğrulama Kodu",
       "mfaCodeRequired": "Lütfen 6 haneli doğrulama kodunu girin.",
       "mfaInvalidCode": "Kod geçersiz. Lütfen tekrar deneyin.",
+      "mfaRecoveryCodesTitle": "Kurtarma Kodları",
+      "mfaRecoveryCodesIntro": "Bu kodları güvenli bir yere kaydedin. Her kod yalnızca bir kez kullanılabilir ve telefonunuzu kaybederseniz hesabınıza erişmek için gereklidir.",
       "mfaMisconfigured": "2FA yapılandırması eksik. Lütfen tekrar kurulum başlatın.",
       "mfaAlreadyEnabled": "Bu kullanıcı için 2FA zaten açık."
     },
@@ -556,7 +558,13 @@
       "title": "Restoran Detayları",
       "subscriptionManagement": "Abonelik Yönetimi"
     },
-    "viewDetails": "Detayları Görüntüle"
+    "viewDetails": "Detayları Görüntüle",
+    "confirmDeleteTenant": "\"{name}\" restoranını ve tüm verilerini silmek istiyor musunuz? Bu işlem geri alınamaz.",
+    "deleteTenantFailed": "Restoran silinemedi.",
+    "confirmDeleteUser": "\"{email}\" kullanıcısını silmek istiyor musunuz? Bu işlem geri alınamaz.",
+    "deleteUserFailed": "Kullanıcı silinemedi.",
+    "deleteUserHasOrders": "Bu kullanıcı siparişlerde görevli olduğu için silinemiyor.",
+    "deleteUserCannotDeleteSelf": "Kendi hesabınızı silemezsiniz."
   },
   "notifications": {
     "title": "Yeni Siparişler",

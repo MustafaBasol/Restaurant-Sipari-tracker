@@ -40,9 +40,14 @@ export const mfaSetup = async (): Promise<{
   return apiFetch('/auth/mfa/setup', { method: 'POST' });
 };
 
-export const mfaVerify = async (code: string): Promise<{ mfaEnabledAt: string }> => {
+export const mfaVerify = async (
+  code: string,
+): Promise<{ mfaEnabledAt: string; recoveryCodes?: string[] }> => {
   if (!isRealApiEnabled()) {
-    return { mfaEnabledAt: new Date().toISOString() };
+    return {
+      mfaEnabledAt: new Date().toISOString(),
+      recoveryCodes: ['aaaa-bbbb-cccc-dddd', 'eeee-ffff-gggg-hhhh'],
+    };
   }
   return apiFetch('/auth/mfa/verify', { method: 'POST', body: JSON.stringify({ code }) });
 };

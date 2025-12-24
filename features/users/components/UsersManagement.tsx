@@ -413,11 +413,8 @@ const UsersManagement: React.FC = () => {
             setEnablingMfaForUser(null);
           }}
           onSetup={setupUserMfa}
-          onVerify={(userId, code) =>
-            verifyUserMfa(userId, code).then(() => {
-              handleMfaEnabled();
-            })
-          }
+          onVerify={verifyUserMfa}
+          onEnabled={handleMfaEnabled}
         />
       )}
     </div>

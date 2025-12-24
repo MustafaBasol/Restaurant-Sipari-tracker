@@ -13,12 +13,14 @@ import {
 import { Badge } from '../../../shared/components/ui/Badge';
 import { formatDateTime, getTrialDaysLeft } from '../../../shared/lib/utils';
 import { Select } from '../../../shared/components/ui/Select';
+import { ApiError } from '../../../shared/lib/runtimeApi';
 
 interface TenantDetailModalProps {
   tenant: Tenant;
   users: User[];
   onClose: () => void;
   onSubscriptionChange: (tenantId: string, status: SubscriptionStatus) => void;
+  onDeleteUser: (userId: string) => Promise<any>;
 }
 
 const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
@@ -33,6 +35,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
   users,
   onClose,
   onSubscriptionChange,
+  onDeleteUser,
 }) => {
   const { t } = useLanguage();
 
@@ -101,6 +104,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
               <TableHeader>
                 <TableHeaderCell>{t('general.name')}</TableHeaderCell>
                 <TableHeaderCell>{t('general.role')}</TableHeaderCell>
+                <TableHeaderCell align="right">{t('general.actions')}</TableHeaderCell>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
@@ -113,6 +117,33 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
                       <Badge variant={user.isActive ? 'green' : 'red'}>
                         {t(`roles.${user.role}`)}
                       </Badge>
+                    </TableCell>
+                    <TableCell align="right">
+                      <button
+                        type="button"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={async () => {
+                          const ok = window.confirm(
+                            t('superAdmin.confirmDeleteUser').replace('{email}', user.email),
+                          );
+                          if (!ok) return;
+                          try {
+                            await onDeleteUser(user.id);
+                          } catch (e) {
+                            if (e instanceof ApiError && e.code === 'USER_HAS_ORDERS') {
+                              window.alert(t('superAdmin.deleteUserHasOrders'));
+                              return;
+                            }
+                            if (e instanceof ApiError && e.code === 'CANNOT_DELETE_SELF') {
+                              window.alert(t('superAdmin.deleteUserCannotDeleteSelf'));
+                              return;
+                            }
+                            window.alert(t('superAdmin.deleteUserFailed'));
+                          }
+                        }}
+                      >
+                        {t('general.delete')}
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -21,7 +21,7 @@ type SortKey = 'name' | 'createdAt' | 'subscriptionStatus';
 type StatusFilter = 'ALL' | SubscriptionStatus;
 
 const TenantList: React.FC = () => {
-  const { tenants, users, updateTenantSubscription } = useTenants();
+  const { tenants, users, updateTenantSubscription, deleteTenant, deleteUser } = useTenants();
   const { t } = useLanguage();
   const [viewingTenant, setViewingTenant] = useState<Tenant | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
@@ -181,13 +181,32 @@ const TenantList: React.FC = () => {
                 </TableCell>
                 <TableCell>{tenant.userCount}</TableCell>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {/* FIX: Removed unnecessary type cast `as Tenant` since the type from `useTenants` hook is now correct. */}
-                  <button
-                    onClick={() => setViewingTenant(tenant)}
-                    className="text-accent hover:text-accent-hover"
-                  >
-                    {t('superAdmin.viewDetails')}
-                  </button>
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      onClick={() => setViewingTenant(tenant)}
+                      className="text-accent hover:text-accent-hover"
+                    >
+                      {t('superAdmin.viewDetails')}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const ok = window.confirm(
+                          t('superAdmin.confirmDeleteTenant').replace('{name}', tenant.name),
+                        );
+                        if (!ok) return;
+                        try {
+                          await deleteTenant(tenant.id);
+                          if (viewingTenant?.id === tenant.id) setViewingTenant(null);
+                        } catch (e) {
+                          console.error('Failed to delete tenant', e);
+                          window.alert(t('superAdmin.deleteTenantFailed'));
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      {t('general.delete')}
+                    </button>
+                  </div>
                 </td>
               </TableRow>
             );
@@ -201,6 +220,7 @@ const TenantList: React.FC = () => {
           users={users.filter((u) => u.tenantId === viewingTenant.id)}
           onClose={() => setViewingTenant(null)}
           onSubscriptionChange={updateTenantSubscription}
+          onDeleteUser={deleteUser}
         />
       )}
     </>

@@ -146,6 +146,7 @@ model User {
 
   mfaEnabledAt DateTime?
   mfaSecret String?
+  mfaRecoveryCodeHashes String[] @default([])
 
   role       UserRole
   isActive   Boolean  @default(true)

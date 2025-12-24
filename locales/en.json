@@ -431,6 +431,8 @@
       "mfaCode": "Verification Code",
       "mfaCodeRequired": "Please enter the 6-digit verification code.",
       "mfaInvalidCode": "Invalid code. Please try again.",
+      "mfaRecoveryCodesTitle": "Recovery Codes",
+      "mfaRecoveryCodesIntro": "Save these codes in a safe place. Each code can be used only once and is required to access the account if the phone is lost.",
       "mfaMisconfigured": "2FA configuration is missing. Please start setup again.",
       "mfaAlreadyEnabled": "2FA is already enabled for this user."
     },
@@ -549,7 +551,13 @@
       "title": "Tenant Details",
       "subscriptionManagement": "Subscription Management"
     },
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "confirmDeleteTenant": "Do you want to delete \"{name}\" and all its data? This action cannot be undone.",
+    "deleteTenantFailed": "Failed to delete tenant.",
+    "confirmDeleteUser": "Do you want to delete user \"{email}\"? This action cannot be undone.",
+    "deleteUserFailed": "Failed to delete user.",
+    "deleteUserHasOrders": "This user cannot be deleted because they are referenced by orders.",
+    "deleteUserCannotDeleteSelf": "You cannot delete your own account."
   },
   "notifications": {
     "title": "New Orders",

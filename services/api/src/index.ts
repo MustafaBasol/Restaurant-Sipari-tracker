@@ -151,6 +151,26 @@ const generateTemporaryPassword = (): string => {
 const hashToken = (token: string): string =>
   crypto.createHash('sha256').update(token).digest('hex');
 
+const normalizeRecoveryCode = (value: string): string =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/-/g, '');
+
+const hashRecoveryCode = (code: string): string =>
+  crypto.createHash('sha256').update(normalizeRecoveryCode(code)).digest('hex');
+
+const generateRecoveryCodes = (count = 10): string[] => {
+  const out: string[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const raw = crypto.randomBytes(8).toString('hex'); // 16 chars
+    // Format as xxxx-xxxx-xxxx-xxxx for readability
+    out.push(`${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}-${raw.slice(12, 16)}`);
+  }
+  return out;
+};
+
 const slugifyTenant = (value: string): string => {
   const base = value
     .trim()
@@ -275,6 +295,12 @@ const requireTenant: express.RequestHandler = (req, res, next) => {
   if (!req.auth) return res.status(401).json({ error: 'UNAUTHENTICATED' });
   if (req.auth.role === 'SUPER_ADMIN') return next();
   if (!req.auth.tenantId) return res.status(403).json({ error: 'TENANT_REQUIRED' });
+  return next();
+};
+
+const requireSuperAdmin: express.RequestHandler = (req, res, next) => {
+  if (!req.auth) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+  if (req.auth.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'FORBIDDEN' });
   return next();
 };
 
@@ -435,13 +461,17 @@ const loginSchema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
     z.string().min(1).optional(),
   ),
+  mfaRecoveryCode: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().min(1).optional(),
+  ),
 });
 
 app.post('/api/auth/login', async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
 
-  const { email, password, deviceId, turnstileToken, mfaCode } = parsed.data;
+  const { email, password, deviceId, turnstileToken, mfaCode, mfaRecoveryCode } = parsed.data;
 
   if (!(await requireHumanVerification(req, res, turnstileToken))) return;
 
@@ -460,12 +490,28 @@ app.post('/api/auth/login', async (req, res) => {
   // MFA (TOTP) enforcement once enabled.
   // NOTE: Some editor TS setups may cache older Prisma Client types; keep this access resilient.
   if ((user as any).mfaEnabledAt) {
-    if (!mfaCode) return res.status(401).json({ error: 'MFA_REQUIRED' });
-    if (!isSixDigitCode(mfaCode)) return res.status(400).json({ error: 'INVALID_INPUT' });
-    const secret = (user as any).mfaSecret as string | null | undefined;
-    if (!secret) return res.status(500).json({ error: 'MFA_MISCONFIGURED' });
-    const valid = authenticator.check(mfaCode, secret);
-    if (!valid) return res.status(401).json({ error: 'MFA_INVALID' });
+    // Accept either a TOTP code or a recovery code.
+    if (mfaCode) {
+      if (!isSixDigitCode(mfaCode)) return res.status(400).json({ error: 'INVALID_INPUT' });
+      const secret = (user as any).mfaSecret as string | null | undefined;
+      if (!secret) return res.status(500).json({ error: 'MFA_MISCONFIGURED' });
+      const valid = authenticator.check(mfaCode, secret);
+      if (!valid) return res.status(401).json({ error: 'MFA_INVALID' });
+    } else if (mfaRecoveryCode) {
+      const hashes = ((user as any).mfaRecoveryCodeHashes ?? []) as string[];
+      const h = hashRecoveryCode(mfaRecoveryCode);
+      const idx = hashes.indexOf(h);
+      if (idx === -1) return res.status(401).json({ error: 'MFA_INVALID' });
+      // Consume one-time code.
+      const next = hashes.slice();
+      next.splice(idx, 1);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { mfaRecoveryCodeHashes: next } as any,
+      });
+    } else {
+      return res.status(401).json({ error: 'MFA_REQUIRED' });
+    }
   }
 
   const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
@@ -638,7 +684,7 @@ app.post('/api/auth/mfa/setup', requireAuth, async (req, res) => {
   const secret = authenticator.generateSecret();
   await prisma.user.update({
     where: { id: user.id },
-    data: { mfaSecret: secret } as any,
+    data: { mfaSecret: secret, mfaRecoveryCodeHashes: [] } as any,
   });
 
   const label = user.email;
@@ -669,12 +715,14 @@ app.post('/api/auth/mfa/verify', requireAuth, async (req, res) => {
   if (!ok) return res.status(401).json({ error: 'MFA_INVALID' });
 
   const enabledAt = new Date();
+  const recoveryCodes = generateRecoveryCodes(10);
+  const hashes = recoveryCodes.map(hashRecoveryCode);
   await prisma.user.update({
     where: { id: user.id },
-    data: { mfaEnabledAt: enabledAt } as any,
+    data: { mfaEnabledAt: enabledAt, mfaRecoveryCodeHashes: hashes } as any,
   });
 
-  return res.json({ mfaEnabledAt: enabledAt });
+  return res.json({ mfaEnabledAt: enabledAt, recoveryCodes });
 });
 
 const resendVerificationSchema = z.object({
@@ -1194,6 +1242,103 @@ app.delete('/api/menu/items/:id', requireAuth, requireTenant, async (req, res) =
   return res.status(204).send();
 });
 
+// Super admin: tenant + user overview
+app.get('/api/super-admin/tenants', requireAuth, requireSuperAdmin, async (_req, res) => {
+  const tenants = await prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } });
+  return res.json(tenants);
+});
+
+app.get('/api/super-admin/users', requireAuth, requireSuperAdmin, async (_req, res) => {
+  const users = await prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
+  return res.json(users.map(sanitizeUserForResponse));
+});
+
+app.post(
+  '/api/super-admin/users/:id/mfa/disable',
+  requireAuth,
+  requireSuperAdmin,
+  async (req, res) => {
+    if (req.params.id === req.auth!.userId) {
+      return res.status(400).json({ error: 'CANNOT_DELETE_SELF' });
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { mfaEnabledAt: null, mfaSecret: null, mfaRecoveryCodeHashes: [] } as any,
+    });
+    return res.json(true);
+  },
+);
+
+const superAdminTenantSubscriptionSchema = z.object({
+  status: z.enum(['TRIAL', 'ACTIVE', 'EXPIRED', 'CANCELED']),
+});
+
+app.put(
+  '/api/super-admin/tenants/:id/subscription',
+  requireAuth,
+  requireSuperAdmin,
+  async (req, res) => {
+    const parsed = superAdminTenantSubscriptionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+    try {
+      const updated = await prisma.tenant.update({
+        where: { id: req.params.id },
+        data: { subscriptionStatus: parsed.data.status as any },
+      });
+      return res.json(updated);
+    } catch (e: any) {
+      const code = typeof e?.code === 'string' ? e.code : '';
+      if (code === 'P2025') return res.status(404).json({ error: 'NOT_FOUND' });
+      req.log?.error({ err: e, msg: 'Failed to update tenant subscription' });
+      return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    }
+  },
+);
+
+app.delete('/api/super-admin/users/:id', requireAuth, requireSuperAdmin, async (req, res) => {
+  if (req.params.id === req.auth!.userId) {
+    return res.status(400).json({ error: 'CANNOT_DELETE_SELF' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  if (user.role === 'SUPER_ADMIN') {
+    const superAdminCount = await prisma.user.count({ where: { role: 'SUPER_ADMIN' } });
+    if (superAdminCount <= 1) {
+      return res.status(409).json({ error: 'LAST_SUPER_ADMIN' });
+    }
+  }
+
+  // Prevent deleting a waiter that is still referenced by orders.
+  const orderRefs = await prisma.order.count({ where: { waiterId: user.id } });
+  if (orderRefs > 0) {
+    return res.status(409).json({ error: 'USER_HAS_ORDERS' });
+  }
+
+  await prisma.user.delete({ where: { id: user.id } });
+  return res.json(true);
+});
+
+app.delete('/api/super-admin/tenants/:id', requireAuth, requireSuperAdmin, async (req, res) => {
+  const tenantId = req.params.id;
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  // Delete in a safe order to satisfy FK constraints:
+  // - Orders reference waiter (User) with onDelete: Restrict
+  // - Tables reference orders, etc.
+  await prisma.$transaction(async (tx) => {
+    await tx.order.deleteMany({ where: { tenantId } });
+    await tx.user.deleteMany({ where: { tenantId } });
+    await tx.tenant.delete({ where: { id: tenantId } });
+  });
+
+  return res.json(true);
+});
+
 // Users (tenant admin)
 app.get('/api/users', requireAuth, requireTenant, async (req, res) => {
   if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN'))
@@ -1213,7 +1358,7 @@ app.post('/api/users/:id/mfa/disable', requireAuth, requireTenant, async (req, r
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { mfaEnabledAt: null, mfaSecret: null } as any,
+    data: { mfaEnabledAt: null, mfaSecret: null, mfaRecoveryCodeHashes: [] } as any,
   });
   return res.json(true);
 });
@@ -1234,7 +1379,7 @@ app.post('/api/users/:id/mfa/setup', requireAuth, requireTenant, async (req, res
   const secret = authenticator.generateSecret();
   await prisma.user.update({
     where: { id: user.id },
-    data: { mfaSecret: secret, mfaEnabledAt: null } as any,
+    data: { mfaSecret: secret, mfaEnabledAt: null, mfaRecoveryCodeHashes: [] } as any,
   });
 
   const label = user.email;
@@ -1269,11 +1414,13 @@ app.post('/api/users/:id/mfa/verify', requireAuth, requireTenant, async (req, re
   if (!ok) return res.status(401).json({ error: 'MFA_INVALID' });
 
   const enabledAt = new Date();
+  const recoveryCodes = generateRecoveryCodes(10);
+  const hashes = recoveryCodes.map(hashRecoveryCode);
   await prisma.user.update({
     where: { id: user.id },
-    data: { mfaEnabledAt: enabledAt } as any,
+    data: { mfaEnabledAt: enabledAt, mfaRecoveryCodeHashes: hashes } as any,
   });
-  return res.json({ mfaEnabledAt: enabledAt });
+  return res.json({ mfaEnabledAt: enabledAt, recoveryCodes });
 });
 
 const userCreateSchema = z.object({

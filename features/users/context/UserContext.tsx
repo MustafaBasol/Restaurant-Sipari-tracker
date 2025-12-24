@@ -3,6 +3,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
   useContext,
 } from 'react';
@@ -33,11 +34,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const tenantId = authState?.tenant?.id;
+
   const fetchUsers = useCallback(async () => {
-    if (authState?.tenant?.id) {
+    if (tenantId) {
       setIsLoading(true);
       try {
-        const data = await api.getUsers(authState.tenant.id);
+        const data = await api.getUsers(tenantId);
         setUsers(data);
       } catch (error) {
         console.error('Failed to fetch users', error);
@@ -48,50 +51,83 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUsers([]);
       setIsLoading(false);
     }
-  }, [authState]);
+  }, [tenantId]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleMutation = async <T,>(mutationFn: () => Promise<T>): Promise<T> => {
-    const result = await mutationFn();
-    await fetchUsers();
-    return result;
-  };
+  const handleMutation = useCallback(
+    async <T,>(mutationFn: () => Promise<T>): Promise<T> => {
+      const result = await mutationFn();
+      await fetchUsers();
+      return result;
+    },
+    [fetchUsers],
+  );
 
-  const addUser = (
-    user: Omit<SharedUser, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string },
-  ) => handleMutation(() => api.addUser(authState!.tenant!.id, user));
+  const addUser = useCallback(
+    (
+      user: Omit<SharedUser, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string },
+    ) => {
+      if (!tenantId) return Promise.reject(new Error('TENANT_REQUIRED'));
+      return handleMutation(() => api.addUser(tenantId, user));
+    },
+    [handleMutation, tenantId],
+  );
 
-  const updateUser = (user: User) => handleMutation(() => api.updateUser(user));
+  const updateUser = useCallback(
+    (user: User) => handleMutation(() => api.updateUser(user)),
+    [handleMutation],
+  );
 
-  const changeUserPassword = async (userId: string, newPassword: string) => {
+  const changeUserPassword = useCallback(async (userId: string, newPassword: string) => {
     await api.changeUserPassword(userId, newPassword);
     // No refetch needed as the user list UI does not change.
-  };
+  }, []);
 
-  const disableUserMfa = (userId: string) => handleMutation(() => api.disableUserMfa(userId));
+  const disableUserMfa = useCallback(
+    (userId: string) => handleMutation(() => api.disableUserMfa(userId)),
+    [handleMutation],
+  );
 
-  const setupUserMfa = (userId: string) => handleMutation(() => api.setupUserMfa(userId));
+  const setupUserMfa = useCallback(
+    (userId: string) => handleMutation(() => api.setupUserMfa(userId)),
+    [handleMutation],
+  );
 
-  const verifyUserMfa = (userId: string, code: string) =>
-    handleMutation(() => api.verifyUserMfa(userId, code)).then(() => undefined);
+  const verifyUserMfa = useCallback(
+    (userId: string, code: string) => handleMutation(() => api.verifyUserMfa(userId, code)),
+    [handleMutation],
+  );
+
+  const value = useMemo<UserContextData>(
+    () => ({
+      users,
+      isLoading,
+      addUser,
+      updateUser,
+      changeUserPassword,
+      disableUserMfa,
+      setupUserMfa,
+      verifyUserMfa: (userId: string, code: string) => verifyUserMfa(userId, code).then(() => undefined),
+      refetch: fetchUsers,
+    }),
+    [
+      addUser,
+      changeUserPassword,
+      disableUserMfa,
+      fetchUsers,
+      isLoading,
+      setupUserMfa,
+      updateUser,
+      users,
+      verifyUserMfa,
+    ],
+  );
 
   return (
-    <UserContext.Provider
-      value={{
-        users,
-        isLoading,
-        addUser,
-        updateUser,
-        changeUserPassword,
-        disableUserMfa,
-        setupUserMfa,
-        verifyUserMfa,
-        refetch: fetchUsers,
-      }}
-    >
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );

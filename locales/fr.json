@@ -437,6 +437,8 @@
       "mfaCode": "Code de vérification",
       "mfaCodeRequired": "Veuillez saisir le code de vérification à 6 chiffres.",
       "mfaInvalidCode": "Code invalide. Veuillez réessayer.",
+      "mfaRecoveryCodesTitle": "Codes de récupération",
+      "mfaRecoveryCodesIntro": "Enregistrez ces codes dans un endroit sûr. Chaque code ne peut être utilisé qu'une seule fois et est nécessaire pour accéder au compte si le téléphone est perdu.",
       "mfaMisconfigured": "La configuration 2FA est manquante. Veuillez relancer l’installation.",
       "mfaAlreadyEnabled": "La 2FA est déjà activée pour cet utilisateur."
     },
@@ -555,7 +557,13 @@
       "title": "Détails du Restaurant",
       "subscriptionManagement": "Gestion de l'Abonnement"
     },
-    "viewDetails": "Voir Détails"
+    "viewDetails": "Voir les détails",
+    "confirmDeleteTenant": "Voulez-vous supprimer \"{name}\" et toutes ses données ? Cette action est irréversible.",
+    "deleteTenantFailed": "Échec de la suppression du restaurant.",
+    "confirmDeleteUser": "Voulez-vous supprimer l'utilisateur \"{email}\" ? Cette action est irréversible.",
+    "deleteUserFailed": "Échec de la suppression de l'utilisateur.",
+    "deleteUserHasOrders": "Cet utilisateur ne peut pas être supprimé car il est référencé par des commandes.",
+    "deleteUserCannotDeleteSelf": "Vous ne pouvez pas supprimer votre propre compte."
   },
   "notifications": {
     "title": "Nouvelles Commandes",

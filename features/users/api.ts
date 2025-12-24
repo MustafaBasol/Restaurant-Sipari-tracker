@@ -92,9 +92,15 @@ export const setupUserMfa = async (
   return apiFetch(`/users/${encodeURIComponent(userId)}/mfa/setup`, { method: 'POST' });
 };
 
-export const verifyUserMfa = async (userId: string, code: string): Promise<{ mfaEnabledAt: string }> => {
+export const verifyUserMfa = async (
+  userId: string,
+  code: string,
+): Promise<{ mfaEnabledAt: string; recoveryCodes?: string[] }> => {
   if (!isRealApiEnabled()) {
-    return { mfaEnabledAt: new Date().toISOString() };
+    return {
+      mfaEnabledAt: new Date().toISOString(),
+      recoveryCodes: ['aaaa-bbbb-cccc-dddd', 'eeee-ffff-gggg-hhhh'],
+    };
   }
   return apiFetch(`/users/${encodeURIComponent(userId)}/mfa/verify`, {
     method: 'POST',

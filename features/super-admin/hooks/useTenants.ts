@@ -34,5 +34,8 @@ export const useTenants = () => {
   const updateTenantSubscription = (tenantId: string, status: SubscriptionStatus) =>
     handleMutation(() => api.updateTenantSubscription(tenantId, status));
 
-  return { tenants, users, isLoading, updateTenantSubscription };
+  const deleteTenant = (tenantId: string) => handleMutation(() => api.deleteTenant(tenantId));
+  const deleteUser = (userId: string) => handleMutation(() => api.deleteUser(userId));
+
+  return { tenants, users, isLoading, updateTenantSubscription, deleteTenant, deleteUser };
 };
