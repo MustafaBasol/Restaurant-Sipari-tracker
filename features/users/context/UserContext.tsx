@@ -10,13 +10,14 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import * as api from '../api';
 import { User } from '../types';
 import { User as SharedUser } from '../../../shared/types';
+import type { CreateUserResult } from '../api';
 
 interface UserContextData {
   users: User[];
   isLoading: boolean;
   addUser: (
     user: Omit<SharedUser, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string },
-  ) => Promise<void>;
+  ) => Promise<CreateUserResult | void>;
   updateUser: (user: User) => Promise<void>;
   changeUserPassword: (userId: string, newPassword: string) => Promise<void>;
   disableUserMfa: (userId: string) => Promise<void>;
@@ -51,9 +52,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleMutation = async (mutationFn: () => Promise<any>) => {
-    await mutationFn();
+  const handleMutation = async <T,>(mutationFn: () => Promise<T>): Promise<T> => {
+    const result = await mutationFn();
     await fetchUsers();
+    return result;
   };
 
   const addUser = (

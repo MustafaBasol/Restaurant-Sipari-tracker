@@ -13,6 +13,11 @@ import { apiFetch, isRealApiEnabled } from '../../shared/lib/runtimeApi';
 
 type Actor = { userId: string; role: UserRole };
 
+export type CreateUserResult = {
+  user: User;
+  generatedPassword?: string | null;
+};
+
 export const getUsers = (tenantId: string) => {
   if (!isRealApiEnabled()) return getDataByTenant<User>('users', tenantId);
   return apiFetch<User[]>('/users', { method: 'GET' });
@@ -23,26 +28,28 @@ export const addUser = (
   user: Omit<SharedUser, 'id' | 'tenantId' | 'passwordHash' | 'isActive'> & { password?: string },
 ) => {
   if (isRealApiEnabled()) {
-    return apiFetch<User>('/users', {
+    return apiFetch<CreateUserResult>('/users', {
       method: 'POST',
       body: JSON.stringify({
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        password: user.password,
+        password: user.password && user.password.trim() ? user.password : undefined,
       }),
     });
   }
+  const password = user.password && user.password.trim() ? user.password : undefined;
+  const generatedPassword = password ? null : Math.random().toString(36).slice(2, 14);
   const newUser: User = {
     id: `user${Date.now()}`,
     tenantId,
     fullName: user.fullName,
     email: user.email,
-    passwordHash: user.password || '123456', // Mock hash
+    passwordHash: password || generatedPassword || '123456', // Mock hash
     role: user.role,
     isActive: true,
   };
-  return addData('users', newUser);
+  return addData('users', newUser).then((u) => ({ user: u, generatedPassword }));
 };
 
 export const updateUser = (user: User) => {

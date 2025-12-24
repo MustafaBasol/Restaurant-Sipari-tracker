@@ -28,7 +28,10 @@
     "allergens": "Allergens",
     "allergensPlaceholder": "e.g. gluten, dairy, egg",
     "all": "All",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Copy failed"
   },
   "customers": {
     "none": "No registered customer",
@@ -348,7 +351,7 @@
       "add": "Add User",
       "edit": "Edit User",
       "fullName": "Full Name",
-      "passwordOptional": "Password (leave blank to not change)",
+      "passwordOptional": "Password (leave blank to auto-generate)",
       "deactivate": "Deactivate",
       "activate": "Activate",
       "showArchive": "Archive",
@@ -364,6 +367,8 @@
       "newPassword": "New Password",
       "confirmPassword": "Confirm Password",
       "passwordUpdateSuccess": "Password updated successfully.",
+      "userCreatedSuccess": "User created.",
+      "userCreatedWithPassword": "User created. Password: {password}",
       "passwordMismatch": "Passwords do not match.",
       "passwordTooShort": "Password must be at least 6 characters.",
       "changePasswordTitle": "Change Password for {userName}",
@@ -553,6 +558,7 @@
         "secondary": "See how it works"
       },
       "saveItem": "Save",
+      "verificationEmailSentTo": "Verification email sent to: {email}",
       "cancelEdit": "Cancel",
       "variants": "Variants",
       "addVariant": "Add Variant",

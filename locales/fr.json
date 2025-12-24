@@ -28,7 +28,10 @@
     "allergens": "Allergènes",
     "allergensPlaceholder": "ex. gluten, lait, œuf",
     "all": "Tous",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "copy": "Copier",
+    "copied": "Copié",
+    "copyFailed": "Copie échouée"
   },
   "customers": {
     "none": "Aucun client enregistré",
@@ -112,6 +115,7 @@
     "humanVerificationFailed": "Échec de la vérification humaine. Veuillez réessayer.",
     "emailNotVerified": "Votre e-mail n’est pas vérifié. Veuillez vérifier votre boîte de réception.",
     "verificationRequiredMessage": "Votre e-mail n'est pas vérifié. Veuillez ouvrir le lien de vérification envoyé à votre e-mail.",
+    "verificationEmailSentTo": "E-mail de vérification envoyé à : {email}",
     "forgotPassword": "Mot de passe oublié",
     "backToLogin": "Retour à la connexion",
     "checkEmailForVerification": "Inscription terminée. Veuillez ouvrir le lien de vérification envoyé par e-mail.",
@@ -353,7 +357,7 @@
       "add": "Ajouter un Utilisateur",
       "edit": "Modifier l'Utilisateur",
       "fullName": "Nom Complet",
-      "passwordOptional": "Mot de passe (laisser vide pour ne pas changer)",
+      "passwordOptional": "Mot de passe (laisser vide pour générer automatiquement)",
       "deactivate": "Désactiver",
       "activate": "Activer",
       "showArchive": "Archive",
@@ -369,6 +373,8 @@
       "newPassword": "Nouveau mot de passe",
       "confirmPassword": "Confirmer le mot de passe",
       "passwordUpdateSuccess": "Mot de passe mis à jour avec succès.",
+      "userCreatedSuccess": "Utilisateur créé.",
+      "userCreatedWithPassword": "Utilisateur créé. Mot de passe : {password}",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
       "changePasswordTitle": "Changer le mot de passe pour {userName}",

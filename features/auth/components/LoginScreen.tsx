@@ -339,6 +339,14 @@ const LoginScreen: React.FC = () => {
       >
         <div className="p-6 space-y-4">
           <p className="text-text-secondary">{t('auth.verificationRequiredMessage')}</p>
+          {(pendingVerificationEmail || email).trim() && (
+            <p className="text-sm text-text-secondary">
+              {t('auth.verificationEmailSentTo').replace(
+                '{email}',
+                (pendingVerificationEmail || email).trim(),
+              )}
+            </p>
+          )}
           <p className="text-sm text-text-secondary">
             {resendSecondsLeft > 0
               ? t('auth.register.resendCountdown', { seconds: resendSecondsLeft })

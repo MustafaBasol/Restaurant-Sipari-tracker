@@ -49,6 +49,17 @@ const SubscriptionManagement: React.FC = () => {
   const isCancelScheduled =
     !!tenant?.subscriptionCancelAtPeriodEnd && !!tenant?.subscriptionCurrentPeriodEndAt;
 
+  const stripeBackendUrlLooksWrong = (() => {
+    if (!stripeBackendUrl) return false;
+    // This warning is useful during local/dev setup but is noisy in production.
+    if (Boolean((import.meta as any).env?.PROD)) return false;
+    const origin = window.location.origin.replace(/\/+$/, '');
+    const normalized = stripeBackendUrl.replace(/\/+$/, '');
+    if (normalized === origin) return true;
+    if (normalized.startsWith(origin) && !normalized.startsWith(`${origin}/stripe`)) return true;
+    return false;
+  })();
+
   const stripeBackendUrlIsValid = (() => {
     if (!stripeBackendUrl) return false;
     const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
@@ -206,6 +217,23 @@ const SubscriptionManagement: React.FC = () => {
 
   if (!tenant) return null;
 
+  const paidStartedDateText = formatMaybeEpochDate(stripeSubscription?.current_period_start) || '-';
+  const nextPaymentDateText = (() => {
+    if (stripeSubscription?.cancel_at_period_end) return null;
+    if (stripeSubscription?.status === 'canceled' || stripeSubscription?.ended_at) return null;
+    return formatMaybeEpochDate(stripeSubscription?.current_period_end) || null;
+  })();
+
+  const accessUntilDateText = (() => {
+    if (stripeSubscription?.current_period_end) {
+      return formatMaybeEpochDate(stripeSubscription.current_period_end) || null;
+    }
+    if (tenant.subscriptionCurrentPeriodEndAt) {
+      return formatMaybeDate(tenant.subscriptionCurrentPeriodEndAt) || null;
+    }
+    return null;
+  })();
+
   const handleActivate = () => {
     setError('');
     window.location.hash = '#/checkout';
@@ -293,6 +321,23 @@ const SubscriptionManagement: React.FC = () => {
               <p className="font-bold text-lg">{t('marketing.pricing.planName')}</p>
               {renderStatus()}
             </div>
+
+            {tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
+              <div className="mt-3 space-y-1 text-sm text-text-secondary">
+                <div>
+                  {t('subscription.historyPaidStarted').replace('{date}', paidStartedDateText)}
+                </div>
+                {nextPaymentDateText ? (
+                  <div>
+                    {t('subscription.historyNextPayment').replace('{date}', nextPaymentDateText)}
+                  </div>
+                ) : accessUntilDateText ? (
+                  <div>
+                    {t('subscription.historyAccessUntil').replace('{date}', accessUntilDateText)}
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
 
           <div className="text-sm text-text-secondary">
@@ -316,7 +361,7 @@ const SubscriptionManagement: React.FC = () => {
 
           {subscriptionIsActive && tenant.subscriptionStatus === SubscriptionStatus.ACTIVE && (
             <div>
-              <Button variant="secondary" onClick={handleManageSubscription} className="w-full">
+              <Button variant="primary" onClick={handleManageSubscription} className="w-full">
                 {t('subscription.manageButton')}
               </Button>
             </div>
@@ -365,16 +410,14 @@ const SubscriptionManagement: React.FC = () => {
                         </td>
                       </tr>
                     )}
-                    {stripeSubscription?.current_period_start && (
-                      <tr className="hover:bg-gray-50">
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-primary whitespace-nowrap">
-                          {t('subscription.historyEventPaidStarted')}
-                        </td>
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
-                          {formatMaybeEpochDate(stripeSubscription.current_period_start) || '-'}
-                        </td>
-                      </tr>
-                    )}
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-primary whitespace-nowrap">
+                        {t('subscription.historyEventPaidStarted')}
+                      </td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
+                        {formatMaybeEpochDate(stripeSubscription?.current_period_start) || '-'}
+                      </td>
+                    </tr>
 
                     {stripeSubscription?.cancel_at_period_end ? (
                       <>
@@ -431,16 +474,14 @@ const SubscriptionManagement: React.FC = () => {
                         )}
                       </>
                     ) : (
-                      stripeSubscription?.current_period_end && (
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-primary whitespace-nowrap">
-                            {t('subscription.historyEventNextPayment')}
-                          </td>
-                          <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
-                            {formatMaybeEpochDate(stripeSubscription.current_period_end) || '-'}
-                          </td>
-                        </tr>
-                      )
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-primary whitespace-nowrap">
+                          {t('subscription.historyEventNextPayment')}
+                        </td>
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
+                          {formatMaybeEpochDate(stripeSubscription?.current_period_end) || '-'}
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
@@ -453,7 +494,7 @@ const SubscriptionManagement: React.FC = () => {
               </div>
             )}
 
-            {stripeBackendUrl && stripeBackendUrl.startsWith(window.location.origin) && (
+            {stripeBackendUrlLooksWrong && (
               <div className="text-sm text-text-secondary">
                 {t('subscription.paymentHistoryBackendUrlLooksWrong')}
               </div>

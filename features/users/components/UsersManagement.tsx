@@ -34,16 +34,64 @@ const UsersManagement: React.FC = () => {
   const [editingPasswordForUser, setEditingPasswordForUser] = useState<User | null>(null);
   const [viewingSessionsForUser, setViewingSessionsForUser] = useState<User | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [successCopyValue, setSuccessCopyValue] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
-  const canManageSessions = authState?.user.role === UserRole.ADMIN;
-  const canManageMfa = authState?.user.role === UserRole.ADMIN;
+  const canManageSessions =
+    authState?.user.role === UserRole.ADMIN || authState?.user.role === UserRole.SUPER_ADMIN;
+  const canManageMfa =
+    authState?.user.role === UserRole.ADMIN || authState?.user.role === UserRole.SUPER_ADMIN;
   const visibleUsers = users.filter((u) => (showArchived ? !u.isActive : u.isActive));
 
   const handleAddUser = async () => {
-    if (newUser.fullName && newUser.email && newUser.password) {
-      await addUser(newUser);
+    if (newUser.fullName && newUser.email) {
+      const result = await addUser({
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+        password: newUser.password && newUser.password.trim() ? newUser.password : undefined,
+      } as any);
+
+      const generatedPassword = (result as any)?.generatedPassword as string | null | undefined;
+      if (generatedPassword) {
+        setSuccessMessage(
+          t('admin.users.userCreatedWithPassword').replace('{password}', generatedPassword),
+        );
+        setSuccessCopyValue(generatedPassword);
+        setCopyStatus('idle');
+        setTimeout(() => setSuccessMessage(''), 15000);
+      } else {
+        setSuccessMessage(t('admin.users.userCreatedSuccess'));
+        setSuccessCopyValue(null);
+        setCopyStatus('idle');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
       setNewUser({ fullName: '', email: '', password: '', role: UserRole.WAITER });
       setIsAdding(false);
+    }
+  };
+
+  const handleCopySuccessPassword = async () => {
+    if (!successCopyValue) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(successCopyValue);
+      } else {
+        const el = document.createElement('textarea');
+        el.value = successCopyValue;
+        el.setAttribute('readonly', 'true');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch {
+      setCopyStatus('failed');
+      setTimeout(() => setCopyStatus('idle'), 2000);
     }
   };
 
@@ -55,12 +103,16 @@ const UsersManagement: React.FC = () => {
     await changeUserPassword(userId, newPassword);
     setEditingPasswordForUser(null);
     setSuccessMessage(t('admin.users.passwordUpdateSuccess'));
+    setSuccessCopyValue(null);
+    setCopyStatus('idle');
     setTimeout(() => setSuccessMessage(''), 3000); // Clear message after 3 seconds
   };
 
   const handleDisableMfa = async (user: User) => {
     await disableUserMfa(user.id);
     setSuccessMessage(t('admin.users.mfaDisabledSuccess'));
+    setSuccessCopyValue(null);
+    setCopyStatus('idle');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
@@ -80,8 +132,22 @@ const UsersManagement: React.FC = () => {
       </div>
 
       {successMessage && (
-        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm">
-          {successMessage}
+        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm flex items-center justify-between gap-3">
+          <div className="min-w-0">{successMessage}</div>
+          {successCopyValue && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="py-1 px-2 whitespace-nowrap"
+              onClick={() => void handleCopySuccessPassword()}
+            >
+              {copyStatus === 'copied'
+                ? t('general.copied')
+                : copyStatus === 'failed'
+                  ? t('general.copyFailed')
+                  : t('general.copy')}
+            </Button>
+          )}
         </div>
       )}
 
@@ -110,13 +176,13 @@ const UsersManagement: React.FC = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">
-              {t('auth.password')}
+              {t('admin.users.passwordOptional')}
             </label>
             <Input
               type="password"
               value={newUser.password}
               onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-              placeholder={t('auth.password')}
+              placeholder={t('admin.users.passwordOptional')}
             />
           </div>
           <div>

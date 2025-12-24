@@ -34,7 +34,10 @@
     "allergens": "Alerjenler",
     "allergensPlaceholder": "örn. gluten, süt, yumurta",
     "all": "Tümü",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı",
+    "copyFailed": "Kopyalanamadı"
   },
   "customers": {
     "none": "Kayıtlı müşteri yok",
@@ -115,6 +118,7 @@
     "humanVerificationFailed": "İnsan doğrulaması başarısız. Lütfen tekrar deneyin.",
     "emailNotVerified": "E-postanız doğrulanmamış. Lütfen e-postanızı doğrulayın.",
     "verificationRequiredMessage": "E-postanız doğrulanmamış. Lütfen e-postanıza gelen doğrulama bağlantısını açın.",
+    "verificationEmailSentTo": "Doğrulama e-postası şu adrese gönderildi: {email}",
     "forgotPassword": "Şifremi unuttum",
     "backToLogin": "Giriş ekranına dön",
     "checkEmailForVerification": "Kayıt tamamlandı. Lütfen e-postanıza gelen doğrulama bağlantısını açın.",
@@ -354,7 +358,7 @@
       "add": "Kullanıcı Ekle",
       "edit": "Kullanıcıyı Düzenle",
       "fullName": "Tam Ad",
-      "passwordOptional": "Şifre (değiştirmek istemiyorsanız boş bırakın)",
+      "passwordOptional": "Şifre (boş bırakılırsa otomatik oluşturulur)",
       "deactivate": "Pasif Yap",
       "activate": "Aktif Yap",
       "showArchive": "Arşiv",
@@ -370,6 +374,8 @@
       "newPassword": "Yeni Şifre",
       "confirmPassword": "Şifreyi Onayla",
       "passwordUpdateSuccess": "Şifre başarıyla güncellendi.",
+      "userCreatedSuccess": "Kullanıcı oluşturuldu.",
+      "userCreatedWithPassword": "Kullanıcı oluşturuldu. Şifre: {password}",
       "passwordMismatch": "Şifreler eşleşmiyor.",
       "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
       "changePasswordTitle": "{userName} için Şifre Değiştir",

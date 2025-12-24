@@ -143,6 +143,11 @@ const verifyTurnstileToken = async (token: string, remoteIp?: string | null): Pr
 const isSixDigitCode = (value: string): boolean => /^[0-9]{6}$/.test(value);
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');
+
+const generateTemporaryPassword = (): string => {
+  // base64url gives URL-safe characters; 12 bytes -> ~16 chars.
+  return crypto.randomBytes(12).toString('base64url');
+};
 const hashToken = (token: string): string =>
   crypto.createHash('sha256').update(token).digest('hex');
 
@@ -1188,7 +1193,13 @@ app.post('/api/users', requireAuth, requireTenant, async (req, res) => {
   const parsed = userCreateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
   const tenantId = req.auth!.tenantId!;
-  const passwordHash = await bcrypt.hash(parsed.data.password ?? '123456', 12);
+  const suppliedPassword = parsed.data.password?.trim();
+  const generatedPassword = suppliedPassword ? null : generateTemporaryPassword();
+  const passwordPlain = suppliedPassword || generatedPassword;
+  if (!passwordPlain) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const passwordHash = await bcrypt.hash(passwordPlain, 12);
+  const now = new Date();
   const user = await prisma.user.create({
     data: {
       tenantId,
@@ -1196,10 +1207,14 @@ app.post('/api/users', requireAuth, requireTenant, async (req, res) => {
       email: parsed.data.email.toLowerCase(),
       role: parsed.data.role,
       passwordHash,
+      // Admin-created users are allowed to log in immediately.
+      emailVerifiedAt: now,
+      emailVerificationTokenHash: null,
+      emailVerificationExpiresAt: null,
       isActive: true,
-    },
+    } as any,
   });
-  return res.json(sanitizeUserForResponse(user));
+  return res.json({ user: sanitizeUserForResponse(user), generatedPassword });
 });
 
 const userUpdateSchema = z.object({
@@ -2377,15 +2392,68 @@ app.post(
   },
 );
 
-const server = app.listen(PORT, () => {
-  console.log(`kitchorify-api listening on :${PORT}`);
-});
+const bootstrapSuperAdmin = async () => {
+  const emailRaw = String(process.env.SUPER_ADMIN_EMAIL ?? '').trim();
+  const passwordRaw = String(process.env.SUPER_ADMIN_PASSWORD ?? '').trim();
+  const fullNameRaw = String(process.env.SUPER_ADMIN_FULL_NAME ?? '').trim();
+  if (!emailRaw || !passwordRaw) return;
+
+  if (passwordRaw.length < 12) {
+    console.warn(
+      '[bootstrap] SUPER_ADMIN_PASSWORD must be at least 12 characters; skipping super admin bootstrap',
+    );
+    return;
+  }
+
+  const email = emailRaw.toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    if (existing.role !== 'SUPER_ADMIN') {
+      console.warn(
+        `[bootstrap] user ${email} exists but is not SUPER_ADMIN; skipping super admin bootstrap`,
+      );
+    }
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(passwordRaw, 12);
+  await prisma.user.create({
+    data: {
+      fullName: fullNameRaw || 'Super Admin',
+      email,
+      passwordHash,
+      role: 'SUPER_ADMIN' as any,
+      isActive: true,
+      emailVerifiedAt: new Date(),
+      emailVerificationTokenHash: null,
+      emailVerificationExpiresAt: null,
+      mfaEnabledAt: null,
+      mfaSecret: null,
+    } as any,
+  });
+  console.log(`[bootstrap] created SUPER_ADMIN user: ${email}`);
+};
+
+let server: any;
+void (async () => {
+  try {
+    await bootstrapSuperAdmin();
+  } catch (e) {
+    console.error('[bootstrap] failed to bootstrap super admin', e);
+  }
+
+  server = app.listen(PORT, () => {
+    console.log(`kitchorify-api listening on :${PORT}`);
+  });
+})();
 
 const shutdown = async (signal: string) => {
   console.log(`[shutdown] received ${signal}`);
-  server.close(() => {
-    console.log('[shutdown] http server closed');
-  });
+  if (server) {
+    server.close(() => {
+      console.log('[shutdown] http server closed');
+    });
+  }
   try {
     await prisma.$disconnect();
   } catch {
