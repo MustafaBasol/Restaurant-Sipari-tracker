@@ -59,12 +59,14 @@ services:
 
       # Stripe backend under same-origin prefix: /stripe/* (strip prefix before proxy)
       - traefik.http.middlewares.kitchorify-stripe-strip.stripprefix.prefixes=/stripe
+      # Optional: inject API key to upstream (browser never sees it)
+      - traefik.http.middlewares.kitchorify-stripe-headers.headers.customrequestheaders.x-api-key=${STRIPE_API_KEY}
       - traefik.http.routers.kitchorify-stripe.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/stripe`)
       - traefik.http.routers.kitchorify-stripe.entrypoints=websecure
       - traefik.http.routers.kitchorify-stripe.tls=true
       - traefik.http.routers.kitchorify-stripe.tls.certresolver=mytlschallenge
       - traefik.http.routers.kitchorify-stripe.priority=2000
-      - traefik.http.routers.kitchorify-stripe.middlewares=kitchorify-stripe-strip
+      - traefik.http.routers.kitchorify-stripe.middlewares=kitchorify-stripe-strip,kitchorify-stripe-headers
       - traefik.http.services.kitchorify-stripe.loadbalancer.server.port=4242
     logging:
       driver: json-file
