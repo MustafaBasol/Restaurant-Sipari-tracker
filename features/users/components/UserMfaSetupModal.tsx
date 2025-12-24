@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import QRCode from 'qrcode';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
@@ -31,6 +32,7 @@ const UserMfaSetupModal: React.FC<UserMfaSetupModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const title = useMemo(
     () => t('admin.users.mfaSetupTitle').replace('{userName}', user.fullName),
@@ -44,6 +46,7 @@ const UserMfaSetupModal: React.FC<UserMfaSetupModalProps> = ({
     setSetup(null);
     setRecoveryCodes(null);
     setCopyStatus('idle');
+    setQrDataUrl(null);
     setIsLoading(true);
     onSetup(user.id)
       .then((data) => {
@@ -73,6 +76,27 @@ const UserMfaSetupModal: React.FC<UserMfaSetupModalProps> = ({
       cancelled = true;
     };
   }, [onSetup, t, user.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setQrDataUrl(null);
+
+    if (!setup?.otpauthUri) return;
+
+    QRCode.toDataURL(setup.otpauthUri, { margin: 1, width: 192 })
+      .then((url) => {
+        if (cancelled) return;
+        setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setQrDataUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setup?.otpauthUri]);
 
   const handleVerify = async () => {
     setError('');
@@ -171,6 +195,15 @@ const UserMfaSetupModal: React.FC<UserMfaSetupModalProps> = ({
 
         {setup && (
           <div className="space-y-3">
+            {qrDataUrl && (
+              <div className="flex justify-center">
+                <img
+                  src={qrDataUrl}
+                  alt="2FA QR"
+                  className="h-48 w-48 rounded-lg border border-border-color bg-white p-2"
+                />
+              </div>
+            )}
             <div>
               <div className="text-xs font-medium text-text-secondary mb-1">{t('admin.users.mfaIssuer')}</div>
               <div className="text-sm text-text-primary break-all">{setup.issuer}</div>
