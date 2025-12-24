@@ -6,16 +6,21 @@ type MailerSendEmailRequest = {
   html?: string;
 };
 
-const MAILERSEND_ENABLED_RAW = (process.env.MAILERSEND_ENABLED ?? '').toLowerCase();
-const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY ?? '';
+const env = (key: string): string | undefined => {
+  const raw = process.env[key];
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  return trimmed ? trimmed : undefined;
+};
+
+const MAILERSEND_ENABLED_RAW = (process.env.MAILERSEND_ENABLED ?? '').trim().toLowerCase();
+const MAILERSEND_API_KEY = env('MAILERSEND_API_KEY') ?? '';
 
 // Backward-compatible env names:
 // - preferred: MAILERSEND_FROM_EMAIL / MAILERSEND_FROM_NAME
 // - legacy:   MAILERSEND_SENDER_EMAIL / MAILERSEND_SENDER_NAME
-const MAILERSEND_FROM_EMAIL =
-  process.env.MAILERSEND_FROM_EMAIL ?? process.env.MAILERSEND_SENDER_EMAIL ?? '';
+const MAILERSEND_FROM_EMAIL = env('MAILERSEND_FROM_EMAIL') ?? env('MAILERSEND_SENDER_EMAIL') ?? '';
 const MAILERSEND_FROM_NAME =
-  process.env.MAILERSEND_FROM_NAME ?? process.env.MAILERSEND_SENDER_NAME ?? 'Kitchorify';
+  env('MAILERSEND_FROM_NAME') ?? env('MAILERSEND_SENDER_NAME') ?? 'Kitchorify';
 
 // Ergonomic default: if user provided an API key and didn't explicitly disable, consider enabled.
 const MAILERSEND_ENABLED =
