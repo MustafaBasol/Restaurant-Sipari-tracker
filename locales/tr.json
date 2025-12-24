@@ -299,6 +299,28 @@
       "drinks": "İçecekler"
     }
   },
+  "marketing": {
+    "subscriptionTerms": {
+      "title": "Abonelik Koşulları",
+      "lastUpdated": "Son güncelleme: Aralık 2025",
+      "disclaimerTitle": "Genel Bilgilendirme",
+      "disclaimerContent": "Bu metin, Kitchorify hizmetinin abonelik ve ödeme koşullarını genel hatlarıyla açıklar. Hizmeti kullanarak bu koşulları kabul etmiş olursunuz.",
+      "trialTitle": "Deneme Süresi",
+      "trialContent": "Yeni hesaplar deneme süresi ile başlayabilir. Deneme süresi boyunca belirli özellikler sunulabilir. Deneme süresi sonunda abonelik ücretli döneme geçebilir veya sona erebilir.",
+      "billingTitle": "Faturalandırma",
+      "billingContent": "Ücretli abonelikler seçilen plan periyoduna göre (örn. aylık/yıllık) faturalandırılır. Ödeme sağlayıcısı üzerinden yapılan ödemeler, fatura/ödeme geçmişinde görüntülenebilir.",
+      "cancellationTitle": "İptal",
+      "cancellationContent": "Aboneliği dilediğiniz zaman iptal edebilirsiniz. İptal edildiğinde abonelik, mevcut fatura döneminin sonuna kadar aktif kalabilir.",
+      "refundsTitle": "İadeler",
+      "refundsContent": "İade koşulları, plan türüne ve ödeme sağlayıcısına göre değişebilir. İade talepleri için destek kanallarımız üzerinden bizimle iletişime geçebilirsiniz.",
+      "taxesTitle": "Vergiler",
+      "taxesContent": "Fiyatlara uygulanacak vergiler (varsa) fatura üzerinde ayrıca gösterilebilir ve bulunduğunuz ülke/konuma göre değişebilir.",
+      "changesTitle": "Değişiklikler",
+      "changesContent": "Bu koşullar zaman zaman güncellenebilir. Güncellemeler bu sayfada yayınlandığı tarihten itibaren geçerli olur.",
+      "contactTitle": "İletişim",
+      "contactContent": "Abonelik ve faturalandırma ile ilgili sorularınız için destek ekibimizle iletişime geçebilirsiniz."
+    }
+  },
   "admin": {
     "title": "Yönetici Paneli",
     "tabs": {
@@ -385,7 +407,19 @@
       "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
       "changePasswordTitle": "{userName} için Şifre Değiştir",
       "disableMfa": "2FA'yı kapat",
-      "mfaDisabledSuccess": "2FA kapatıldı."
+      "mfaDisabledSuccess": "2FA kapatıldı.",
+      "enableMfa": "2FA'yı aç",
+      "mfaEnabledSuccess": "2FA açıldı.",
+      "mfaSetupTitle": "{userName} için 2FA kurulumu",
+      "mfaSetupInstructions": "Bir doğrulama uygulamasına (Google Authenticator / Authy vb.) yeni hesap ekleyin. İsterseniz aşağıdaki otpauth URI ile ekleyebilir veya secret'ı manuel girebilirsiniz. Sonra uygulamadaki 6 haneli kodu buraya yazıp kaydedin.",
+      "mfaIssuer": "Sağlayıcı",
+      "mfaSecret": "Secret",
+      "mfaOtpAuthUri": "otpauth URI",
+      "mfaCode": "Doğrulama Kodu",
+      "mfaCodeRequired": "Lütfen 6 haneli doğrulama kodunu girin.",
+      "mfaInvalidCode": "Kod geçersiz. Lütfen tekrar deneyin.",
+      "mfaMisconfigured": "2FA yapılandırması eksik. Lütfen tekrar kurulum başlatın.",
+      "mfaAlreadyEnabled": "Bu kullanıcı için 2FA zaten açık."
     },
     "history": {
       "startDate": "Başlangıç Tarihi",

@@ -20,8 +20,7 @@ import { OrderStatus } from '../../../shared/types';
 import { Order } from '../../orders/types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { UserRole } from '../../../shared/types';
-import CustomerCreateModal from '../../customers/components/CustomerCreateModal';
-import { createCustomer, getCustomers } from '../../customers/api';
+import { getCustomers } from '../../customers/api';
 import { Customer } from '../../customers/types';
 
 const TablesManagement: React.FC = () => {
@@ -32,7 +31,6 @@ const TablesManagement: React.FC = () => {
   const [newTableName, setNewTableName] = useState('');
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
 
@@ -104,15 +102,6 @@ const TablesManagement: React.FC = () => {
           <Button onClick={handleAddTable} className="px-4 py-2 w-full sm:w-auto">
             {t('admin.tables.add')}
           </Button>
-          {canCreateCustomers && (
-            <Button
-              onClick={() => setIsCustomerModalOpen(true)}
-              variant="secondary"
-              className="px-4 py-2 w-full sm:w-auto"
-            >
-              {t('customers.addNew')}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -250,20 +239,6 @@ const TablesManagement: React.FC = () => {
         <AdminOrderViewModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
       )}
 
-      {canCreateCustomers && authState?.tenant?.id && (
-        <CustomerCreateModal
-          isOpen={isCustomerModalOpen}
-          onClose={() => setIsCustomerModalOpen(false)}
-          onCreate={(payload) =>
-            createCustomer(authState.tenant!.id, payload.fullName, payload.phone, payload.email)
-          }
-          onCreated={(created) => {
-            setCustomers((prev) =>
-              [...prev, created].slice().sort((a, b) => a.fullName.localeCompare(b.fullName)),
-            );
-          }}
-        />
-      )}
     </div>
   );
 };

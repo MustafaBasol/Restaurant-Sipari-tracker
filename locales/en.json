@@ -292,6 +292,28 @@
       "drinks": "Drinks"
     }
   },
+  "marketing": {
+    "subscriptionTerms": {
+      "title": "Subscription Terms",
+      "lastUpdated": "Last updated: December 2025",
+      "disclaimerTitle": "General Notice",
+      "disclaimerContent": "This page provides a general overview of the subscription and billing terms for Kitchorify. By using the service, you agree to these terms.",
+      "trialTitle": "Trial Period",
+      "trialContent": "New accounts may start with a trial period. During the trial, certain features may be available. After the trial ends, the subscription may convert to a paid plan or end.",
+      "billingTitle": "Billing",
+      "billingContent": "Paid subscriptions are billed according to the selected plan period (e.g., monthly/yearly). Payments processed by the payment provider can be seen in your billing history.",
+      "cancellationTitle": "Cancellation",
+      "cancellationContent": "You can cancel your subscription at any time. If canceled, your subscription may remain active until the end of the current billing period.",
+      "refundsTitle": "Refunds",
+      "refundsContent": "Refund eligibility can vary by plan and payment provider. Please contact support if you have a refund request.",
+      "taxesTitle": "Taxes",
+      "taxesContent": "Applicable taxes (if any) may be shown separately on invoices and can vary depending on your location.",
+      "changesTitle": "Changes",
+      "changesContent": "These terms may be updated from time to time. Updates become effective when published on this page.",
+      "contactTitle": "Contact",
+      "contactContent": "If you have questions about subscriptions or billing, please contact our support team."
+    }
+  },
   "admin": {
     "title": "Admin Dashboard",
     "tabs": {
@@ -378,7 +400,19 @@
       "passwordTooShort": "Password must be at least 6 characters.",
       "changePasswordTitle": "Change Password for {userName}",
       "disableMfa": "Disable 2FA",
-      "mfaDisabledSuccess": "2FA disabled."
+      "mfaDisabledSuccess": "2FA disabled.",
+      "enableMfa": "Enable 2FA",
+      "mfaEnabledSuccess": "2FA enabled.",
+      "mfaSetupTitle": "2FA setup for {userName}",
+      "mfaSetupInstructions": "Add a new account in an authenticator app (Google Authenticator / Authy, etc.). You can use the otpauth URI below or enter the secret manually. Then enter the 6-digit code from the app and save.",
+      "mfaIssuer": "Issuer",
+      "mfaSecret": "Secret",
+      "mfaOtpAuthUri": "otpauth URI",
+      "mfaCode": "Verification Code",
+      "mfaCodeRequired": "Please enter the 6-digit verification code.",
+      "mfaInvalidCode": "Invalid code. Please try again.",
+      "mfaMisconfigured": "2FA configuration is missing. Please start setup again.",
+      "mfaAlreadyEnabled": "2FA is already enabled for this user."
     },
     "history": {
       "startDate": "Start Date",

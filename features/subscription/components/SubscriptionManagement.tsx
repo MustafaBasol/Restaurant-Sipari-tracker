@@ -33,6 +33,8 @@ const SubscriptionManagement: React.FC = () => {
   const { t } = useLanguage();
   const [error, setError] = useState('');
 
+  const isProd = (import.meta as any).env?.PROD === true;
+
   const [invoices, setInvoices] = useState<StripeInvoiceSummary[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [invoicesError, setInvoicesError] = useState('');
@@ -52,7 +54,7 @@ const SubscriptionManagement: React.FC = () => {
   const stripeBackendUrlLooksWrong = (() => {
     if (!stripeBackendUrl) return false;
     // This warning is useful during local/dev setup but is noisy in production.
-    if (Boolean((import.meta as any).env?.PROD)) return false;
+    if (isProd) return false;
     const origin = window.location.origin.replace(/\/+$/, '');
     const normalized = stripeBackendUrl.replace(/\/+$/, '');
     if (normalized === origin) return true;
@@ -62,7 +64,7 @@ const SubscriptionManagement: React.FC = () => {
 
   const stripeBackendUrlIsValid = (() => {
     if (!stripeBackendUrl) return false;
-    const requireHttps = Boolean((import.meta as any).env?.PROD) && !shouldAllowInsecureServices();
+    const requireHttps = isProd && !shouldAllowInsecureServices();
     return isTrustedServiceBaseUrl(stripeBackendUrl, {
       allowedOrigins: getServiceOriginAllowlist(),
       requireHttps,
@@ -217,7 +219,21 @@ const SubscriptionManagement: React.FC = () => {
 
   if (!tenant) return null;
 
-  const paidStartedDateText = formatMaybeEpochDate(stripeSubscription?.current_period_start) || '-';
+  const firstPaidInvoiceCreated = (() => {
+    let min: number | null = null;
+    for (const inv of invoices) {
+      const s = (inv.status || '').toLowerCase();
+      if (s !== 'paid') continue;
+      if (typeof inv.created !== 'number') continue;
+      if (min === null || inv.created < min) min = inv.created;
+    }
+    return min;
+  })();
+
+  const paidStartedDateText =
+    formatMaybeEpochDate(stripeSubscription?.current_period_start) ||
+    formatMaybeEpochDate(firstPaidInvoiceCreated) ||
+    '-';
   const nextPaymentDateText = (() => {
     if (stripeSubscription?.cancel_at_period_end) return null;
     if (stripeSubscription?.status === 'canceled' || stripeSubscription?.ended_at) return null;
@@ -415,7 +431,7 @@ const SubscriptionManagement: React.FC = () => {
                         {t('subscription.historyEventPaidStarted')}
                       </td>
                       <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
-                        {formatMaybeEpochDate(stripeSubscription?.current_period_start) || '-'}
+                        {paidStartedDateText}
                       </td>
                     </tr>
 

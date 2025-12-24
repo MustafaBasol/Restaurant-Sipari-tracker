@@ -23,8 +23,7 @@ import { Select } from '../../../shared/components/ui/Select';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
 import { calcOrderPricing } from '../../../shared/lib/billing';
 import { hasPermission } from '../../../shared/lib/permissions';
-import { createCustomer, getCustomers } from '../../customers/api';
-import CustomerCreateModal from '../../customers/components/CustomerCreateModal';
+import { getCustomers } from '../../customers/api';
 import { Customer } from '../../customers/types';
 import {
   buildKitchenTicketText,
@@ -124,7 +123,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   const [currentOrderItems, setCurrentOrderItems] = useState<TempOrderItem[]>([]);
   const [sendToKitchenError, setSendToKitchenError] = useState<string>('');
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [customerId, setCustomerId] = useState(table.customerId || '');
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerName, setCustomerName] = useState(table.customerName || '');
@@ -855,13 +853,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                         >
                           {t('customers.clearSelection')}
                         </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setIsCustomerModalOpen(true)}
-                          className="px-3 py-2"
-                        >
-                          {t('customers.addNew')}
-                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -1370,21 +1361,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
         </div>
       </div>
 
-      {canManageCustomers && authState?.tenant?.id && (
-        <CustomerCreateModal
-          isOpen={isCustomerModalOpen}
-          onClose={() => setIsCustomerModalOpen(false)}
-          onCreate={(payload) =>
-            createCustomer(authState.tenant!.id, payload.fullName, payload.phone, payload.email)
-          }
-          onCreated={(created) => {
-            setCustomers((prev) =>
-              [...prev, created].slice().sort((a, b) => a.fullName.localeCompare(b.fullName)),
-            );
-            handleCustomerSelect(created.id);
-          }}
-        />
-      )}
     </Modal>
   );
 };

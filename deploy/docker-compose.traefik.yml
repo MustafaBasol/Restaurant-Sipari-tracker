@@ -109,6 +109,11 @@ services:
       # MFA (TOTP)
       MFA_ISSUER: ${MFA_ISSUER-Kitchorify}
 
+      # Super admin bootstrap (optional but recommended for production access)
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL-}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD-}
+      SUPER_ADMIN_FULL_NAME: ${SUPER_ADMIN_FULL_NAME-}
+
       # Internal auth for stripe-backend -> api updates
       STRIPE_API_KEY: ${STRIPE_API_KEY-}
     expose:

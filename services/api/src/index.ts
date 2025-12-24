@@ -1181,6 +1181,64 @@ app.post('/api/users/:id/mfa/disable', requireAuth, requireTenant, async (req, r
   return res.json(true);
 });
 
+// Admin-managed MFA (TOTP) setup for a user (tenant admin only)
+app.post('/api/users/:id/mfa/setup', requireAuth, requireTenant, async (req, res) => {
+  if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN')) {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
+  const tenantId = req.auth!.tenantId!;
+  const user = await prisma.user.findFirst({ where: { id: req.params.id, tenantId } });
+  if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  if ((user as any).mfaEnabledAt) {
+    return res.status(400).json({ error: 'MFA_ALREADY_ENABLED' });
+  }
+
+  const secret = authenticator.generateSecret();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { mfaSecret: secret, mfaEnabledAt: null } as any,
+  });
+
+  const label = user.email;
+  const otpauthUri = authenticator.keyuri(label, MFA_ISSUER, secret);
+  return res.json({ secret, otpauthUri, issuer: MFA_ISSUER });
+});
+
+const mfaAdminVerifySchema = z.object({
+  code: z.string().min(1),
+});
+
+app.post('/api/users/:id/mfa/verify', requireAuth, requireTenant, async (req, res) => {
+  if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN')) {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
+  const parsed = mfaAdminVerifySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const tenantId = req.auth!.tenantId!;
+  const user = await prisma.user.findFirst({ where: { id: req.params.id, tenantId } });
+  if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  const alreadyEnabledAt = (user as any).mfaEnabledAt as Date | null | undefined;
+  if (alreadyEnabledAt) return res.json({ mfaEnabledAt: alreadyEnabledAt });
+
+  const secret = (user as any).mfaSecret as string | null | undefined;
+  if (!secret) return res.status(500).json({ error: 'MFA_MISCONFIGURED' });
+  const code = parsed.data.code.trim();
+  if (!isSixDigitCode(code)) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const ok = authenticator.check(code, secret);
+  if (!ok) return res.status(401).json({ error: 'MFA_INVALID' });
+
+  const enabledAt = new Date();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { mfaEnabledAt: enabledAt } as any,
+  });
+  return res.json({ mfaEnabledAt: enabledAt });
+});
+
 const userCreateSchema = z.object({
   fullName: z.string().min(1),
   email: z.string().email(),

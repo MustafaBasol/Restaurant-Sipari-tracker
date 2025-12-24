@@ -83,6 +83,25 @@ export const disableUserMfa = (userId: string) => {
   return updateData('users', { id: userId, mfaEnabledAt: null } as any);
 };
 
+export const setupUserMfa = async (
+  userId: string,
+): Promise<{ secret: string; otpauthUri: string; issuer: string }> => {
+  if (!isRealApiEnabled()) {
+    return { secret: 'MOCK-SECRET', otpauthUri: 'otpauth://totp/mock', issuer: 'Kitchorify' };
+  }
+  return apiFetch(`/users/${encodeURIComponent(userId)}/mfa/setup`, { method: 'POST' });
+};
+
+export const verifyUserMfa = async (userId: string, code: string): Promise<{ mfaEnabledAt: string }> => {
+  if (!isRealApiEnabled()) {
+    return { mfaEnabledAt: new Date().toISOString() };
+  }
+  return apiFetch(`/users/${encodeURIComponent(userId)}/mfa/verify`, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+};
+
 export const getSessionsForUser = (tenantId: string, userId: string, actor: Actor) =>
   isRealApiEnabled()
     ? apiFetch<any[]>(`/users/${encodeURIComponent(userId)}/sessions`, { method: 'GET' })

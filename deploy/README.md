@@ -87,6 +87,7 @@ nano .env.production
 - `MAILERSEND_API_KEY`, `MAILERSEND_FROM_EMAIL`, `MAILERSEND_FROM_NAME`
 - (opsiyonel) `TURNSTILE_ENABLED=true|false`, `TURNSTILE_SECRET_KEY=...`
 - (opsiyonel) `MFA_ISSUER=Kitchorify`
+- (önerilen) `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD` (en az 12 karakter), `SUPER_ADMIN_FULL_NAME`
 - `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_USER`, `DATABASE_URL`
 
 Yedekleme (önerilir):

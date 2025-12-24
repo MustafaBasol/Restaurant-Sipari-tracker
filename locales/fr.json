@@ -296,6 +296,28 @@
       "drinks": "Boissons"
     }
   },
+  "marketing": {
+    "subscriptionTerms": {
+      "title": "Conditions d’abonnement",
+      "lastUpdated": "Dernière mise à jour : décembre 2025",
+      "disclaimerTitle": "Information générale",
+      "disclaimerContent": "Cette page présente un aperçu général des conditions d’abonnement et de facturation de Kitchorify. En utilisant le service, vous acceptez ces conditions.",
+      "trialTitle": "Période d’essai",
+      "trialContent": "Les nouveaux comptes peuvent commencer par une période d’essai. Pendant l’essai, certaines fonctionnalités peuvent être disponibles. À la fin de l’essai, l’abonnement peut passer à une formule payante ou prendre fin.",
+      "billingTitle": "Facturation",
+      "billingContent": "Les abonnements payants sont facturés selon la période choisie (par ex. mensuelle/annuelle). Les paiements traités par le prestataire de paiement sont visibles dans l’historique de facturation.",
+      "cancellationTitle": "Résiliation",
+      "cancellationContent": "Vous pouvez résilier votre abonnement à tout moment. En cas de résiliation, l’abonnement peut rester actif jusqu’à la fin de la période de facturation en cours.",
+      "refundsTitle": "Remboursements",
+      "refundsContent": "L’éligibilité aux remboursements peut varier selon la formule et le prestataire de paiement. Veuillez contacter le support pour toute demande.",
+      "taxesTitle": "Taxes",
+      "taxesContent": "Les taxes applicables (le cas échéant) peuvent être affichées séparément sur les factures et varier selon votre localisation.",
+      "changesTitle": "Modifications",
+      "changesContent": "Ces conditions peuvent être mises à jour périodiquement. Les mises à jour prennent effet dès leur publication sur cette page.",
+      "contactTitle": "Contact",
+      "contactContent": "Pour toute question concernant les abonnements ou la facturation, veuillez contacter notre équipe support."
+    }
+  },
   "admin": {
     "title": "Panneau d'Administration",
     "tabs": {
@@ -384,7 +406,19 @@
       "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
       "changePasswordTitle": "Changer le mot de passe pour {userName}",
       "disableMfa": "Désactiver 2FA",
-      "mfaDisabledSuccess": "2FA désactivée."
+      "mfaDisabledSuccess": "2FA désactivée.",
+      "enableMfa": "Activer la 2FA",
+      "mfaEnabledSuccess": "2FA activée.",
+      "mfaSetupTitle": "Configuration 2FA pour {userName}",
+      "mfaSetupInstructions": "Ajoutez un nouveau compte dans une application d’authentification (Google Authenticator / Authy, etc.). Vous pouvez utiliser l’URI otpauth ci-dessous ou saisir le secret manuellement. Ensuite, saisissez le code à 6 chiffres de l’application et enregistrez.",
+      "mfaIssuer": "Émetteur",
+      "mfaSecret": "Secret",
+      "mfaOtpAuthUri": "URI otpauth",
+      "mfaCode": "Code de vérification",
+      "mfaCodeRequired": "Veuillez saisir le code de vérification à 6 chiffres.",
+      "mfaInvalidCode": "Code invalide. Veuillez réessayer.",
+      "mfaMisconfigured": "La configuration 2FA est manquante. Veuillez relancer l’installation.",
+      "mfaAlreadyEnabled": "La 2FA est déjà activée pour cet utilisateur."
     },
     "history": {
       "startDate": "Date de début",

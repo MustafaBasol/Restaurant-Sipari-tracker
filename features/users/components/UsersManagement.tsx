@@ -20,9 +20,10 @@ import {
 import ChangePasswordModal from './ChangePasswordModal';
 import UserSessionsModal from './UserSessionsModal';
 import EditUserModal from './EditUserModal';
+import UserMfaSetupModal from './UserMfaSetupModal';
 
 const UsersManagement: React.FC = () => {
-  const { users, addUser, updateUser, changeUserPassword, disableUserMfa } = useUsers();
+  const { users, addUser, updateUser, changeUserPassword, disableUserMfa, setupUserMfa, verifyUserMfa } = useUsers();
   const { t } = useLanguage();
   const { authState } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
@@ -36,6 +37,7 @@ const UsersManagement: React.FC = () => {
   const [editingPasswordForUser, setEditingPasswordForUser] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [viewingSessionsForUser, setViewingSessionsForUser] = useState<User | null>(null);
+  const [enablingMfaForUser, setEnablingMfaForUser] = useState<User | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successCopyValue, setSuccessCopyValue] = useState<string | null>(null);
@@ -187,6 +189,13 @@ const UsersManagement: React.FC = () => {
   const handleDisableMfa = async (user: User) => {
     await disableUserMfa(user.id);
     setSuccessMessage(t('admin.users.mfaDisabledSuccess'));
+    setSuccessCopyValue(null);
+    setCopyStatus('idle');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleMfaEnabled = () => {
+    setSuccessMessage(t('admin.users.mfaEnabledSuccess'));
     setSuccessCopyValue(null);
     setCopyStatus('idle');
     setTimeout(() => setSuccessMessage(''), 3000);
@@ -347,6 +356,14 @@ const UsersManagement: React.FC = () => {
                         {t('admin.users.disableMfa')}
                       </button>
                     )}
+                    {canManageMfa && !user.mfaEnabledAt && (
+                      <button
+                        onClick={() => setEnablingMfaForUser(user)}
+                        className="text-accent hover:text-accent-hover text-sm font-medium"
+                      >
+                        {t('admin.users.enableMfa')}
+                      </button>
+                    )}
                     {canToggleActive && (
                       <button
                         onClick={() => {
@@ -386,6 +403,21 @@ const UsersManagement: React.FC = () => {
           user={viewingSessionsForUser}
           isOpen={Boolean(viewingSessionsForUser)}
           onClose={() => setViewingSessionsForUser(null)}
+        />
+      )}
+
+      {enablingMfaForUser && (
+        <UserMfaSetupModal
+          user={enablingMfaForUser}
+          onClose={() => {
+            setEnablingMfaForUser(null);
+          }}
+          onSetup={setupUserMfa}
+          onVerify={(userId, code) =>
+            verifyUserMfa(userId, code).then(() => {
+              handleMfaEnabled();
+            })
+          }
         />
       )}
     </div>

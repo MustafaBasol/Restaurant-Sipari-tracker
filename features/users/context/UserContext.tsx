@@ -21,6 +21,8 @@ interface UserContextData {
   updateUser: (user: User) => Promise<void>;
   changeUserPassword: (userId: string, newPassword: string) => Promise<void>;
   disableUserMfa: (userId: string) => Promise<void>;
+  setupUserMfa: (userId: string) => Promise<{ secret: string; otpauthUri: string; issuer: string }>;
+  verifyUserMfa: (userId: string, code: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -71,6 +73,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const disableUserMfa = (userId: string) => handleMutation(() => api.disableUserMfa(userId));
 
+  const setupUserMfa = (userId: string) => handleMutation(() => api.setupUserMfa(userId));
+
+  const verifyUserMfa = (userId: string, code: string) =>
+    handleMutation(() => api.verifyUserMfa(userId, code)).then(() => undefined);
+
   return (
     <UserContext.Provider
       value={{
@@ -80,6 +87,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateUser,
         changeUserPassword,
         disableUserMfa,
+        setupUserMfa,
+        verifyUserMfa,
         refetch: fetchUsers,
       }}
     >
