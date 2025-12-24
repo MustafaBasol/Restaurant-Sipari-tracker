@@ -23,7 +23,9 @@ const MfaSetupEnforcer: React.FC = () => {
 
   const isInApp = hash.startsWith('#/app');
   const needsSetup = Boolean(authState && authState.user && !authState.user.mfaEnabledAt);
-  const isDismissedForThisSession = Boolean(sessionId && dismissedSessionId === sessionId);
+  const isDismissedForThisSession = Boolean(
+    (sessionId && dismissedSessionId === sessionId) || (!sessionId && dismissedSessionId === '__NO_SESSION__'),
+  );
 
   const isOpen = Boolean(isInApp && needsSetup && !isDismissedForThisSession);
 
@@ -33,7 +35,7 @@ const MfaSetupEnforcer: React.FC = () => {
     <MfaSetupModal
       isOpen={isOpen}
       onClose={() => {
-        if (sessionId) setDismissedSessionId(sessionId);
+        setDismissedSessionId(sessionId ?? '__NO_SESSION__');
       }}
       onEnabled={(mfaEnabledAt) => {
         updateUserInState({ mfaEnabledAt });

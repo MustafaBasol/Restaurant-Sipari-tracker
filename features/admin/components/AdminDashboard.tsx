@@ -139,25 +139,26 @@ const AdminDashboard: React.FC = () => {
       <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">{t('admin.title')}</h1>
       <Card padding="none">
         <div className="border-b border-border-color p-2">
-          <nav className="flex space-x-2 overflow-x-auto" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                                    flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors flex-shrink-0
-                                    ${
-                                      activeTab === tab.id
-                                        ? 'bg-accent/10 text-accent'
-                                        : 'text-text-secondary hover:bg-gray-100'
-                                    }
-                                `}
-              >
-                {tab.icon}
-                {t(tab.labelKey)}
-              </button>
-            ))}
-          </nav>
+          <div className="overflow-x-auto touch-pan-x overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+            <nav className="flex gap-2 min-w-max" aria-label="Tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={
+                    `flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors flex-shrink-0 ` +
+                    (activeTab === tab.id
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-text-secondary hover:bg-gray-100')
+                  }
+                >
+                  {tab.icon}
+                  {t(tab.labelKey)}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
         <div className="p-4 sm:p-6">{renderContent()}</div>
       </Card>

@@ -23,21 +23,21 @@ const MarketingHeader: React.FC = () => {
           {authState ? (
             <button
               onClick={() => (window.location.hash = '#/app')}
-              className="hidden sm:block bg-accent text-white font-semibold py-2 px-4 rounded-xl hover:bg-accent-hover transition-colors text-sm"
+              className="bg-accent text-white font-semibold py-2 px-4 rounded-xl hover:bg-accent-hover transition-colors text-sm"
             >
               {t('marketing.nav.goToDashboard')}
             </button>
           ) : (
-            <div className="hidden sm:flex items-center gap-x-4">
+            <div className="flex items-center gap-x-2 sm:gap-x-4">
               <button
                 onClick={() => (window.location.hash = '#/login')}
-                className="text-sm font-semibold leading-6 text-text-primary hover:text-text-secondary"
+                className="bg-accent text-white font-semibold py-2 px-4 rounded-xl hover:bg-accent-hover transition-colors text-sm sm:bg-transparent sm:text-text-primary sm:hover:text-text-secondary sm:p-0 sm:rounded-none"
               >
                 {t('marketing.nav.login')}
               </button>
               <button
                 onClick={() => (window.location.hash = '#/register')}
-                className="bg-accent text-white font-semibold py-2 px-4 rounded-xl hover:bg-accent-hover transition-colors text-sm"
+                className="hidden sm:block bg-accent text-white font-semibold py-2 px-4 rounded-xl hover:bg-accent-hover transition-colors text-sm"
               >
                 {t('marketing.nav.signUp')}
               </button>
