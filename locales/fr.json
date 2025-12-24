@@ -32,6 +32,8 @@
     "copy": "Copier",
     "copied": "Copié",
     "copyFailed": "Échec de la copie",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
     "somethingWentWrong": "Une erreur est survenue. Veuillez réessayer."
   },
   "customers": {

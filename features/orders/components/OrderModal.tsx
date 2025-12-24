@@ -23,8 +23,9 @@ import { Select } from '../../../shared/components/ui/Select';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
 import { calcOrderPricing } from '../../../shared/lib/billing';
 import { hasPermission } from '../../../shared/lib/permissions';
-import { getCustomers } from '../../customers/api';
+import { createCustomer, getCustomers } from '../../customers/api';
 import { Customer } from '../../customers/types';
+import CustomerCreateModal from '../../customers/components/CustomerCreateModal';
 import {
   buildKitchenTicketText,
   buildReceiptText,
@@ -123,8 +124,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   const [currentOrderItems, setCurrentOrderItems] = useState<TempOrderItem[]>([]);
   const [sendToKitchenError, setSendToKitchenError] = useState<string>('');
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
   const [customerId, setCustomerId] = useState(table.customerId || '');
-  const [customerSearch, setCustomerSearch] = useState('');
   const [customerName, setCustomerName] = useState(table.customerName || '');
   const [tableNote, setTableNote] = useState(table.note || '');
   const [orderNote, setOrderNote] = useState('');
@@ -133,7 +135,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     setCustomerId(table.customerId || '');
     setCustomerName(table.customerName || '');
     setTableNote(table.note || '');
-    setCustomerSearch('');
+    setIsCustomerDropdownOpen(false);
   }, [table]);
 
   const canManageCustomers =
@@ -215,6 +217,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const nextName = selected?.fullName || '';
     setCustomerId(normalizedId);
     setCustomerName(nextName);
+    setIsCustomerDropdownOpen(false);
     updateTable({
       ...table,
       customerId: normalizedId || undefined,
@@ -224,17 +227,18 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   };
 
   const filteredCustomers = useMemo(() => {
-    const q = customerSearch.trim().toLowerCase();
-    if (!q) return customers;
+    const q = customerName.trim().toLowerCase();
+    if (q.length < 2) return [];
     return customers.filter((c) => {
       const haystack = `${c.fullName} ${c.phone ?? ''} ${c.email ?? ''}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [customers, customerSearch]);
+  }, [customers, customerName]);
 
   const handleClearCustomerSelection = () => {
     setCustomerId('');
     setCustomerName('');
+    setIsCustomerDropdownOpen(false);
     updateTable({
       ...table,
       customerId: undefined,
@@ -814,44 +818,97 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
               <div className="p-4 border-b border-border-color grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-medium text-text-secondary">
+
+              {canManageCustomers && authState?.tenant?.id && (
+                <CustomerCreateModal
+                  isOpen={isCustomerModalOpen}
+                  onClose={() => setIsCustomerModalOpen(false)}
+                  onCreate={(payload) =>
+                    createCustomer(authState.tenant!.id, payload.fullName, payload.phone, payload.email)
+                  }
+                  onCreated={(created) => {
+                    setCustomers((prev) =>
+                      [...prev, created].slice().sort((a, b) => a.fullName.localeCompare(b.fullName)),
+                    );
+                    handleCustomerSelect(created.id);
+                  }}
+                />
+              )}
                     {t('waiter.customerName')}
                   </label>
                   {canManageCustomers ? (
                     <div className="space-y-2">
-                      <Input
-                        value={customerSearch}
-                        onChange={(e) => setCustomerSearch(e.target.value)}
-                        placeholder={t('customers.searchPlaceholder')}
-                        className="py-2"
-                      />
-                      <Select
-                        value={customerId}
-                        onChange={(e) => handleCustomerSelect(e.target.value)}
-                        className="py-2"
-                      >
-                        <option value="">{t('customers.none')}</option>
-                        {filteredCustomers.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.fullName}
-                          </option>
-                        ))}
-                      </Select>
-
-                      <div className="flex gap-2">
+                      <div className="relative">
                         <Input
                           value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                          onBlur={handleTableInfoSave}
-                          placeholder={t('waiter.customerName')}
-                          className="py-2"
-                          disabled={Boolean(customerId)}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            setCustomerName(next);
+                            if (customerId) setCustomerId('');
+                            setIsCustomerDropdownOpen(next.trim().length >= 2);
+                          }}
+                          onFocus={() => {
+                            if (customerName.trim().length >= 2) setIsCustomerDropdownOpen(true);
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => setIsCustomerDropdownOpen(false), 120);
+                            handleTableInfoSave();
+                          }}
+                          placeholder={t('customers.searchPlaceholder')}
+                          className="py-2 pr-12"
                         />
+
+                        {(customerId || customerName.trim()) && (
+                          <button
+                            type="button"
+                            onClick={handleClearCustomerSelection}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                            aria-label={t('customers.clearSelection')}
+                            title={t('customers.clearSelection')}
+                          >
+                            ×
+                          </button>
+                        )}
+
+                        {isCustomerDropdownOpen && customerName.trim().length >= 2 && (
+                          <div className="absolute z-50 mt-1 w-full rounded-xl border border-border-color bg-card-bg shadow-medium max-h-56 overflow-y-auto">
+                            {filteredCustomers.length > 0 ? (
+                              filteredCustomers.slice(0, 8).map((c) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onMouseDown={(ev) => {
+                                    ev.preventDefault();
+                                    handleCustomerSelect(c.id);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-light-bg"
+                                >
+                                  <div className="text-sm font-medium text-text-primary">
+                                    {c.fullName}
+                                  </div>
+                                  {(c.phone || c.email) && (
+                                    <div className="text-xs text-text-secondary">
+                                      {[c.phone, c.email].filter(Boolean).join(' • ')}
+                                    </div>
+                                  )}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-2 text-sm text-text-secondary">
+                                {t('customers.none')}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-end">
                         <Button
                           variant="secondary"
-                          onClick={handleClearCustomerSelection}
+                          onClick={() => setIsCustomerModalOpen(true)}
                           className="px-3 py-2"
                         >
-                          {t('customers.clearSelection')}
+                          {t('customers.addNew')}
                         </Button>
                       </div>
                     </div>

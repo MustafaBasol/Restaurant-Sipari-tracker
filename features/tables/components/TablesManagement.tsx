@@ -4,7 +4,6 @@ import { Table, TableStatus } from '../types';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
-import { Select } from '../../../shared/components/ui/Select';
 import { Badge } from '../../../shared/components/ui/Badge';
 import {
   Table as UiTable,
@@ -33,6 +32,7 @@ const TablesManagement: React.FC = () => {
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
 
   const canCreateCustomers = authState?.user?.role === UserRole.ADMIN;
 
@@ -47,8 +47,21 @@ const TablesManagement: React.FC = () => {
   }, [authState?.tenant?.id, canCreateCustomers]);
 
   useEffect(() => {
-    setCustomerSearch('');
-  }, [editingTable?.id]);
+    if (!editingTable) {
+      setCustomerSearch('');
+      setIsCustomerDropdownOpen(false);
+      return;
+    }
+
+    const resolved =
+      editingTable.customerName ||
+      (editingTable.customerId
+        ? customers.find((c) => c.id === editingTable.customerId)?.fullName
+        : undefined) ||
+      '';
+    setCustomerSearch(resolved);
+    setIsCustomerDropdownOpen(false);
+  }, [customers, editingTable]);
 
   const customersById = useMemo(() => {
     const map = new Map<string, Customer>();
@@ -145,48 +158,85 @@ const TablesManagement: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   {editingTable?.id === table.id ? (
-                    <div className="space-y-2">
+                    <div className="relative">
                       <Input
                         value={customerSearch}
-                        onChange={(e) => setCustomerSearch(e.target.value)}
-                        placeholder={t('customers.searchPlaceholder')}
-                        className="py-2"
-                      />
-
-                      <Select
-                        value={editingTable.customerId ?? ''}
                         onChange={(e) => {
-                          const nextId = e.target.value || undefined;
-                          const nextName = nextId ? customersById.get(nextId)?.fullName : undefined;
-                          setEditingTable({
-                            ...editingTable,
-                            customerId: nextId,
-                            customerName: nextName,
-                          });
-                        }}
-                        className="py-2"
-                      >
-                        <option value="">{t('customers.none')}</option>
-                        {filteredCustomers.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.fullName}
-                          </option>
-                        ))}
-                      </Select>
-
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
+                          const next = e.target.value;
+                          setCustomerSearch(next);
                           setEditingTable({
                             ...editingTable,
                             customerId: undefined,
-                            customerName: undefined,
+                            customerName: next.trim() ? next : undefined,
                           });
+                          setIsCustomerDropdownOpen(next.trim().length >= 2);
                         }}
-                        className="px-3 py-2"
-                      >
-                        {t('customers.clearSelection')}
-                      </Button>
+                        onFocus={() => {
+                          if (customerSearch.trim().length >= 2) setIsCustomerDropdownOpen(true);
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setIsCustomerDropdownOpen(false), 120);
+                        }}
+                        placeholder={t('customers.searchPlaceholder')}
+                        className="py-2 pr-12"
+                      />
+
+                      {(editingTable.customerId || editingTable.customerName) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomerSearch('');
+                            setIsCustomerDropdownOpen(false);
+                            setEditingTable({
+                              ...editingTable,
+                              customerId: undefined,
+                              customerName: undefined,
+                            });
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                          aria-label={t('customers.clearSelection')}
+                          title={t('customers.clearSelection')}
+                        >
+                          ×
+                        </button>
+                      )}
+
+                      {isCustomerDropdownOpen && customerSearch.trim().length >= 2 && (
+                        <div className="absolute z-50 mt-1 w-full rounded-xl border border-border-color bg-card-bg shadow-medium max-h-56 overflow-y-auto">
+                          {filteredCustomers.length > 0 ? (
+                            filteredCustomers.slice(0, 8).map((c) => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setCustomerSearch(c.fullName);
+                                  setIsCustomerDropdownOpen(false);
+                                  setEditingTable({
+                                    ...editingTable,
+                                    customerId: c.id,
+                                    customerName: c.fullName,
+                                  });
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-light-bg"
+                              >
+                                <div className="text-sm font-medium text-text-primary">
+                                  {c.fullName}
+                                </div>
+                                {(c.phone || c.email) && (
+                                  <div className="text-xs text-text-secondary">
+                                    {[c.phone, c.email].filter(Boolean).join(' • ')}
+                                  </div>
+                                )}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-2 text-sm text-text-secondary">
+                              {t('customers.none')}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <span className="text-sm text-text-secondary">

@@ -32,6 +32,8 @@
     "copy": "Copy",
     "copied": "Copied",
     "copyFailed": "Copy failed",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "somethingWentWrong": "Something went wrong. Please try again."
   },
   "customers": {

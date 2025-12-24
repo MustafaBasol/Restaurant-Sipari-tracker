@@ -38,6 +38,8 @@
     "copy": "Kopyala",
     "copied": "Kopyalandı",
     "copyFailed": "Kopyalanamadı",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle",
     "somethingWentWrong": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
   },
   "customers": {

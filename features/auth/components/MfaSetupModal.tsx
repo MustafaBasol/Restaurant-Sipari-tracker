@@ -110,7 +110,7 @@ const MfaSetupModal: React.FC<Props> = ({ isOpen, onClose, onEnabled }) => {
   };
 
   return (
-    <Modal title={title} isOpen={isOpen} onClose={onClose}>
+    <Modal title={title} isOpen={isOpen} onClose={onClose} size="sm">
       <div className="p-6">
         <p className="text-sm text-text-secondary mb-4">{t('auth.mfaSetupIntro')}</p>
 
@@ -128,7 +128,7 @@ const MfaSetupModal: React.FC<Props> = ({ isOpen, onClose, onEnabled }) => {
               </label>
               <div className="flex items-center justify-center rounded-xl border border-border-color bg-card-bg p-4">
                 {qrDataUrl ? (
-                  <img src={qrDataUrl} alt="QR" className="h-[220px] w-[220px]" draggable={false} />
+                  <img src={qrDataUrl} alt="QR" className="h-[180px] w-[180px]" draggable={false} />
                 ) : (
                   <div className="text-sm text-text-secondary">...</div>
                 )}
