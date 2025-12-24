@@ -202,33 +202,6 @@ const RegisterScreen: React.FC = () => {
         </div>
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
-
-      <Modal
-        isOpen={successModalOpen}
-        onClose={closeSuccessModal}
-        title={t('auth.register.successTitle')}
-      >
-        <div className="p-6 space-y-4">
-          <p className="text-text-secondary">{t('auth.register.successMessage')}</p>
-          <p className="text-sm text-text-secondary">
-            {resendSecondsLeft > 0
-              ? t('auth.register.resendCountdown', { seconds: resendSecondsLeft })
-              : t('auth.register.resendReady')}
-          </p>
-
-          {resendError && <p className="text-red-500 text-sm">{resendError}</p>}
-
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={handleResend}
-              disabled={isResending || resendSecondsLeft > 0}
-            >
-              {t('auth.register.resendButton')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 {t('auth.register.restaurantName')}
@@ -315,6 +288,33 @@ const RegisterScreen: React.FC = () => {
           </p>
         </div>
       </div>
+
+      <Modal
+        isOpen={successModalOpen}
+        onClose={closeSuccessModal}
+        title={t('auth.register.successTitle')}
+      >
+        <div className="p-6 space-y-4">
+          <p className="text-text-secondary">{t('auth.register.successMessage')}</p>
+          <p className="text-sm text-text-secondary">
+            {resendSecondsLeft > 0
+              ? t('auth.register.resendCountdown', { seconds: resendSecondsLeft })
+              : t('auth.register.resendReady')}
+          </p>
+
+          {resendError && <p className="text-red-500 text-sm">{resendError}</p>}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={handleResend}
+              disabled={isResending || resendSecondsLeft > 0}
+            >
+              {t('auth.register.resendButton')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
