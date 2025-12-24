@@ -109,7 +109,7 @@ model Tenant {
   printConfig Json?
   taxRatePercent Float?
   serviceChargePercent Float?
-  roundingIncrement Int?
+  roundingIncrement Float?
   permissions Json?
   integrations Json?
 

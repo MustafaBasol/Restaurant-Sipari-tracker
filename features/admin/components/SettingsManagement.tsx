@@ -67,7 +67,19 @@ const SettingsManagement: React.FC = () => {
     setIsSaving(true);
     setSuccessMessage('');
     try {
-      const updatedTenant = await updateTenantSettings(settings);
+      const payload = {
+        defaultLanguage: settings.defaultLanguage,
+        currency: settings.currency,
+        timezone: settings.timezone,
+        taxRatePercent: settings.taxRatePercent ?? 0,
+        serviceChargePercent: settings.serviceChargePercent ?? 0,
+        roundingIncrement: settings.roundingIncrement ?? 0,
+        printConfig: settings.printConfig ?? undefined,
+        permissions: settings.permissions ?? undefined,
+        integrations: settings.integrations ?? undefined,
+      };
+
+      const updatedTenant = await updateTenantSettings(payload as any);
       updateTenantInState(updatedTenant);
       setSuccessMessage(t('admin.settings.saveSuccess'));
       setTimeout(() => setSuccessMessage(''), 3000);

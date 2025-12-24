@@ -1591,7 +1591,7 @@ app.put('/api/tenant', requireAuth, requireTenant, async (req, res) => {
       timezone: z.string().optional(),
       taxRatePercent: z.number().optional(),
       serviceChargePercent: z.number().optional(),
-      roundingIncrement: z.number().int().optional(),
+      roundingIncrement: z.number().optional(),
       printConfig: z.any().optional(),
       permissions: z.any().optional(),
       integrations: z.any().optional(),
