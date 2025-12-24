@@ -4,12 +4,10 @@ import { useLanguage } from '../../../shared/hooks/useLanguage';
 import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
-import { Modal } from '../../../shared/components/ui/Modal';
 import AuthHeader from './AuthHeader';
 import { loadTurnstile } from '../../../shared/lib/turnstile';
 import { ApiError } from '../../../shared/lib/runtimeApi';
 import { isRealApiEnabled } from '../../../shared/lib/runtimeApi';
-import { resendVerificationEmail } from '../api';
 
 const RegisterScreen: React.FC = () => {
   const { register, isLoading } = useAuth();
@@ -19,11 +17,6 @@ const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [resendSecondsLeft, setResendSecondsLeft] = useState(60);
-  const [isResending, setIsResending] = useState(false);
-  const [resendError, setResendError] = useState('');
 
   const setAuthFlash = (messageKey: string) => {
     try {
@@ -102,7 +95,6 @@ const RegisterScreen: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setResendError('');
     if (!tenantName || !fullName || !email || !password) {
       setError(t('auth.register.allFieldsRequired'));
       return;
@@ -124,8 +116,15 @@ const RegisterScreen: React.FC = () => {
 
       if (success) {
         if (isRealApiEnabled()) {
-          setSuccessModalOpen(true);
-          setResendSecondsLeft(60);
+          // Redirect to login, and show the "check your email" modal there.
+          setAuthFlash('auth.checkEmailForVerification');
+          try {
+            localStorage.setItem('pendingVerificationEmail', email.trim());
+            localStorage.setItem('pendingVerificationResendAt', String(Date.now()));
+          } catch {
+            // ignore
+          }
+          window.location.hash = '#/login';
         } else {
           window.location.hash = '#/app';
         }
@@ -139,46 +138,6 @@ const RegisterScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (!successModalOpen) return;
-    if (resendSecondsLeft <= 0) return;
-    const id = window.setInterval(() => {
-      setResendSecondsLeft((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [successModalOpen, resendSecondsLeft]);
-
-  const closeSuccessModal = () => {
-    setSuccessModalOpen(false);
-    // Keep existing flow: after successful registration, go to login.
-    setAuthFlash('auth.checkEmailForVerification');
-    window.location.hash = '#/login';
-  };
-
-  const handleResend = async () => {
-    if (!email) return;
-    if (resendSecondsLeft > 0) return;
-    setIsResending(true);
-    setResendError('');
-    try {
-      await resendVerificationEmail(email);
-      setResendSecondsLeft(60);
-    } catch (e) {
-      if (e instanceof ApiError) {
-        if (e.code === 'INVALID_INPUT') {
-          setResendError(t('auth.register.resendFailed'));
-          return;
-        }
-        if (e.code === 'TOO_MANY_REQUESTS') {
-          setResendSecondsLeft(60);
-          return;
-        }
-      }
-      setResendError(t('auth.register.resendFailed'));
-    } finally {
-      setIsResending(false);
-    }
-  };
 
   return (
     <div className="relative flex items-center justify-center min-h-screen bg-light-bg p-4">
@@ -266,33 +225,6 @@ const RegisterScreen: React.FC = () => {
           </p>
         </div>
       </div>
-
-      <Modal
-        isOpen={successModalOpen}
-        onClose={closeSuccessModal}
-        title={t('auth.register.successTitle')}
-      >
-        <div className="p-6 space-y-4">
-          <p className="text-text-secondary">{t('auth.register.successMessage')}</p>
-          <p className="text-sm text-text-secondary">
-            {resendSecondsLeft > 0
-              ? t('auth.register.resendCountdown', { seconds: resendSecondsLeft })
-              : t('auth.register.resendReady')}
-          </p>
-
-          {resendError && <p className="text-red-500 text-sm">{resendError}</p>}
-
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={handleResend}
-              disabled={isResending || resendSecondsLeft > 0}
-            >
-              {t('auth.register.resendButton')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

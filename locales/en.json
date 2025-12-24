@@ -104,6 +104,7 @@
     "email": "Email",
     "password": "Password",
     "loginFailed": "Login failed. Please check your credentials.",
+    "invalidInput": "Please check the email and password fields.",
     "humanVerificationRequired": "Please complete the human verification.",
     "humanVerificationFailed": "Human verification failed. Please try again.",
     "emailNotVerified": "Your email is not verified. Please check your inbox.",

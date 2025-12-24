@@ -151,17 +151,17 @@ const buildHashRouteUrl = (route: string, params: Record<string, string>): strin
 
 const sendVerificationEmail = async (user: { email: string; fullName: string }, token: string) => {
   const url = buildHashRouteUrl('verify-email', { token });
-  const subject = 'E-posta doğrulama';
-  const text = `Merhaba ${user.fullName},\n\nHesabınızı doğrulamak için bu bağlantıyı açın: ${url}\n\nBu bağlantı belirli bir süre sonra geçersiz olur.`;
-  const html = `<p>Merhaba ${user.fullName},</p><p>Hesabınızı doğrulamak için aşağıdaki bağlantıyı açın:</p><p><a href="${url}">${url}</a></p><p>Bu bağlantı belirli bir süre sonra geçersiz olur.</p>`;
+  const subject = 'Verify your email';
+  const text = `Hi ${user.fullName},\n\nPlease verify your email address by opening this link: ${url}\n\nThis link will expire after a limited time.`;
+  const html = `<p>Hi ${user.fullName},</p><p>Please verify your email address by opening this link:</p><p><a href="${url}">${url}</a></p><p>This link will expire after a limited time.</p>`;
   await sendEmail({ toEmail: user.email, toName: user.fullName, subject, text, html });
 };
 
 const sendPasswordResetEmail = async (user: { email: string; fullName: string }, token: string) => {
   const url = buildHashRouteUrl('reset-password', { token });
-  const subject = 'Şifre sıfırlama';
-  const text = `Merhaba ${user.fullName},\n\nŞifrenizi sıfırlamak için bu bağlantıyı açın: ${url}\n\nEğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.`;
-  const html = `<p>Merhaba ${user.fullName},</p><p>Şifrenizi sıfırlamak için aşağıdaki bağlantıyı açın:</p><p><a href="${url}">${url}</a></p><p>Eğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>`;
+  const subject = 'Reset your password';
+  const text = `Hi ${user.fullName},\n\nTo reset your password, open this link: ${url}\n\nIf you didn't request this, you can ignore this email.`;
+  const html = `<p>Hi ${user.fullName},</p><p>To reset your password, open this link:</p><p><a href="${url}">${url}</a></p><p>If you didn't request this, you can ignore this email.</p>`;
   await sendEmail({ toEmail: user.email, toName: user.fullName, subject, text, html });
 };
 
@@ -367,7 +367,7 @@ app.get('/api/health/db', async (_req, res) => {
 // --- Auth ---
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
   password: z.string().min(1),
   deviceId: z.string().min(1),
   turnstileToken: z.string().min(1).optional(),
@@ -433,7 +433,7 @@ const registerTenantSchema = z.object({
   // We keep it optional for backward compatibility with older clients.
   tenantSlug: z.string().min(2).optional(),
   adminFullName: z.string().min(2),
-  adminEmail: z.string().email(),
+  adminEmail: z.string().trim().email(),
   adminPassword: z.string().min(6),
   deviceId: z.string().min(1),
   turnstileToken: z.string().min(1).optional(),
@@ -600,7 +600,7 @@ app.post('/api/auth/mfa/verify', requireAuth, async (req, res) => {
 });
 
 const resendVerificationSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
 });
 
 app.post('/api/auth/resend-verification', async (req, res) => {
@@ -679,7 +679,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
 });
 
 const requestPasswordResetSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
 });
 
 app.post('/api/auth/request-password-reset', async (req, res) => {

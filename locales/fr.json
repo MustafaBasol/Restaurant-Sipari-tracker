@@ -107,6 +107,7 @@
     "email": "E-mail",
     "password": "Mot de passe",
     "loginFailed": "Échec de la connexion. Veuillez vérifier vos identifiants.",
+    "invalidInput": "Veuillez vérifier les champs e-mail et mot de passe.",
     "humanVerificationRequired": "Veuillez compléter la vérification humaine.",
     "humanVerificationFailed": "Échec de la vérification humaine. Veuillez réessayer.",
     "emailNotVerified": "Votre e-mail n’est pas vérifié. Veuillez vérifier votre boîte de réception.",

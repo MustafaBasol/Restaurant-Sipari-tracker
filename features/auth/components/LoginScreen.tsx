@@ -5,9 +5,11 @@ import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
 import { Input } from '../../../shared/components/ui/Input';
 import { Button } from '../../../shared/components/ui/Button';
 import { Card } from '../../../shared/components/ui/Card';
+import { Modal } from '../../../shared/components/ui/Modal';
 import AuthHeader from './AuthHeader';
 import { loadTurnstile } from '../../../shared/lib/turnstile';
 import { ApiError, isRealApiEnabled } from '../../../shared/lib/runtimeApi';
+import { resendVerificationEmail } from '../api';
 
 const LoginScreen: React.FC = () => {
   const { login, isLoading } = useAuth();
@@ -19,6 +21,12 @@ const LoginScreen: React.FC = () => {
   const [needsMfaCode, setNeedsMfaCode] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+  const [resendError, setResendError] = useState('');
 
   const turnstileSiteKey = useMemo(() => import.meta.env.VITE_TURNSTILE_SITE_KEY, []);
   const isHumanVerificationEnabled = Boolean(turnstileSiteKey);
@@ -32,10 +40,35 @@ const LoginScreen: React.FC = () => {
       if (!key) return;
       localStorage.removeItem('authFlash');
       setInfo(t(key));
+
+      // If register sent the user here, show the verification modal.
+      if (key === 'auth.checkEmailForVerification') {
+        const storedEmail = localStorage.getItem('pendingVerificationEmail') ?? '';
+        const storedAtRaw = localStorage.getItem('pendingVerificationResendAt') ?? '';
+        const storedAt = Number(storedAtRaw);
+        const now = Date.now();
+        const secondsLeft =
+          Number.isFinite(storedAt) && storedAt > 0
+            ? Math.max(0, 60 - Math.floor((now - storedAt) / 1000))
+            : 60;
+        setPendingVerificationEmail(storedEmail);
+        setResendSecondsLeft(secondsLeft);
+        setResendError('');
+        setVerificationModalOpen(true);
+      }
     } catch {
       // ignore
     }
   }, [t]);
+
+  useEffect(() => {
+    if (!verificationModalOpen) return;
+    if (resendSecondsLeft <= 0) return;
+    const id = window.setInterval(() => {
+      setResendSecondsLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [verificationModalOpen, resendSecondsLeft]);
 
   useEffect(() => {
     if (!isHumanVerificationEnabled) return;
@@ -95,8 +128,41 @@ const LoginScreen: React.FC = () => {
       if (err.code === 'MFA_REQUIRED') return t('auth.mfaRequired');
       if (err.code === 'MFA_INVALID') return t('auth.mfaInvalid');
       if (err.code === 'INVALID_CREDENTIALS') return t('auth.loginFailed');
+      if (err.code === 'INVALID_INPUT') return t('auth.invalidInput');
     }
     return t('auth.loginFailed');
+  };
+
+  const closeVerificationModal = () => {
+    setVerificationModalOpen(false);
+  };
+
+  const handleResendVerification = async () => {
+    const targetEmail = (pendingVerificationEmail || email).trim();
+    if (!targetEmail) return;
+    if (resendSecondsLeft > 0) return;
+    setIsResending(true);
+    setResendError('');
+    try {
+      await resendVerificationEmail(targetEmail);
+      try {
+        localStorage.setItem('pendingVerificationEmail', targetEmail);
+        localStorage.setItem('pendingVerificationResendAt', String(Date.now()));
+      } catch {
+        // ignore
+      }
+      setResendSecondsLeft(60);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.code === 'TOO_MANY_REQUESTS') {
+          setResendSecondsLeft(60);
+          return;
+        }
+      }
+      setResendError(t('auth.register.resendFailed'));
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,6 +295,33 @@ const LoginScreen: React.FC = () => {
           </p>
         </div>
       </div>
+
+      <Modal
+        isOpen={verificationModalOpen}
+        onClose={closeVerificationModal}
+        title={t('auth.register.successTitle')}
+      >
+        <div className="p-6 space-y-4">
+          <p className="text-text-secondary">{t('auth.register.successMessage')}</p>
+          <p className="text-sm text-text-secondary">
+            {resendSecondsLeft > 0
+              ? t('auth.register.resendCountdown', { seconds: resendSecondsLeft })
+              : t('auth.register.resendReady')}
+          </p>
+
+          {resendError && <p className="text-red-500 text-sm">{resendError}</p>}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={isResending || resendSecondsLeft > 0}
+            >
+              {t('auth.register.resendButton')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

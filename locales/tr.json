@@ -110,6 +110,7 @@
     "email": "E-posta",
     "password": "Şifre",
     "loginFailed": "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.",
+    "invalidInput": "Lütfen e-posta ve şifre alanlarını kontrol edin.",
     "humanVerificationRequired": "Lütfen insan doğrulamasını tamamlayın.",
     "humanVerificationFailed": "İnsan doğrulaması başarısız. Lütfen tekrar deneyin.",
     "emailNotVerified": "E-postanız doğrulanmamış. Lütfen e-postanızı doğrulayın.",
