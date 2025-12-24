@@ -43,12 +43,17 @@ const hydrateAuthStateFromStorage = (raw: unknown): AuthState => {
     throw new Error('Invalid auth state in storage');
   }
 
+  const sessionId = typeof (raw as any).sessionId === 'string' ? ((raw as any).sessionId as string) : undefined;
+  const deviceId = typeof (raw as any).deviceId === 'string' ? ((raw as any).deviceId as string) : undefined;
+
   const hydrated: AuthState = {
     user: {
       ...raw.user,
       passwordHash: '',
     },
     tenant: raw.tenant ?? null,
+    sessionId,
+    deviceId,
   };
 
   if (hydrated.tenant) {
