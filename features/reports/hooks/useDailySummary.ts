@@ -9,8 +9,12 @@ const toDateString = (date: Date): string => {
 
 export const useSummaryReport = () => {
   const { authState } = useAuth();
-  const [startDate, setStartDate] = useState(toDateString(new Date()));
-  const [endDate, setEndDate] = useState(toDateString(new Date()));
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 29);
+    return toDateString(d);
+  });
+  const [endDate, setEndDate] = useState(() => toDateString(new Date()));
   const [data, setData] = useState<SummaryReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

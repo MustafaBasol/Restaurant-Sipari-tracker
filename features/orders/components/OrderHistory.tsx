@@ -19,6 +19,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { OrderStatus } from '../../../shared/types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { formatCurrency, formatDateTime } from '../../../shared/lib/utils';
+import AdminOrderViewModal from '../../admin/components/AdminOrderViewModal';
 
 const OrderHistory: React.FC = () => {
   const { t } = useLanguage();
@@ -37,6 +38,12 @@ const OrderHistory: React.FC = () => {
     waiterId: '',
     tableId: '',
   });
+
+  const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
+  const viewingOrder = useMemo(() => {
+    if (!viewingOrderId) return null;
+    return (orders ?? []).find((o) => o.id === viewingOrderId) ?? null;
+  }, [orders, viewingOrderId]);
 
   const waiters = useMemo(() => users.filter((u) => u.role === UserRole.WAITER), [users]);
 
@@ -131,6 +138,7 @@ const OrderHistory: React.FC = () => {
           <TableHeaderCell>{t('admin.history.header.date')}</TableHeaderCell>
           <TableHeaderCell>{t('admin.history.header.closedAt')}</TableHeaderCell>
           <TableHeaderCell>{t('admin.history.header.table')}</TableHeaderCell>
+          <TableHeaderCell>{t('waiter.customerName')}</TableHeaderCell>
           <TableHeaderCell>{t('admin.history.header.waiter')}</TableHeaderCell>
           <TableHeaderCell>{t('admin.history.header.total')}</TableHeaderCell>
           <TableHeaderCell>{t('admin.history.header.status')}</TableHeaderCell>
@@ -138,8 +146,21 @@ const OrderHistory: React.FC = () => {
         <TableBody>
           {filteredOrders.map((order) => {
             const table = tables.find((t) => t.id === order.tableId);
+            const customerName = order.customerName || table?.customerName || '-';
             return (
-              <TableRow key={order.id}>
+              <TableRow
+                key={order.id}
+                role="button"
+                tabIndex={0}
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => setViewingOrderId(order.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setViewingOrderId(order.id);
+                  }
+                }}
+              >
                 <TableCell>
                   {formatDateTime(order.createdAt, timezone, {
                     dateStyle: 'short',
@@ -152,6 +173,7 @@ const OrderHistory: React.FC = () => {
                     : '-'}
                 </TableCell>
                 <TableCell>{table?.name || 'N/A'}</TableCell>
+                <TableCell>{customerName}</TableCell>
                 <TableCell>{order.waiterName || 'N/A'}</TableCell>
                 <TableCell>{formatCurrency(getOrderTotal(order.id), currency)}</TableCell>
                 <TableCell>
@@ -164,6 +186,10 @@ const OrderHistory: React.FC = () => {
           })}
         </TableBody>
       </Table>
+
+      {viewingOrder && (
+        <AdminOrderViewModal order={viewingOrder} onClose={() => setViewingOrderId(null)} />
+      )}
     </div>
   );
 };

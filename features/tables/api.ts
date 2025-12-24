@@ -33,7 +33,11 @@ export const updateTable = (table: Table) => {
   if (!isRealApiEnabled()) return updateData('tables', table);
   return apiFetch<Table>(`/tables/${encodeURIComponent(table.id)}`, {
     method: 'PUT',
-    body: JSON.stringify({ name: table.name, note: (table as any).note ?? undefined }),
+    body: JSON.stringify({
+      name: table.name,
+      note: table.note ?? null,
+      customerId: table.customerId ?? null,
+    }),
   });
 };
 

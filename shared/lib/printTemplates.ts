@@ -29,6 +29,49 @@ type ReceiptMeta = {
   currencySymbol?: string;
 };
 
+type PrintLabels = {
+  tableLabel: string;
+  orderLabel: string;
+  itemsHeader: string;
+  totalsHeader: string;
+  kitchenHeader: string;
+  noteLabel: string;
+  complimentarySuffix: string;
+  subtotalLabel: string;
+  discountLabel: string;
+  serviceLabel: string;
+  taxLabel: string;
+  roundingLabel: string;
+  grandTotalLabel: string;
+  paidLabel: string;
+  remainingLabel: string;
+  thanksFooter: string;
+};
+
+const DEFAULT_LABELS_TR: PrintLabels = {
+  tableLabel: 'Masa',
+  orderLabel: 'Sipariş',
+  itemsHeader: 'Ürünler',
+  totalsHeader: 'Toplam',
+  kitchenHeader: 'Mutfak',
+  noteLabel: 'Not',
+  complimentarySuffix: ' (İkram)',
+  subtotalLabel: 'Ara toplam',
+  discountLabel: 'İndirim',
+  serviceLabel: 'Servis',
+  taxLabel: 'KDV/Vergi',
+  roundingLabel: 'Yuvarlama',
+  grandTotalLabel: 'Genel toplam',
+  paidLabel: 'Ödenen',
+  remainingLabel: 'Kalan',
+  thanksFooter: 'Teşekkürler!',
+};
+
+const resolveLabels = (labels?: Partial<PrintLabels>): PrintLabels => {
+  if (!labels) return DEFAULT_LABELS_TR;
+  return { ...DEFAULT_LABELS_TR, ...labels };
+};
+
 const money = (value: number, currencySymbol?: string): string => {
   const v = Number.isFinite(value) ? value : 0;
   if (!currencySymbol) return v.toFixed(2);
@@ -49,43 +92,45 @@ export const buildReceiptText = (
   meta: ReceiptMeta,
   items: ReceiptItemLine[],
   totals: ReceiptTotals,
+  labels?: Partial<PrintLabels>,
 ) => {
+  const l = resolveLabels(labels);
   const lines: string[] = [];
   lines.push(meta.restaurantName);
-  lines.push(`Masa: ${meta.tableName}`);
+  lines.push(`${l.tableLabel}: ${meta.tableName}`);
   lines.push(meta.dateTimeText);
-  if (meta.orderId) lines.push(`Sipariş: ${meta.orderId}`);
+  if (meta.orderId) lines.push(`${l.orderLabel}: ${meta.orderId}`);
   lines.push('');
-  lines.push('--- Ürünler ---');
+  lines.push(`--- ${l.itemsHeader} ---`);
 
   for (const it of items) {
     const qtyPrefix = `${it.quantity}x `;
-    lines.push(`${qtyPrefix}${it.name}${it.isComplimentary ? ' (İkram)' : ''}`);
+    lines.push(`${qtyPrefix}${it.name}${it.isComplimentary ? l.complimentarySuffix : ''}`);
     if (Array.isArray(it.details)) {
       for (const d of it.details) lines.push(`  - ${d}`);
     }
-    if (it.note) lines.push(`  Not: ${it.note}`);
+    if (it.note) lines.push(`  ${l.noteLabel}: ${it.note}`);
     if (!it.isComplimentary && typeof it.lineTotal === 'number') {
       lines.push(`  ${money(it.lineTotal, meta.currencySymbol)}`);
     }
     lines.push('');
   }
 
-  lines.push('--- Toplam ---');
-  lines.push(formatLine('Ara toplam', money(totals.subtotal, meta.currencySymbol)));
+  lines.push(`--- ${l.totalsHeader} ---`);
+  lines.push(formatLine(l.subtotalLabel, money(totals.subtotal, meta.currencySymbol)));
   if (totals.discountAmount > 0) {
-    lines.push(formatLine('İndirim', `-${money(totals.discountAmount, meta.currencySymbol)}`));
+    lines.push(formatLine(l.discountLabel, `-${money(totals.discountAmount, meta.currencySymbol)}`));
   }
   const serviceChargeAmount = Number.isFinite(totals.serviceChargeAmount)
     ? (totals.serviceChargeAmount as number)
     : 0;
   if (serviceChargeAmount > 0.00001) {
-    lines.push(formatLine('Servis', money(serviceChargeAmount, meta.currencySymbol)));
+    lines.push(formatLine(l.serviceLabel, money(serviceChargeAmount, meta.currencySymbol)));
   }
 
   const taxAmount = Number.isFinite(totals.taxAmount) ? (totals.taxAmount as number) : 0;
   if (taxAmount > 0.00001) {
-    lines.push(formatLine('KDV/Vergi', money(taxAmount, meta.currencySymbol)));
+    lines.push(formatLine(l.taxLabel, money(taxAmount, meta.currencySymbol)));
   }
 
   const roundingAdjustment = Number.isFinite(totals.roundingAdjustment)
@@ -93,33 +138,38 @@ export const buildReceiptText = (
     : 0;
   if (Math.abs(roundingAdjustment) > 0.00001) {
     const sign = roundingAdjustment > 0 ? '+' : '';
-    lines.push(formatLine('Yuvarlama', `${sign}${money(roundingAdjustment, meta.currencySymbol)}`));
+    lines.push(formatLine(l.roundingLabel, `${sign}${money(roundingAdjustment, meta.currencySymbol)}`));
   }
-  lines.push(formatLine('Genel toplam', money(totals.total, meta.currencySymbol)));
-  lines.push(formatLine('Ödenen', money(totals.paid, meta.currencySymbol)));
-  lines.push(formatLine('Kalan', money(totals.remaining, meta.currencySymbol)));
+  lines.push(formatLine(l.grandTotalLabel, money(totals.total, meta.currencySymbol)));
+  lines.push(formatLine(l.paidLabel, money(totals.paid, meta.currencySymbol)));
+  lines.push(formatLine(l.remainingLabel, money(totals.remaining, meta.currencySymbol)));
 
   lines.push('');
-  lines.push('Teşekkürler!');
+  lines.push(l.thanksFooter);
 
   return lines.join('\n');
 };
 
-export const buildKitchenTicketText = (meta: ReceiptMeta, items: ReceiptItemLine[]) => {
+export const buildKitchenTicketText = (
+  meta: ReceiptMeta,
+  items: ReceiptItemLine[],
+  labels?: Partial<PrintLabels>,
+) => {
+  const l = resolveLabels(labels);
   const lines: string[] = [];
   lines.push(meta.restaurantName);
-  lines.push(`Masa: ${meta.tableName}`);
+  lines.push(`${l.tableLabel}: ${meta.tableName}`);
   lines.push(meta.dateTimeText);
-  if (meta.orderId) lines.push(`Sipariş: ${meta.orderId}`);
+  if (meta.orderId) lines.push(`${l.orderLabel}: ${meta.orderId}`);
   lines.push('');
-  lines.push('--- Mutfak ---');
+  lines.push(`--- ${l.kitchenHeader} ---`);
 
   for (const it of items) {
     lines.push(`${it.quantity}x ${it.name}`);
     if (Array.isArray(it.details)) {
       for (const d of it.details) lines.push(`  - ${d}`);
     }
-    if (it.note) lines.push(`  Not: ${it.note}`);
+    if (it.note) lines.push(`  ${l.noteLabel}: ${it.note}`);
     lines.push('');
   }
 

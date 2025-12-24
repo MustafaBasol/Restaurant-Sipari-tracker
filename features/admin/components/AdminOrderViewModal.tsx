@@ -6,6 +6,8 @@ import { Order } from '../../orders/types';
 import { OrderStatus } from '../../../shared/types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Badge } from '../../../shared/components/ui/Badge';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { formatCurrency } from '../../../shared/lib/utils';
 
 interface AdminOrderViewModalProps {
   order: Order;
@@ -14,8 +16,11 @@ interface AdminOrderViewModalProps {
 
 const AdminOrderViewModal: React.FC<AdminOrderViewModalProps> = ({ order, onClose }) => {
   const { t } = useLanguage();
+  const { authState } = useAuth();
   const { tables } = useTables();
   const { menuItems } = useMenu();
+
+  const currency = authState?.tenant?.currency || 'USD';
 
   const table = tables.find((t) => t.id === order.tableId);
 
@@ -30,6 +35,7 @@ const AdminOrderViewModal: React.FC<AdminOrderViewModalProps> = ({ order, onClos
   };
 
   const total = order.items.reduce((acc, item) => {
+    if (item.status === OrderStatus.CANCELED) return acc;
     const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
     return acc + (menuItem ? menuItem.price * item.quantity : 0);
   }, 0);
@@ -40,8 +46,10 @@ const AdminOrderViewModal: React.FC<AdminOrderViewModalProps> = ({ order, onClos
     <Modal isOpen={!!order} onClose={onClose} title={title}>
       <div className="p-6">
         <div className="mb-4 bg-white p-4 rounded-xl shadow-subtle">
-          {table?.customerName && (
-            <p className="text-sm font-semibold">Customer: {table.customerName}</p>
+          {(order.customerName || table?.customerName) && (
+            <p className="text-sm font-semibold">
+              {t('waiter.customerName')}: {order.customerName || table?.customerName}
+            </p>
           )}
           {table?.note && (
             <p className="text-sm text-text-secondary italic">Note: "{table.note}"</p>
@@ -72,7 +80,7 @@ const AdminOrderViewModal: React.FC<AdminOrderViewModalProps> = ({ order, onClos
         </div>
         <div className="mt-6 pt-4 border-t border-border-color flex justify-between items-center font-bold text-lg">
           <span>{t('waiter.total')}</span>
-          <span>${total.toFixed(2)}</span>
+          <span>{formatCurrency(total, currency)}</span>
         </div>
       </div>
     </Modal>

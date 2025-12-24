@@ -92,6 +92,24 @@
     "fillSelected": "Remplir le montant sélectionné",
     "clearSelection": "Effacer la sélection"
   },
+  "print": {
+    "table": "Table",
+    "order": "Commande",
+    "items": "Articles",
+    "totals": "Totaux",
+    "kitchen": "Cuisine",
+    "note": "Note",
+    "complimentarySuffix": " (Offert)",
+    "subtotal": "Sous-total",
+    "discount": "Remise",
+    "service": "Service",
+    "tax": "Taxe",
+    "rounding": "Arrondi",
+    "grandTotal": "Total général",
+    "paid": "Payé",
+    "remaining": "Restant",
+    "thanks": "Merci !"
+  },
   "audit": {
     "actions": {
       "ORDER_CREATED": "Commande créée",

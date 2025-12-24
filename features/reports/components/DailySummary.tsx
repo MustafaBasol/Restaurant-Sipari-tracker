@@ -18,11 +18,191 @@ import { getOrders } from '../../orders/api';
 import { getMenuItems } from '../../menu/api';
 
 const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
-  <Card className="text-center">
+  <Card className="text-center border border-border-color notched" style={notchedStyle}>
     <p className="text-sm font-medium text-text-secondary">{title}</p>
     <p className="text-2xl sm:text-3xl font-bold text-text-primary mt-1 break-words">{value}</p>
   </Card>
 );
+
+const NOTCHED_CLIP_PATH =
+  'polygon(0 12px, 12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px))';
+
+const notchedStyle: React.CSSProperties = {
+  clipPath: NOTCHED_CLIP_PATH,
+};
+
+type ReportSectionId =
+  | 'kpis'
+  | 'revenueTrend'
+  | 'netRatio'
+  | 'topItems'
+  | 'waiters'
+  | 'endOfDay'
+  | 'hourly'
+  | 'stations';
+
+const REPORT_VISIBILITY_KEY = 'kitchorify-reports-section-visibility';
+
+const useSectionVisibility = () => {
+  const [hidden, setHidden] = React.useState<Record<ReportSectionId, boolean>>(() => {
+    try {
+      const raw = window.localStorage.getItem(REPORT_VISIBILITY_KEY);
+      if (!raw) return {} as any;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const out: Record<ReportSectionId, boolean> = {
+        kpis: false,
+        revenueTrend: false,
+        netRatio: false,
+        topItems: false,
+        waiters: false,
+        endOfDay: false,
+        hourly: false,
+        stations: false,
+      };
+      (Object.keys(out) as ReportSectionId[]).forEach((k) => {
+        out[k] = parsed?.[k] === true;
+      });
+      return out;
+    } catch {
+      return {
+        kpis: false,
+        revenueTrend: false,
+        netRatio: false,
+        topItems: false,
+        waiters: false,
+        endOfDay: false,
+        hourly: false,
+        stations: false,
+      };
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(REPORT_VISIBILITY_KEY, JSON.stringify(hidden));
+    } catch {
+      // ignore
+    }
+  }, [hidden]);
+
+  const setSectionHidden = (id: ReportSectionId, isHidden: boolean) => {
+    setHidden((prev) => ({ ...prev, [id]: isHidden }));
+  };
+
+  return { hidden, setSectionHidden };
+};
+
+const SectionCard: React.FC<{
+  id: ReportSectionId;
+  title: string;
+  hidden: boolean;
+  onToggle: () => void;
+  children?: React.ReactNode;
+}> = ({ title, hidden, onToggle, children }) => {
+  return (
+    <Card className="border border-border-color notched" style={notchedStyle}>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-sm font-medium text-accent hover:text-accent-hover"
+        >
+          {hidden ? 'Göster' : 'Gizle'}
+        </button>
+      </div>
+
+      {!hidden && <div className="mt-4">{children}</div>}
+    </Card>
+  );
+};
+
+const MiniBarChart: React.FC<{
+  title?: string;
+  points: Array<{ label: string; value: number }>;
+  formatValue?: (n: number) => string;
+}> = ({ title, points, formatValue }) => {
+  const max = Math.max(0, ...points.map((p) => p.value));
+  const safeMax = max > 0 ? max : 1;
+
+  return (
+    <div>
+      {title && <div className="text-sm font-medium text-text-secondary mb-2">{title}</div>}
+      <div className="grid grid-cols-12 gap-2 items-end h-28">
+        {points.slice(-12).map((p) => {
+          const h = Math.round((p.value / safeMax) * 100);
+          return (
+            <div key={p.label} className="col-span-3 sm:col-span-1 flex flex-col items-center">
+              <div className="w-full flex-1 flex items-end">
+                <div
+                  className="w-full bg-accent/20 border border-border-color"
+                  style={{ height: `${h}%` }}
+                  title={`${p.label} • ${formatValue ? formatValue(p.value) : p.value}`}
+                />
+              </div>
+              <div className="mt-1 text-[10px] text-text-secondary whitespace-nowrap">
+                {p.label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const Gauge: React.FC<{ label: string; value: number; suffix?: string }> = ({
+  label,
+  value,
+  suffix,
+}) => {
+  const clamped = Math.max(0, Math.min(100, value));
+  const r = 44;
+  const c = 2 * Math.PI * r;
+  const pct = clamped / 100;
+  const dash = c * pct;
+  const gap = c - dash;
+
+  return (
+    <div className="flex items-center gap-4">
+      <svg width="110" height="110" viewBox="0 0 110 110" className="text-accent">
+        <circle
+          cx="55"
+          cy="55"
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="10"
+          opacity="0.2"
+        />
+        <circle
+          cx="55"
+          cy="55"
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="10"
+          strokeDasharray={`${dash} ${gap}`}
+          strokeLinecap="round"
+          transform="rotate(-90 55 55)"
+        />
+        <text
+          x="55"
+          y="60"
+          textAnchor="middle"
+          className="fill-text-primary"
+          style={{ fontSize: 16, fontWeight: 700 }}
+        >
+          {Math.round(clamped)}{suffix ?? '%'}
+        </text>
+      </svg>
+      <div>
+        <div className="text-sm font-medium text-text-secondary">{label}</div>
+        <div className="text-xs text-text-secondary">0–100{suffix ?? '%'} aralığı</div>
+      </div>
+    </div>
+  );
+};
 
 const toDateString = (date: Date): string => date.toISOString().split('T')[0];
 
@@ -102,7 +282,7 @@ const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => voi
         <button
           key={p.value}
           onClick={() => handlePresetClick(p.value)}
-          className="px-3 py-1 text-sm font-medium bg-gray-200 text-text-secondary rounded-full hover:bg-gray-300 transition-colors"
+          className="px-3 py-1 text-sm font-medium bg-card-bg text-text-secondary rounded-full border border-border-color hover:bg-light-bg transition-colors"
         >
           {t(p.labelKey)}
         </button>
@@ -126,6 +306,11 @@ const DailySummary: React.FC = () => {
   const [stationItemCounts, setStationItemCounts] = React.useState<
     Array<{ station: KitchenStation; quantity: number }>
   >([]);
+  const [dailyRevenue, setDailyRevenue] = React.useState<Array<{ day: string; revenue: number }>>(
+    [],
+  );
+
+  const { hidden, setSectionHidden } = useSectionVisibility();
 
   const isSingleDay = startDate === endDate;
 
@@ -178,6 +363,20 @@ const DailySummary: React.FC = () => {
           return d >= start && d <= end;
         });
 
+        const dayMap = new Map<string, number>();
+        for (const o of closedInRange) {
+          const d = new Date(o.orderClosedAt as any);
+          const key = d.toISOString().slice(0, 10);
+          const revenue = Array.isArray(o.payments)
+            ? o.payments.reduce((s: number, p: any) => s + (Number(p?.amount) || 0), 0)
+            : 0;
+          dayMap.set(key, (dayMap.get(key) ?? 0) + revenue);
+        }
+        const dayRows = Array.from(dayMap.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([day, revenue]) => ({ day, revenue }));
+        setDailyRevenue(dayRows);
+
         const hourly: Array<{ hour: number; orders: number }> = Array.from(
           { length: 24 },
           (_, h) => ({
@@ -210,6 +409,7 @@ const DailySummary: React.FC = () => {
         console.error('Failed to fetch extended report data', e);
         setHourlyOrders([]);
         setStationItemCounts([]);
+        setDailyRevenue([]);
       } finally {
         setExtraLoading(false);
       }
@@ -268,176 +468,250 @@ const DailySummary: React.FC = () => {
         </div>
       </Card>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+      {isLoading && (
+        <div className="flex justify-center items-center h-24">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
         </div>
-      ) : error ? (
-        <p className="text-red-500 text-center">{error}</p>
-      ) : !data || data.totalOrders === 0 ? (
-        <p className="text-text-secondary text-center py-10">{t('reports.noData')}</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <StatCard
-              title={t('reports.totalRevenue')}
-              value={formatCurrency(data.totalRevenue, currency)}
-            />
-            <StatCard title={t('reports.totalOrders')} value={data.totalOrders} />
-            <StatCard
-              title={t('reports.averageTicket')}
-              value={formatCurrency(data.averageTicket, currency)}
-            />
-          </div>
+      )}
 
-          <Card>
-            <h3 className="text-lg font-semibold mb-4">{t('reports.topItems')}</h3>
-            <Table>
-              <TableHeader>
-                <TableHeaderCell>{t('reports.headers.item')}</TableHeaderCell>
-                <TableHeaderCell align="right">{t('reports.headers.quantity')}</TableHeaderCell>
-                <TableHeaderCell align="right">{t('reports.headers.revenue')}</TableHeaderCell>
-              </TableHeader>
-              <TableBody>
-                {data.topItems.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell align="right">{item.quantity}</TableCell>
-                    <TableCell align="right">{formatCurrency(item.revenue, currency)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+      {error && <p className="text-center text-text-secondary">{error}</p>}
 
-          {data.waiterStats.length > 0 && (
-            <Card>
-              <h3 className="text-lg font-semibold mb-4">{t('reports.waiterPerformance')}</h3>
+      {!isLoading && !error && (!data || data.totalOrders === 0) && (
+        <p className="text-text-secondary text-center">{t('reports.noData')}</p>
+      )}
+
+      {(() => {
+        const safe =
+          data ??
+          ({
+            startDate,
+            endDate,
+            totalOrders: 0,
+            totalRevenue: 0,
+            averageTicket: 0,
+            topItems: [],
+            waiterStats: [],
+            endOfDay: {
+              grossSales: 0,
+              discountTotal: 0,
+              complimentaryTotal: 0,
+              netSales: 0,
+              paymentsByMethod: [],
+              canceledItemsCount: 0,
+              canceledItemsAmount: 0,
+            },
+          } as any);
+
+        const netRatioPct =
+          safe.endOfDay?.grossSales && safe.endOfDay.grossSales > 0
+            ? (safe.endOfDay.netSales / safe.endOfDay.grossSales) * 100
+            : 0;
+
+        const revenuePoints =
+          dailyRevenue.length > 0
+            ? dailyRevenue.map((x) => ({ label: x.day.slice(5), value: x.revenue }))
+            : Array.from({ length: 7 }, (_, i) => ({ label: `-${6 - i}`, value: 0 }));
+
+        return (
+          <>
+            <SectionCard
+              id="kpis"
+              title={t('reports.titleDateRange').includes('{startDate}') ? t('reports.totalRevenue') : t('reports.totalRevenue')}
+              hidden={hidden.kpis}
+              onToggle={() => setSectionHidden('kpis', !hidden.kpis)}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <StatCard title={t('reports.totalRevenue')} value={formatCurrency(safe.totalRevenue, currency)} />
+                <StatCard title={t('reports.totalOrders')} value={safe.totalOrders} />
+                <StatCard title={t('reports.averageTicket')} value={formatCurrency(safe.averageTicket, currency)} />
+              </div>
+            </SectionCard>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SectionCard
+                id="revenueTrend"
+                title="Ciro Trend (Günlük)"
+                hidden={hidden.revenueTrend}
+                onToggle={() => setSectionHidden('revenueTrend', !hidden.revenueTrend)}
+              >
+                <MiniBarChart
+                  points={revenuePoints}
+                  formatValue={(n) => formatCurrency(n, currency)}
+                />
+                {extraLoading && (
+                  <div className="mt-2 text-xs text-text-secondary">Grafik verileri hazırlanıyor…</div>
+                )}
+              </SectionCard>
+
+              <SectionCard
+                id="netRatio"
+                title="Net Satış Oranı"
+                hidden={hidden.netRatio}
+                onToggle={() => setSectionHidden('netRatio', !hidden.netRatio)}
+              >
+                <Gauge label="Net / Brüt" value={netRatioPct} />
+                <div className="mt-3 text-sm text-text-secondary">
+                  Brüt: {formatCurrency(safe.endOfDay.grossSales, currency)} • Net:{' '}
+                  {formatCurrency(safe.endOfDay.netSales, currency)}
+                </div>
+              </SectionCard>
+            </div>
+
+            <SectionCard
+              id="topItems"
+              title={t('reports.topItems')}
+              hidden={hidden.topItems}
+              onToggle={() => setSectionHidden('topItems', !hidden.topItems)}
+            >
               <Table>
                 <TableHeader>
-                  <TableHeaderCell>{t('reports.headers.waiter')}</TableHeaderCell>
-                  <TableHeaderCell align="right">{t('reports.headers.orders')}</TableHeaderCell>
-                  <TableHeaderCell align="right">{t('reports.totalRevenue')}</TableHeaderCell>
-                  <TableHeaderCell align="right">
-                    {t('reports.headers.averageTicket')}
-                  </TableHeaderCell>
+                  <TableHeaderCell>{t('reports.headers.item')}</TableHeaderCell>
+                  <TableHeaderCell align="right">{t('reports.headers.quantity')}</TableHeaderCell>
+                  <TableHeaderCell align="right">{t('reports.headers.revenue')}</TableHeaderCell>
                 </TableHeader>
                 <TableBody>
-                  {data.waiterStats.map((w) => (
-                    <TableRow key={w.waiterId}>
-                      <TableCell>{w.waiterName}</TableCell>
-                      <TableCell align="right">{w.totalOrders}</TableCell>
-                      <TableCell align="right">
-                        {formatCurrency(w.totalRevenue, currency)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatCurrency(w.averageTicket, currency)}
-                      </TableCell>
+                  {(safe.topItems ?? []).length > 0 ? (
+                    safe.topItems.map((item: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell align="right">{item.quantity}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.revenue, currency)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell className="text-text-secondary">{t('reports.noData')}</TableCell>
+                      <TableCell />
+                      <TableCell />
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
-            </Card>
-          )}
+            </SectionCard>
 
-          {isSingleDay && data.endOfDay && (
-            <Card>
-              <h3 className="text-lg font-semibold mb-4">{t('reports.endOfDayTitle')}</h3>
+            <SectionCard
+              id="waiters"
+              title={t('reports.waiterPerformance')}
+              hidden={hidden.waiters}
+              onToggle={() => setSectionHidden('waiters', !hidden.waiters)}
+            >
+              {(safe.waiterStats ?? []).length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableHeaderCell>{t('reports.headers.waiter')}</TableHeaderCell>
+                    <TableHeaderCell align="right">{t('reports.headers.orders')}</TableHeaderCell>
+                    <TableHeaderCell align="right">{t('reports.totalRevenue')}</TableHeaderCell>
+                    <TableHeaderCell align="right">{t('reports.headers.averageTicket')}</TableHeaderCell>
+                  </TableHeader>
+                  <TableBody>
+                    {safe.waiterStats.map((w: any) => (
+                      <TableRow key={w.waiterId}>
+                        <TableCell>{w.waiterName}</TableCell>
+                        <TableCell align="right">{w.totalOrders}</TableCell>
+                        <TableCell align="right">{formatCurrency(w.totalRevenue, currency)}</TableCell>
+                        <TableCell align="right">{formatCurrency(w.averageTicket, currency)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-sm text-text-secondary">{t('reports.noData')}</div>
+              )}
+            </SectionCard>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-                <StatCard
-                  title={t('reports.grossSales')}
-                  value={formatCurrency(data.endOfDay.grossSales, currency)}
-                />
-                <StatCard
-                  title={t('reports.discountTotal')}
-                  value={formatCurrency(data.endOfDay.discountTotal, currency)}
-                />
-                <StatCard
-                  title={t('reports.complimentaryTotal')}
-                  value={formatCurrency(data.endOfDay.complimentaryTotal, currency)}
-                />
-                <StatCard
-                  title={t('reports.netSales')}
-                  value={formatCurrency(data.endOfDay.netSales, currency)}
-                />
-              </div>
+            {isSingleDay && (
+              <SectionCard
+                id="endOfDay"
+                title={t('reports.endOfDayTitle')}
+                hidden={hidden.endOfDay}
+                onToggle={() => setSectionHidden('endOfDay', !hidden.endOfDay)}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                  <StatCard title={t('reports.grossSales')} value={formatCurrency(safe.endOfDay.grossSales, currency)} />
+                  <StatCard title={t('reports.discountTotal')} value={formatCurrency(safe.endOfDay.discountTotal, currency)} />
+                  <StatCard title={t('reports.complimentaryTotal')} value={formatCurrency(safe.endOfDay.complimentaryTotal, currency)} />
+                  <StatCard title={t('reports.netSales')} value={formatCurrency(safe.endOfDay.netSales, currency)} />
+                </div>
 
-              {data.endOfDay.paymentsByMethod.length > 0 && (
-                <>
-                  <h4 className="text-sm font-semibold text-text-secondary mb-2">
-                    {t('reports.paymentsByMethod')}
-                  </h4>
+                {(safe.endOfDay.paymentsByMethod ?? []).length > 0 ? (
+                  <>
+                    <h4 className="text-sm font-semibold text-text-secondary mb-2">{t('reports.paymentsByMethod')}</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableHeaderCell>{t('reports.headers.method')}</TableHeaderCell>
+                        <TableHeaderCell align="right">{t('reports.headers.amount')}</TableHeaderCell>
+                      </TableHeader>
+                      <TableBody>
+                        {safe.endOfDay.paymentsByMethod.map((p: any) => (
+                          <TableRow key={p.method}>
+                            <TableCell>{getPaymentMethodLabel(p.method as PaymentMethod)}</TableCell>
+                            <TableCell align="right">{formatCurrency(p.amount, currency)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </>
+                ) : (
+                  <div className="text-sm text-text-secondary">{t('reports.noData')}</div>
+                )}
+
+                <div className="mt-4 text-sm text-text-secondary">
+                  {t('reports.canceledItems')}: {safe.endOfDay.canceledItemsCount} ({formatCurrency(
+                    safe.endOfDay.canceledItemsAmount,
+                    currency,
+                  )})
+                </div>
+              </SectionCard>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SectionCard
+                id="hourly"
+                title={t('reports.hourlyOrders')}
+                hidden={hidden.hourly}
+                onToggle={() => setSectionHidden('hourly', !hidden.hourly)}
+              >
+                {!extraLoading && hourlyOrders.length > 0 ? (
+                  <MiniBarChart
+                    points={hourlyOrders.map((x) => ({
+                      label: String(x.hour).padStart(2, '0'),
+                      value: x.orders,
+                    }))}
+                  />
+                ) : (
+                  <div className="text-sm text-text-secondary">Grafik verisi yok.</div>
+                )}
+              </SectionCard>
+
+              <SectionCard
+                id="stations"
+                title={t('reports.stationBreakdown')}
+                hidden={hidden.stations}
+                onToggle={() => setSectionHidden('stations', !hidden.stations)}
+              >
+                {!extraLoading && stationItemCounts.length > 0 ? (
                   <Table>
                     <TableHeader>
-                      <TableHeaderCell>{t('reports.headers.method')}</TableHeaderCell>
-                      <TableHeaderCell align="right">{t('reports.headers.amount')}</TableHeaderCell>
+                      <TableHeaderCell>{t('reports.headers.station')}</TableHeaderCell>
+                      <TableHeaderCell align="right">{t('reports.headers.quantity')}</TableHeaderCell>
                     </TableHeader>
                     <TableBody>
-                      {data.endOfDay.paymentsByMethod.map((p) => (
-                        <TableRow key={p.method}>
-                          <TableCell>{getPaymentMethodLabel(p.method)}</TableCell>
-                          <TableCell align="right">{formatCurrency(p.amount, currency)}</TableCell>
+                      {stationItemCounts.map((row) => (
+                        <TableRow key={row.station}>
+                          <TableCell>{getStationLabel(row.station)}</TableCell>
+                          <TableCell align="right">{row.quantity}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </>
-              )}
-
-              <div className="mt-4 text-sm text-text-secondary">
-                {t('reports.canceledItems')}: {data.endOfDay.canceledItemsCount} (
-                {formatCurrency(data.endOfDay.canceledItemsAmount, currency)})
-              </div>
-            </Card>
-          )}
-
-          {!extraLoading && hourlyOrders.length > 0 && (
-            <Card>
-              <h3 className="text-lg font-semibold mb-4">{t('reports.hourlyOrders')}</h3>
-              <Table>
-                <TableHeader>
-                  <TableHeaderCell>{t('reports.headers.hour')}</TableHeaderCell>
-                  <TableHeaderCell align="right">{t('reports.headers.orders')}</TableHeaderCell>
-                </TableHeader>
-                <TableBody>
-                  {hourlyOrders
-                    .filter((x) => x.orders > 0)
-                    .map((x) => (
-                      <TableRow key={x.hour}>
-                        <TableCell>{String(x.hour).padStart(2, '0')}:00</TableCell>
-                        <TableCell align="right">{x.orders}</TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-              {hourlyOrders.every((x) => x.orders === 0) && (
-                <p className="text-text-secondary text-sm">{t('reports.noData')}</p>
-              )}
-            </Card>
-          )}
-
-          {!extraLoading && stationItemCounts.length > 0 && (
-            <Card>
-              <h3 className="text-lg font-semibold mb-4">{t('reports.stationBreakdown')}</h3>
-              <Table>
-                <TableHeader>
-                  <TableHeaderCell>{t('reports.headers.station')}</TableHeaderCell>
-                  <TableHeaderCell align="right">{t('reports.headers.quantity')}</TableHeaderCell>
-                </TableHeader>
-                <TableBody>
-                  {stationItemCounts.map((row) => (
-                    <TableRow key={row.station}>
-                      <TableCell>{getStationLabel(row.station)}</TableCell>
-                      <TableCell align="right">{row.quantity}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          )}
-        </>
-      )}
+                ) : (
+                  <div className="text-sm text-text-secondary">{t('reports.noData')}</div>
+                )}
+              </SectionCard>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };

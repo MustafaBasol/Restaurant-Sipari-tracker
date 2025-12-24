@@ -21,7 +21,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [newOrders, setNewOrders] = useState<Order[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const previousNewOrderIds = useRef<Set<string>>(new Set());
+  const previousNewItemIdsByOrder = useRef<Map<string, Set<string>>>(new Map());
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -37,25 +37,45 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         order.items.some((item) => item.status === OrderStatus.NEW),
       );
 
-      const currentNewOrderIds = new Set(currentNewOrders.map((o) => o.id));
-      const newlyAddedOrders = currentNewOrders.filter(
-        (o) => !previousNewOrderIds.current.has(o.id),
-      );
+      let hasNewSignal = false;
+      const nextNewItemIdsByOrder = new Map<string, Set<string>>();
+
+      for (const order of currentNewOrders) {
+        const currentNewItemIds = new Set<string>(
+          order.items.filter((i) => i.status === OrderStatus.NEW).map((i) => i.id),
+        );
+        nextNewItemIdsByOrder.set(order.id, currentNewItemIds);
+
+        const prevSet = previousNewItemIdsByOrder.current.get(order.id);
+        if (!prevSet) {
+          // First time seeing this order with NEW items.
+          hasNewSignal = true;
+          continue;
+        }
+
+        for (const itemId of currentNewItemIds) {
+          if (!prevSet.has(itemId)) {
+            // An additional NEW item was added to an existing order.
+            hasNewSignal = true;
+            break;
+          }
+        }
+      }
 
       setNewOrders(currentNewOrders);
 
-      if (newlyAddedOrders.length > 0) {
-        setIsModalOpen(true);
+      if (hasNewSignal) {
+        if (!isModalOpen) setIsModalOpen(true);
         audioRef.current?.play().catch((e) => console.error('Audio playback failed:', e));
       }
 
-      previousNewOrderIds.current = currentNewOrderIds;
+      previousNewItemIdsByOrder.current = nextNewItemIdsByOrder;
     } else {
       // Clear notifications if not a kitchen user or logged out
       setNewOrders([]);
-      previousNewOrderIds.current.clear();
+      previousNewItemIdsByOrder.current.clear();
     }
-  }, [orders, isKitchenUser]);
+  }, [orders, isKitchenUser, isModalOpen]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);

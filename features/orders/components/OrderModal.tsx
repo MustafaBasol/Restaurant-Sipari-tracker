@@ -108,7 +108,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
   } = useOrders();
   const { tables, updateTable } = useTables();
   const { menuItems } = useMenu();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const currency = authState?.tenant?.currency || 'USD';
   const timezone = authState?.tenant?.timezone || 'UTC';
@@ -390,7 +390,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const dateTimeText = formatDateTime(activeOrder.createdAt, timezone, {
       dateStyle: 'medium',
       timeStyle: 'short',
-    });
+    }, lang);
 
     const items = printableItems.map((item) => {
       const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
@@ -471,6 +471,24 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
         paid,
         remaining,
       },
+      {
+        tableLabel: t('print.table'),
+        orderLabel: t('print.order'),
+        itemsHeader: t('print.items'),
+        totalsHeader: t('print.totals'),
+        kitchenHeader: t('print.kitchen'),
+        noteLabel: t('print.note'),
+        complimentarySuffix: t('print.complimentarySuffix'),
+        subtotalLabel: t('print.subtotal'),
+        discountLabel: t('print.discount'),
+        serviceLabel: t('print.service'),
+        taxLabel: t('print.tax'),
+        roundingLabel: t('print.rounding'),
+        grandTotalLabel: t('print.grandTotal'),
+        paidLabel: t('print.paid'),
+        remainingLabel: t('print.remaining'),
+        thanksFooter: t('print.thanks'),
+      },
     );
   };
 
@@ -482,7 +500,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     const dateTimeText = formatDateTime(activeOrder.createdAt, timezone, {
       dateStyle: 'medium',
       timeStyle: 'short',
-    });
+    }, lang);
 
     const items = printableItems
       .filter((i) => !i.isComplimentary)
@@ -532,6 +550,24 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
         currencySymbol,
       },
       items,
+      {
+        tableLabel: t('print.table'),
+        orderLabel: t('print.order'),
+        itemsHeader: t('print.items'),
+        totalsHeader: t('print.totals'),
+        kitchenHeader: t('print.kitchen'),
+        noteLabel: t('print.note'),
+        complimentarySuffix: t('print.complimentarySuffix'),
+        subtotalLabel: t('print.subtotal'),
+        discountLabel: t('print.discount'),
+        serviceLabel: t('print.service'),
+        taxLabel: t('print.tax'),
+        roundingLabel: t('print.rounding'),
+        grandTotalLabel: t('print.grandTotal'),
+        paidLabel: t('print.paid'),
+        remainingLabel: t('print.remaining'),
+        thanksFooter: t('print.thanks'),
+      },
     );
   };
 
@@ -564,7 +600,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     openPrintWindow(
       `<div class="ticket">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`,
       {
-        title: 'Receipt',
+        title: t('actions.printReceipt'),
       },
     );
   };
@@ -598,7 +634,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
     openPrintWindow(
       `<div class="ticket">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`,
       {
-        title: 'Kitchen Ticket',
+        title: t('actions.printKitchenTicket'),
       },
     );
   };

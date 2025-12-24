@@ -1,8 +1,8 @@
 import { Tenant, SubscriptionStatus } from '../types';
 
-export const formatCurrency = (amount: number, currency: string): string => {
+export const formatCurrency = (amount: number, currency: string, locale?: string): string => {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(locale ?? undefined, {
       style: 'currency',
       currency,
     }).format(amount);
@@ -17,10 +17,11 @@ export const formatDateTime = (
   date: Date | string,
   timeZone: string,
   options?: Intl.DateTimeFormatOptions,
+  locale?: string,
 ): string => {
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(locale ?? undefined, {
       ...options,
       timeZone,
     }).format(dateObj);

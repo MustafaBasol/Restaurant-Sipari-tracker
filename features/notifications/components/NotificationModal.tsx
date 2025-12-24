@@ -6,11 +6,14 @@ import { useMenu } from '../../menu/hooks/useMenu';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Button } from '../../../shared/components/ui/Button';
 import { Order } from '../../orders/types';
+import { OrderStatus } from '../../../shared/types';
 
 const OrderDetails: React.FC<{ order: Order }> = ({ order }) => {
   const { tables } = useTables();
   const { menuItems } = useMenu();
   const table = tables.find((t) => t.id === order.tableId);
+
+  const newItems = order.items.filter((item) => item.status === OrderStatus.NEW);
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-subtle mb-4">
@@ -19,13 +22,12 @@ const OrderDetails: React.FC<{ order: Order }> = ({ order }) => {
         {new Date(order.createdAt).toLocaleTimeString()}
       </p>
       <ul className="divide-y divide-border-color">
-        {order.items.map((item) => {
+        {newItems.map((item) => {
           const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
-          if (!menuItem) return null;
           return (
             <li key={item.id} className="py-2">
               <p className="font-semibold">
-                {item.quantity}x {menuItem.name}
+                {item.quantity}x {menuItem?.name ?? item.menuItemId}
               </p>
               {item.note && <p className="text-sm text-text-secondary italic">"{item.note}"</p>}
             </li>

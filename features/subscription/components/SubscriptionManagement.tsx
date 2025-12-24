@@ -235,9 +235,19 @@ const SubscriptionManagement: React.FC = () => {
     formatMaybeEpochDate(firstPaidInvoiceCreated) ||
     '-';
   const nextPaymentDateText = (() => {
-    if (stripeSubscription?.cancel_at_period_end) return null;
+    // If cancel is scheduled, there is no "next payment"; show access-until instead.
+    if (stripeSubscription?.cancel_at_period_end || tenant.subscriptionCancelAtPeriodEnd) return null;
+
+    // If Stripe explicitly says it's ended/canceled, don't show next payment.
     if (stripeSubscription?.status === 'canceled' || stripeSubscription?.ended_at) return null;
-    return formatMaybeEpochDate(stripeSubscription?.current_period_end) || null;
+
+    // Preferred source: Stripe subscription period end.
+    const stripeNext = formatMaybeEpochDate(stripeSubscription?.current_period_end);
+    if (stripeNext) return stripeNext;
+
+    // Fallback: tenant period end (synced from Stripe via backend webhooks/internal sync).
+    const tenantNext = formatMaybeDate(tenant.subscriptionCurrentPeriodEndAt);
+    return tenantNext || null;
   })();
 
   const accessUntilDateText = (() => {

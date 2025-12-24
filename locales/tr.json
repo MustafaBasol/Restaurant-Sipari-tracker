@@ -95,6 +95,24 @@
     "fillSelected": "Seçilen Tutarı Doldur",
     "clearSelection": "Seçimi Temizle"
   },
+  "print": {
+    "table": "Masa",
+    "order": "Sipariş",
+    "items": "Ürünler",
+    "totals": "Toplam",
+    "kitchen": "Mutfak",
+    "note": "Not",
+    "complimentarySuffix": " (İkram)",
+    "subtotal": "Ara toplam",
+    "discount": "İndirim",
+    "service": "Servis",
+    "tax": "KDV/Vergi",
+    "rounding": "Yuvarlama",
+    "grandTotal": "Genel toplam",
+    "paid": "Ödenen",
+    "remaining": "Kalan",
+    "thanks": "Teşekkürler!"
+  },
   "audit": {
     "actions": {
       "ORDER_CREATED": "Sipariş oluşturuldu",

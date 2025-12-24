@@ -130,7 +130,7 @@ const TablesManagement: React.FC = () => {
             const activeOrder = orders?.find(
               (o) =>
                 (o.tableId === table.id || o.linkedTableIds?.includes(table.id)) &&
-                o.status !== OrderStatus.SERVED &&
+                o.status !== OrderStatus.CLOSED &&
                 o.status !== OrderStatus.CANCELED,
             );
 

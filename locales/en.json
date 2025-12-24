@@ -89,6 +89,24 @@
     "fillSelected": "Fill Selected Amount",
     "clearSelection": "Clear Selection"
   },
+  "print": {
+    "table": "Table",
+    "order": "Order",
+    "items": "Items",
+    "totals": "Totals",
+    "kitchen": "Kitchen",
+    "note": "Note",
+    "complimentarySuffix": " (Complimentary)",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "service": "Service",
+    "tax": "Tax",
+    "rounding": "Rounding",
+    "grandTotal": "Grand Total",
+    "paid": "Paid",
+    "remaining": "Remaining",
+    "thanks": "Thank you!"
+  },
   "audit": {
     "actions": {
       "ORDER_CREATED": "Order created",

@@ -891,7 +891,11 @@ app.get('/api/me', requireAuth, async (req, res) => {
 // Tables
 app.get('/api/tables', requireAuth, requireTenant, async (req, res) => {
   const tenantId = req.auth!.tenantId!;
-  const tables = await prisma.table.findMany({ where: { tenantId }, orderBy: { name: 'asc' } });
+  const tables = await prisma.table.findMany({
+    where: { tenantId },
+    orderBy: { name: 'asc' },
+    include: { customer: { select: { fullName: true } } },
+  });
   return res.json(
     tables.map((t) => ({
       id: t.id,
@@ -899,6 +903,7 @@ app.get('/api/tables', requireAuth, requireTenant, async (req, res) => {
       name: t.name,
       status: t.status,
       customerId: t.customerId ?? undefined,
+      customerName: t.customer?.fullName ?? undefined,
       note: t.note ?? undefined,
     })),
   );
@@ -914,14 +919,24 @@ app.post('/api/tables', requireAuth, requireTenant, async (req, res) => {
   const tenantId = req.auth!.tenantId!;
   const table = await prisma.table.create({
     data: { tenantId, name: parsed.data.name.trim(), status: 'FREE' },
+    include: { customer: { select: { fullName: true } } },
   });
-  return res.json(table);
+  return res.json({
+    id: table.id,
+    tenantId: table.tenantId,
+    name: table.name,
+    status: table.status,
+    customerId: table.customerId ?? undefined,
+    customerName: table.customer?.fullName ?? undefined,
+    note: table.note ?? undefined,
+  });
 });
 
 const tableUpdateSchema = z.object({
   name: z.string().min(1).max(50),
   status: z.any().optional(),
   note: z.string().optional().nullable(),
+  customerId: z.string().optional().nullable(),
 });
 app.put('/api/tables/:id', requireAuth, requireTenant, async (req, res) => {
   if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN')) {
@@ -934,9 +949,22 @@ app.put('/api/tables/:id', requireAuth, requireTenant, async (req, res) => {
   if (!table) return res.status(404).json({ error: 'NOT_FOUND' });
   const updated = await prisma.table.update({
     where: { id: table.id },
-    data: { name: parsed.data.name.trim(), note: parsed.data.note ?? null },
+    data: {
+      name: parsed.data.name.trim(),
+      note: parsed.data.note ?? null,
+      customerId: parsed.data.customerId?.trim() ? parsed.data.customerId.trim() : null,
+    },
+    include: { customer: { select: { fullName: true } } },
   });
-  return res.json(updated);
+  return res.json({
+    id: updated.id,
+    tenantId: updated.tenantId,
+    name: updated.name,
+    status: updated.status,
+    customerId: updated.customerId ?? undefined,
+    customerName: updated.customer?.fullName ?? undefined,
+    note: updated.note ?? undefined,
+  });
 });
 
 const tableStatusSchema = z.object({ status: z.enum(['FREE', 'OCCUPIED', 'CLOSED']) });
@@ -954,8 +982,17 @@ app.patch(
     const updated = await prisma.table.update({
       where: { id: table.id },
       data: { status: parsed.data.status },
+      include: { customer: { select: { fullName: true } } },
     });
-    return res.json(updated);
+    return res.json({
+      id: updated.id,
+      tenantId: updated.tenantId,
+      name: updated.name,
+      status: updated.status,
+      customerId: updated.customerId ?? undefined,
+      customerName: updated.customer?.fullName ?? undefined,
+      note: updated.note ?? undefined,
+    });
   },
 );
 
@@ -1692,10 +1729,8 @@ app.get('/api/reports/summary', requireAuth, requireTenant, async (req, res) => 
   const orders = await prisma.order.findMany({
     where: {
       tenantId,
-      createdAt: {
-        gte: start,
-        lte: end,
-      },
+      status: 'CLOSED',
+      orderClosedAt: { gte: start, lte: end },
     },
     include: {
       items: { include: { menuItem: { select: { name: true } } } },
@@ -1729,7 +1764,7 @@ app.get('/api/reports/summary', requireAuth, requireTenant, async (req, res) => 
     for (const item of order.items) {
       const lineAmount = item.unitPrice * item.quantity;
       if (item.status === 'CANCELED') {
-        canceledItemsCount += 1;
+        canceledItemsCount += item.quantity;
         canceledItemsAmount += lineAmount;
         continue;
       }

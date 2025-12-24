@@ -31,7 +31,10 @@ export const TableBody: React.FC<{ children: ReactNode }> = ({ children }) => (
   <tbody className="bg-white divide-y divide-border-color">{children}</tbody>
 );
 
-export const TableRow: React.FC<{ children: ReactNode }> = ({ children }) => <tr>{children}</tr>;
+export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement> & { children: ReactNode }> = ({
+  children,
+  ...props
+}) => <tr {...props}>{children}</tr>;
 
 export const TableCell: React.FC<{ children: ReactNode; align?: 'left' | 'right' }> = ({
   children,
