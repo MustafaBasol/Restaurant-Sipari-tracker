@@ -185,6 +185,12 @@ const SubscriptionManagement: React.FC = () => {
     }
   };
 
+  const addMonthsSafe = (d: Date, months: number): Date => {
+    const next = new Date(d.getTime());
+    next.setMonth(next.getMonth() + months);
+    return next;
+  };
+
   const openExternal = (url: string) => {
     if (!isSafeExternalHttpUrl(url)) {
       setError(t('subscription.checkout.startFailed'));
@@ -230,6 +236,27 @@ const SubscriptionManagement: React.FC = () => {
     return min;
   })();
 
+  const lastPaidInvoiceCreated = (() => {
+    let max: number | null = null;
+    for (const inv of invoices) {
+      const s = (inv.status || '').toLowerCase();
+      if (s !== 'paid') continue;
+      if (typeof inv.created !== 'number') continue;
+      if (max === null || inv.created > max) max = inv.created;
+    }
+    return max;
+  })();
+
+  const invoiceDerivedNextPaymentText = (() => {
+    if (!lastPaidInvoiceCreated) return null;
+    try {
+      const paidAt = new Date(lastPaidInvoiceCreated * 1000);
+      return addMonthsSafe(paidAt, 1).toLocaleDateString();
+    } catch {
+      return null;
+    }
+  })();
+
   const paidStartedDateText =
     formatMaybeEpochDate(stripeSubscription?.current_period_start) ||
     formatMaybeEpochDate(firstPaidInvoiceCreated) ||
@@ -247,7 +274,10 @@ const SubscriptionManagement: React.FC = () => {
 
     // Fallback: tenant period end (synced from Stripe via backend webhooks/internal sync).
     const tenantNext = formatMaybeDate(tenant.subscriptionCurrentPeriodEndAt);
-    return tenantNext || null;
+    if (tenantNext) return tenantNext;
+
+    // Last resort: infer next payment as +1 month from last paid invoice.
+    return invoiceDerivedNextPaymentText || null;
   })();
 
   const accessUntilDateText = (() => {
@@ -257,7 +287,7 @@ const SubscriptionManagement: React.FC = () => {
     if (tenant.subscriptionCurrentPeriodEndAt) {
       return formatMaybeDate(tenant.subscriptionCurrentPeriodEndAt) || null;
     }
-    return null;
+    return invoiceDerivedNextPaymentText || null;
   })();
 
   const handleActivate = () => {
@@ -459,13 +489,15 @@ const SubscriptionManagement: React.FC = () => {
                             </td>
                           </tr>
                         )}
-                        {stripeSubscription.current_period_end && (
+                        {(stripeSubscription.current_period_end || accessUntilDateText) && (
                           <tr className="hover:bg-gray-50">
                             <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-primary whitespace-nowrap">
                               {t('subscription.historyEventAccessUntil')}
                             </td>
                             <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
-                              {formatMaybeEpochDate(stripeSubscription.current_period_end) || '-'}
+                              {formatMaybeEpochDate(stripeSubscription.current_period_end) ||
+                                accessUntilDateText ||
+                                '-'}
                             </td>
                           </tr>
                         )}
@@ -485,7 +517,7 @@ const SubscriptionManagement: React.FC = () => {
                             </td>
                           </tr>
                         )}
-                        {(stripeSubscription.ended_at || stripeSubscription.current_period_end) && (
+                        {(stripeSubscription.ended_at || stripeSubscription.current_period_end || accessUntilDateText) && (
                           <tr className="hover:bg-gray-50">
                             <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-primary whitespace-nowrap">
                               {t('subscription.historyEventAccessUntil')}
@@ -494,7 +526,9 @@ const SubscriptionManagement: React.FC = () => {
                               {formatMaybeEpochDate(
                                 stripeSubscription.ended_at ||
                                   stripeSubscription.current_period_end,
-                              ) || '-'}
+                              ) ||
+                                accessUntilDateText ||
+                                '-'}
                             </td>
                           </tr>
                         )}
@@ -505,7 +539,9 @@ const SubscriptionManagement: React.FC = () => {
                           {t('subscription.historyEventNextPayment')}
                         </td>
                         <td className="px-3 py-2 sm:px-4 sm:py-3 text-text-secondary whitespace-nowrap">
-                          {formatMaybeEpochDate(stripeSubscription?.current_period_end) || '-'}
+                          {nextPaymentDateText ||
+                            formatMaybeEpochDate(stripeSubscription?.current_period_end) ||
+                            '-'}
                         </td>
                       </tr>
                     )}
