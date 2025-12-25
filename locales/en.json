@@ -32,9 +32,20 @@
     "copy": "Copy",
     "copied": "Copied",
     "copyFailed": "Copy failed",
+    "verified": "Verified",
+    "notVerified": "Not verified",
+    "verify": "Verify",
+    "emailVerification": "Email Verification",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "somethingWentWrong": "Something went wrong. Please try again."
+  },
+  "billing": {
+    "warning": {
+      "title": "Payment Warning",
+      "message": "Your monthly payment is overdue or failed. If you don't pay within {days} days, access will be restricted (deadline: {date}).",
+      "hint": "This warning disappears automatically after payment."
+    }
   },
   "customers": {
     "none": "No registered customer",
@@ -544,12 +555,38 @@
     "headers": {
       "tenant": "Tenant",
       "adminEmail": "Admin Email",
+      "adminEmailVerified": "Email Verification",
       "users": "Users",
       "trialInfo": "Trial Info"
     },
     "tenantDetails": {
       "title": "Tenant Details",
-      "subscriptionManagement": "Subscription Management"
+      "subscriptionManagement": "Subscription Management",
+      "lastPaymentAt": "Last payment",
+      "nextPaymentAt": "Next payment",
+      "paymentWarning": "Payment warning",
+      "paymentWarningValue": "{days} days left (deadline: {date})"
+    },
+    "verifyEmailFailed": "Failed to verify email.",
+    "account": {
+      "title": "Account & Security",
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "newPasswordRepeat": "New password (repeat)",
+      "savePassword": "Update password",
+      "passwordChanged": "Password updated.",
+      "passwordMissing": "Current and new password are required.",
+      "passwordTooShort": "New password must be at least 8 characters.",
+      "passwordMismatch": "New passwords do not match.",
+      "currentPasswordInvalid": "Current password is incorrect.",
+      "passwordChangeFailed": "Failed to change password.",
+      "mfaTitle": "2FA (TOTP)",
+      "mfaEnabled": "2FA is enabled.",
+      "mfaDisabled": "2FA is disabled.",
+      "mfaEnable": "Enable 2FA",
+      "mfaDisable": "Disable 2FA",
+      "mfaDisableFailed": "Failed to disable 2FA."
     },
     "viewDetails": "View Details",
     "confirmDeleteTenant": "Do you want to delete \"{name}\" and all its data? This action cannot be undone.",

@@ -21,7 +21,7 @@ type SortKey = 'name' | 'createdAt' | 'subscriptionStatus';
 type StatusFilter = 'ALL' | SubscriptionStatus;
 
 const TenantList: React.FC = () => {
-  const { tenants, users, updateTenantSubscription, deleteTenant, deleteUser } = useTenants();
+  const { tenants, users, updateTenantSubscription, deleteTenant, deleteUser, verifyUserEmail } = useTenants();
   const { t } = useLanguage();
   const [viewingTenant, setViewingTenant] = useState<Tenant | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
@@ -50,6 +50,8 @@ const TenantList: React.FC = () => {
       return {
         ...tenant,
         adminEmail: admin?.email,
+        adminEmailVerifiedAt: (admin as any)?.emailVerifiedAt ?? null,
+        adminUserId: admin?.id,
         userCount,
       };
     });
@@ -146,6 +148,7 @@ const TenantList: React.FC = () => {
           <tr>
             <SortableHeader sortKey="name" labelKey="superAdmin.headers.tenant" />
             <TableHeaderCell>{t('superAdmin.headers.adminEmail')}</TableHeaderCell>
+            <TableHeaderCell>{t('superAdmin.headers.adminEmailVerified')}</TableHeaderCell>
             <SortableHeader sortKey="createdAt" labelKey="superAdmin.registeredOn" />
             <SortableHeader sortKey="subscriptionStatus" labelKey="superAdmin.subscription" />
             <TableHeaderCell>{t('superAdmin.headers.trialInfo')}</TableHeaderCell>
@@ -164,6 +167,35 @@ const TenantList: React.FC = () => {
                   <div className="text-xs text-text-secondary">{tenant.slug}</div>
                 </TableCell>
                 <TableCell>{tenant.adminEmail || 'N/A'}</TableCell>
+                <TableCell>
+                  {(tenant as any).adminEmail ? (
+                    (tenant as any).adminEmailVerifiedAt ? (
+                      <Badge variant="green">{t('general.verified')}</Badge>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="red">{t('general.notVerified')}</Badge>
+                        {(tenant as any).adminUserId ? (
+                          <button
+                            type="button"
+                            className="text-accent hover:text-accent-hover"
+                            onClick={async () => {
+                              try {
+                                await verifyUserEmail((tenant as any).adminUserId as string);
+                              } catch (e) {
+                                console.error('Failed to verify admin email', e);
+                                window.alert(t('superAdmin.verifyEmailFailed'));
+                              }
+                            }}
+                          >
+                            {t('general.verify')}
+                          </button>
+                        ) : null}
+                      </div>
+                    )
+                  ) : (
+                    '-'
+                  )}
+                </TableCell>
                 <TableCell>
                   {formatDateTime(tenant.createdAt, 'UTC', { dateStyle: 'medium' })}
                 </TableCell>
@@ -221,6 +253,7 @@ const TenantList: React.FC = () => {
           onClose={() => setViewingTenant(null)}
           onSubscriptionChange={updateTenantSubscription}
           onDeleteUser={deleteUser}
+          onVerifyUserEmail={verifyUserEmail}
         />
       )}
     </>

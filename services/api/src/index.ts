@@ -117,8 +117,53 @@ const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? '';
 const mapStripeStatusToSubscriptionStatus = (stripeStatus: string) => {
   const s = String(stripeStatus || '').toLowerCase();
   if (s === 'active' || s === 'trialing') return 'ACTIVE';
+  // Keep tenant accessible during dunning/grace period; we track past due separately.
+  if (s === 'past_due' || s === 'unpaid' || s === 'incomplete') return 'ACTIVE';
   if (s === 'canceled' || s === 'incomplete_expired') return 'CANCELED';
   return 'EXPIRED';
+};
+
+const BILLING_GRACE_DAYS = Number(process.env.BILLING_GRACE_DAYS ?? 7);
+
+const addDays = (d: Date, days: number) => {
+  const out = new Date(d);
+  out.setDate(out.getDate() + days);
+  return out;
+};
+
+const shouldEnterPastDue = (stripeStatus: string) => {
+  const s = String(stripeStatus || '').toLowerCase();
+  return s === 'past_due' || s === 'unpaid' || s === 'incomplete';
+};
+
+const shouldClearPastDue = (stripeStatus: string) => {
+  const s = String(stripeStatus || '').toLowerCase();
+  return s === 'active' || s === 'trialing';
+};
+
+const enforceGraceRestrictionIfNeeded = async (tenantId: string) => {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  if (!tenant) return null;
+
+  const pastDueAt = (tenant as any).billingPastDueAt as Date | null | undefined;
+  const graceEndsAt = (tenant as any).billingGraceEndsAt as Date | null | undefined;
+  const restrictedAt = (tenant as any).billingRestrictedAt as Date | null | undefined;
+  if (!pastDueAt || !graceEndsAt) return tenant;
+  if (restrictedAt) return tenant;
+  if (graceEndsAt.getTime() > Date.now()) return tenant;
+
+  // Past due grace ended -> restrict access by expiring subscription.
+  try {
+    return await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        billingRestrictedAt: new Date(),
+        subscriptionStatus: 'EXPIRED' as any,
+      } as any,
+    });
+  } catch {
+    return tenant;
+  }
 };
 
 const verifyTurnstileToken = async (token: string, remoteIp?: string | null): Promise<boolean> => {
@@ -418,6 +463,7 @@ const stripeSubscriptionUpdateSchema = z.object({
   tenantId: z.string().min(1),
   stripeStatus: z.string().min(1),
   currentPeriodEnd: z.number().int().positive().optional(),
+  lastPaymentAt: z.number().int().positive().optional(),
   cancelAtPeriodEnd: z.boolean().optional(),
 });
 
@@ -425,7 +471,7 @@ app.post('/api/internal/stripe/subscription-updated', requireStripeApiKey, async
   const parsed = stripeSubscriptionUpdateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
 
-  const { tenantId, stripeStatus, currentPeriodEnd, cancelAtPeriodEnd } = parsed.data;
+  const { tenantId, stripeStatus, currentPeriodEnd, cancelAtPeriodEnd, lastPaymentAt } = parsed.data;
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) return res.status(404).json({ error: 'TENANT_NOT_FOUND' });
@@ -435,12 +481,35 @@ app.post('/api/internal/stripe/subscription-updated', requireStripeApiKey, async
     ? new Date(currentPeriodEnd * 1000)
     : null;
 
+  const now = new Date();
+  const billingPatch: Record<string, any> = {};
+
+  if (shouldEnterPastDue(stripeStatus)) {
+    // Only set once per past-due cycle.
+    if (!(tenant as any).billingPastDueAt) {
+      billingPatch.billingPastDueAt = now;
+      billingPatch.billingGraceEndsAt = addDays(now, BILLING_GRACE_DAYS);
+      billingPatch.billingRestrictedAt = null;
+    }
+  }
+
+  if (shouldClearPastDue(stripeStatus)) {
+    billingPatch.billingPastDueAt = null;
+    billingPatch.billingGraceEndsAt = null;
+    billingPatch.billingRestrictedAt = null;
+  }
+
+  if (lastPaymentAt) {
+    billingPatch.subscriptionLastPaymentAt = new Date(lastPaymentAt * 1000);
+  }
+
   const updated = await prisma.tenant.update({
     where: { id: tenantId },
     data: {
       subscriptionStatus: subscriptionStatus as any,
       subscriptionCancelAtPeriodEnd: typeof cancelAtPeriodEnd === 'boolean' ? cancelAtPeriodEnd : null,
       subscriptionCurrentPeriodEndAt,
+      ...(billingPatch as any),
     } as any,
   });
 
@@ -528,9 +597,18 @@ app.post('/api/auth/login', async (req, res) => {
     ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
     : null;
 
+  if (tenant?.id) {
+    // Best-effort: if grace ended, mark tenant restricted.
+    await enforceGraceRestrictionIfNeeded(tenant.id);
+  }
+
+  const tenantFresh = user.tenantId
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    : null;
+
   return res.json({
     user: sanitizeUserForResponse(user),
-    tenant,
+    tenant: tenantFresh,
     sessionId: session.id,
     deviceId,
   });
@@ -545,10 +623,50 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
     ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
     : null;
 
+  if (tenant?.id) {
+    await enforceGraceRestrictionIfNeeded(tenant.id);
+  }
+
+  const tenantFresh = user.tenantId
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    : null;
+
   return res.json({
     user: sanitizeUserForResponse(user),
-    tenant,
+    tenant: tenantFresh,
   });
+});
+
+const changeMyPasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+
+// Change own password (works for SUPER_ADMIN too).
+app.post('/api/auth/change-password', requireAuth, async (req, res) => {
+  const parsed = changeMyPasswordSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
+
+  const user = await prisma.user.findUnique({ where: { id: req.auth!.userId } });
+  if (!user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+
+  const ok = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  return res.json(true);
+});
+
+// Disable own MFA.
+app.post('/api/auth/mfa/disable', requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.auth!.userId } });
+  if (!user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { mfaEnabledAt: null, mfaSecret: null, mfaRecoveryCodeHashes: [] } as any,
+  });
+  return res.json(true);
 });
 
 const registerTenantSchema = z.object({
@@ -1252,6 +1370,34 @@ app.get('/api/super-admin/users', requireAuth, requireSuperAdmin, async (_req, r
   const users = await prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
   return res.json(users.map(sanitizeUserForResponse));
 });
+
+app.post(
+  '/api/super-admin/users/:id/verify-email',
+  requireAuth,
+  requireSuperAdmin,
+  async (req, res) => {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (user.role === 'SUPER_ADMIN') {
+      // Super admins don't require verification, but keep endpoint idempotent.
+      const updated = await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date(), emailVerificationTokenHash: null, emailVerificationExpiresAt: null } as any,
+      });
+      return res.json(sanitizeUserForResponse(updated));
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
+      } as any,
+    });
+    return res.json(sanitizeUserForResponse(updated));
+  },
+);
 
 app.post(
   '/api/super-admin/users/:id/mfa/disable',

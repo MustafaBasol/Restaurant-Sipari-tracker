@@ -32,9 +32,20 @@
     "copy": "Copier",
     "copied": "Copié",
     "copyFailed": "Échec de la copie",
+    "verified": "Vérifié",
+    "notVerified": "Non vérifié",
+    "verify": "Vérifier",
+    "emailVerification": "Vérification e-mail",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "somethingWentWrong": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "billing": {
+    "warning": {
+      "title": "Alerte de paiement",
+      "message": "Votre paiement mensuel est en échec ou en retard. Sans paiement sous {days} jours, l'accès sera restreint (date limite : {date}).",
+      "hint": "Cette alerte disparaît automatiquement après paiement."
+    }
   },
   "customers": {
     "none": "Aucun client enregistré",
@@ -550,12 +561,38 @@
     "headers": {
       "tenant": "Restaurant",
       "adminEmail": "E-mail Admin",
+      "adminEmailVerified": "Vérification e-mail",
       "users": "Utilisateurs",
       "trialInfo": "Infos Essai"
     },
     "tenantDetails": {
       "title": "Détails du Restaurant",
-      "subscriptionManagement": "Gestion de l'Abonnement"
+      "subscriptionManagement": "Gestion de l'abonnement",
+      "lastPaymentAt": "Dernier paiement",
+      "nextPaymentAt": "Prochain paiement",
+      "paymentWarning": "Alerte de paiement",
+      "paymentWarningValue": "{days} jours restants (date limite : {date})"
+    },
+    "verifyEmailFailed": "Échec de la vérification de l'e-mail.",
+    "account": {
+      "title": "Compte et sécurité",
+      "changePassword": "Changer le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordRepeat": "Nouveau mot de passe (confirmation)",
+      "savePassword": "Mettre à jour",
+      "passwordChanged": "Mot de passe mis à jour.",
+      "passwordMissing": "Les mots de passe actuel et nouveau sont requis.",
+      "passwordTooShort": "Le nouveau mot de passe doit contenir au moins 8 caractères.",
+      "passwordMismatch": "Les nouveaux mots de passe ne correspondent pas.",
+      "currentPasswordInvalid": "Le mot de passe actuel est incorrect.",
+      "passwordChangeFailed": "Impossible de changer le mot de passe.",
+      "mfaTitle": "2FA (TOTP)",
+      "mfaEnabled": "2FA est activée.",
+      "mfaDisabled": "2FA est désactivée.",
+      "mfaEnable": "Activer 2FA",
+      "mfaDisable": "Désactiver 2FA",
+      "mfaDisableFailed": "Impossible de désactiver 2FA."
     },
     "viewDetails": "Voir les détails",
     "confirmDeleteTenant": "Voulez-vous supprimer \"{name}\" et toutes ses données ? Cette action est irréversible.",

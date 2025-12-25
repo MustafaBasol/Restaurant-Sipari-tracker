@@ -17,6 +17,20 @@ const AppHeader: React.FC = () => {
   const isKitchenUser = user.role === UserRole.KITCHEN;
   const isAdmin = user.role === UserRole.ADMIN;
 
+  const billingWarning = (() => {
+    if (!isAdmin || !tenant) return null;
+    const pastDueRaw = (tenant as any).billingPastDueAt as Date | string | undefined;
+    const graceRaw = (tenant as any).billingGraceEndsAt as Date | string | undefined;
+    const restrictedRaw = (tenant as any).billingRestrictedAt as Date | string | undefined;
+    if (!pastDueRaw || !graceRaw) return null;
+    if (restrictedRaw) return null;
+    const graceEndsAt = new Date(graceRaw as any);
+    if (Number.isNaN(graceEndsAt.getTime())) return null;
+    const msLeft = graceEndsAt.getTime() - Date.now();
+    const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+    return { daysLeft, graceEndsAt };
+  })();
+
   const getRoleDisplayName = (role: UserRole) => {
     return t(`roles.${role}`);
   };
@@ -64,6 +78,27 @@ const AppHeader: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {billingWarning ? (
+          <div className="pb-3">
+            <div className="flex items-start gap-3 rounded-xl border border-border-color bg-card-bg px-4 py-3">
+              <Badge variant="yellow" className="shrink-0">
+                {t('billing.warning.title')}
+              </Badge>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-text-primary">
+                  {t('billing.warning.message')
+                    .replace('{days}', String(billingWarning.daysLeft))
+                    .replace(
+                      '{date}',
+                      billingWarning.graceEndsAt.toLocaleDateString(),
+                    )}
+                </div>
+                <div className="text-xs text-text-secondary mt-1">{t('billing.warning.hint')}</div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </header>
   );

@@ -52,6 +52,22 @@ export const mfaVerify = async (
   return apiFetch('/auth/mfa/verify', { method: 'POST', body: JSON.stringify({ code }) });
 };
 
+export const mfaDisable = async (): Promise<boolean> => {
+  if (!isRealApiEnabled()) return true;
+  return apiFetch<boolean>('/auth/mfa/disable', { method: 'POST' });
+};
+
+export const changeMyPassword = async (
+  currentPassword: string,
+  newPassword: string,
+): Promise<boolean> => {
+  if (!isRealApiEnabled()) return true;
+  return apiFetch<boolean>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+};
+
 export const registerTenant = async (payload: RegisterPayload): Promise<RegisterResult> => {
   if (!isRealApiEnabled()) return mockApi.registerTenant(payload);
   const response = await apiFetch<any>('/auth/register-tenant', {

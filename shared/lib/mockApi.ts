@@ -828,7 +828,18 @@ const _internalActivateSubscription = (tenantId: string): Tenant => {
   if (!tenant) {
     throw new Error('Tenant not found');
   }
+  const now = new Date();
   tenant.subscriptionStatus = SubscriptionStatus.ACTIVE;
+  // Simulate billing state being cleared after successful payment.
+  (tenant as any).subscriptionLastPaymentAt = now;
+  (tenant as any).billingPastDueAt = undefined;
+  (tenant as any).billingGraceEndsAt = undefined;
+  (tenant as any).billingRestrictedAt = undefined;
+
+  // Simulate monthly billing cycle.
+  const next = new Date(now);
+  next.setMonth(next.getMonth() + 1);
+  (tenant as any).subscriptionCurrentPeriodEndAt = next;
   // In a real app, you'd also set an `activatedAt` date, subscription period, etc.
   saveDb();
   return tenant;

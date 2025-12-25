@@ -38,9 +38,20 @@
     "copy": "Kopyala",
     "copied": "Kopyalandı",
     "copyFailed": "Kopyalanamadı",
+    "verified": "Doğrulandı",
+    "notVerified": "Doğrulanmadı",
+    "verify": "Doğrula",
+    "emailVerification": "E-posta Doğrulama",
     "showPassword": "Şifreyi göster",
     "hidePassword": "Şifreyi gizle",
     "somethingWentWrong": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
+  },
+  "billing": {
+    "warning": {
+      "title": "Ödeme Uyarısı",
+      "message": "Aylık ödemeniz başarısız veya gecikmiş. {days} gün içinde ödeme yapılmazsa erişiminiz kısıtlanacak (son tarih: {date}).",
+      "hint": "Ödeme yapınca bu uyarı otomatik olarak kalkar."
+    }
   },
   "customers": {
     "none": "Kayıtlı müşteri yok",
@@ -551,12 +562,38 @@
     "headers": {
       "tenant": "Restoran",
       "adminEmail": "Yönetici E-postası",
+      "adminEmailVerified": "E-posta Doğrulama",
       "users": "Kullanıcılar",
       "trialInfo": "Deneme Bilgisi"
     },
     "tenantDetails": {
       "title": "Restoran Detayları",
-      "subscriptionManagement": "Abonelik Yönetimi"
+      "subscriptionManagement": "Abonelik Yönetimi",
+      "lastPaymentAt": "Son ödeme",
+      "nextPaymentAt": "Bir sonraki ödeme",
+      "paymentWarning": "Ödeme uyarısı",
+      "paymentWarningValue": "{days} gün kaldı (son tarih: {date})"
+    },
+    "verifyEmailFailed": "E-posta doğrulanamadı.",
+    "account": {
+      "title": "Hesap ve Güvenlik",
+      "changePassword": "Şifre değiştir",
+      "currentPassword": "Mevcut şifre",
+      "newPassword": "Yeni şifre",
+      "newPasswordRepeat": "Yeni şifre (tekrar)",
+      "savePassword": "Şifreyi güncelle",
+      "passwordChanged": "Şifre güncellendi.",
+      "passwordMissing": "Mevcut ve yeni şifre zorunlu.",
+      "passwordTooShort": "Yeni şifre en az 8 karakter olmalı.",
+      "passwordMismatch": "Yeni şifreler eşleşmiyor.",
+      "currentPasswordInvalid": "Mevcut şifre hatalı.",
+      "passwordChangeFailed": "Şifre değiştirilemedi.",
+      "mfaTitle": "2FA (TOTP)",
+      "mfaEnabled": "2FA açık.",
+      "mfaDisabled": "2FA kapalı.",
+      "mfaEnable": "2FA aç",
+      "mfaDisable": "2FA kapat",
+      "mfaDisableFailed": "2FA kapatılamadı."
     },
     "viewDetails": "Detayları Görüntüle",
     "confirmDeleteTenant": "\"{name}\" restoranını ve tüm verilerini silmek istiyor musunuz? Bu işlem geri alınamaz.",

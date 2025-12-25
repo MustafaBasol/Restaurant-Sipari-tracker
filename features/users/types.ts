@@ -7,6 +7,7 @@ export interface User {
   email: string;
   passwordHash: string;
   mfaEnabledAt?: string | null;
+  emailVerifiedAt?: string | null;
   role: UserRole;
   isActive: boolean;
 }

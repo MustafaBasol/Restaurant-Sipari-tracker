@@ -106,6 +106,12 @@ model Tenant {
   subscriptionCancelAtPeriodEnd Boolean?
   subscriptionCurrentPeriodEndAt DateTime?
 
+  // Billing / payment tracking (for subscription warnings + grace period)
+  subscriptionLastPaymentAt DateTime?
+  billingPastDueAt DateTime?
+  billingGraceEndsAt DateTime?
+  billingRestrictedAt DateTime?
+
   printConfig Json?
   taxRatePercent Float?
   serviceChargePercent Float?

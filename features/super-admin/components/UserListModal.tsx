@@ -21,6 +21,7 @@ interface TenantDetailModalProps {
   onClose: () => void;
   onSubscriptionChange: (tenantId: string, status: SubscriptionStatus) => void;
   onDeleteUser: (userId: string) => Promise<any>;
+  onVerifyUserEmail: (userId: string) => Promise<any>;
 }
 
 const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
@@ -36,6 +37,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
   onClose,
   onSubscriptionChange,
   onDeleteUser,
+  onVerifyUserEmail,
 }) => {
   const { t } = useLanguage();
 
@@ -75,6 +77,46 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
             <InfoRow label={t('subscription.status')} value={currentStatus} />
             <InfoRow label={t('superAdmin.headers.trialInfo')} value={trialInfo} />
             <InfoRow label={t('superAdmin.headers.users')} value={users.length} />
+            <InfoRow
+              label={t('superAdmin.tenantDetails.lastPaymentAt')}
+              value={
+                (tenant as any).subscriptionLastPaymentAt
+                  ? formatDateTime((tenant as any).subscriptionLastPaymentAt, 'UTC', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })
+                  : '-'
+              }
+            />
+            <InfoRow
+              label={t('superAdmin.tenantDetails.nextPaymentAt')}
+              value={
+                (tenant as any).subscriptionCurrentPeriodEndAt
+                  ? formatDateTime((tenant as any).subscriptionCurrentPeriodEndAt, 'UTC', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })
+                  : '-'
+              }
+            />
+            <InfoRow
+              label={t('superAdmin.tenantDetails.paymentWarning')}
+              value={
+                (tenant as any).billingPastDueAt && (tenant as any).billingGraceEndsAt
+                  ? (() => {
+                      const graceEnds = new Date((tenant as any).billingGraceEndsAt as any);
+                      const msLeft = graceEnds.getTime() - Date.now();
+                      const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+                      return t('superAdmin.tenantDetails.paymentWarningValue')
+                        .replace('{days}', String(daysLeft))
+                        .replace(
+                          '{date}',
+                          formatDateTime(graceEnds, 'UTC', { dateStyle: 'medium' }),
+                        );
+                    })()
+                  : '-'
+              }
+            />
           </div>
 
           <div className="mt-6">
@@ -104,6 +146,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
               <TableHeader>
                 <TableHeaderCell>{t('general.name')}</TableHeaderCell>
                 <TableHeaderCell>{t('general.role')}</TableHeaderCell>
+                <TableHeaderCell>{t('general.emailVerification')}</TableHeaderCell>
                 <TableHeaderCell align="right">{t('general.actions')}</TableHeaderCell>
               </TableHeader>
               <TableBody>
@@ -117,6 +160,29 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
                       <Badge variant={user.isActive ? 'green' : 'red'}>
                         {t(`roles.${user.role}`)}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {(user as any).emailVerifiedAt ? (
+                        <Badge variant="green">{t('general.verified')}</Badge>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="red">{t('general.notVerified')}</Badge>
+                          <button
+                            type="button"
+                            className="text-accent hover:text-accent-hover"
+                            onClick={async () => {
+                              try {
+                                await onVerifyUserEmail(user.id);
+                              } catch (e) {
+                                console.error('Failed to verify user email', e);
+                                window.alert(t('superAdmin.verifyEmailFailed'));
+                              }
+                            }}
+                          >
+                            {t('general.verify')}
+                          </button>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell align="right">
                       <button

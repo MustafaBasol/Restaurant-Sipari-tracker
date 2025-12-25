@@ -50,3 +50,16 @@ export const deleteUser = async (userId: string): Promise<boolean> => {
   await deleteData('users', userId);
   return true;
 };
+
+export const verifyUserEmail = async (userId: string) => {
+  if (isRealApiEnabled()) {
+    return apiFetch<any>(`/super-admin/users/${userId}/verify-email`, { method: 'POST' });
+  }
+
+  // Mock-mode: treat as verified. (Best-effort; structure of mock users may vary)
+  const users = await getAllData<any>('users');
+  const user = users.find((u: any) => u.id === userId);
+  if (!user) throw new Error('User not found');
+  const updated = { ...user, emailVerifiedAt: new Date().toISOString() };
+  return updateData('users', updated);
+};

@@ -132,6 +132,14 @@ export interface Tenant {
   subscriptionCancelAtPeriodEnd?: boolean;
   /** Optional: Stripe billing period end when cancellation is scheduled. */
   subscriptionCurrentPeriodEndAt?: Date;
+  /** Optional: last successful subscription payment timestamp (demo sync). */
+  subscriptionLastPaymentAt?: Date;
+  /** Optional: when Stripe marked the subscription as past due/unpaid (grace starts). */
+  billingPastDueAt?: Date;
+  /** Optional: grace deadline. */
+  billingGraceEndsAt?: Date;
+  /** Optional: when access restriction was applied. */
+  billingRestrictedAt?: Date;
   createdAt: Date;
   currency: string; // e.g. 'USD', 'EUR', 'TRY'
   timezone: string; // e.g. 'America/New_York'
@@ -152,8 +160,11 @@ export interface User {
   email: string;
   passwordHash: string;
   mfaEnabledAt?: string | null;
+  emailVerifiedAt?: string | null;
   role: UserRole;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserSession {

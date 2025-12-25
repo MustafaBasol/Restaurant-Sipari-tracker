@@ -69,6 +69,25 @@ const hydrateAuthStateFromStorage = (raw: unknown): AuthState => {
         (hydrated.tenant as any).subscriptionCurrentPeriodEndAt,
       );
     }
+
+    if ((hydrated.tenant as any).subscriptionLastPaymentAt) {
+      (hydrated.tenant as any).subscriptionLastPaymentAt = new Date(
+        (hydrated.tenant as any).subscriptionLastPaymentAt,
+      );
+    }
+    if ((hydrated.tenant as any).billingPastDueAt) {
+      (hydrated.tenant as any).billingPastDueAt = new Date((hydrated.tenant as any).billingPastDueAt);
+    }
+    if ((hydrated.tenant as any).billingGraceEndsAt) {
+      (hydrated.tenant as any).billingGraceEndsAt = new Date(
+        (hydrated.tenant as any).billingGraceEndsAt,
+      );
+    }
+    if ((hydrated.tenant as any).billingRestrictedAt) {
+      (hydrated.tenant as any).billingRestrictedAt = new Date(
+        (hydrated.tenant as any).billingRestrictedAt,
+      );
+    }
   }
 
   return hydrated;
@@ -263,7 +282,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setTimeout(() => {
             clearLocalAuth();
           }, 0);
+          return;
         }
+
+        // Best-effort: refresh user/tenant snapshot so billing warnings, subscription state etc. stay up to date.
+        if (!ok || cancelled) return;
+        if (!isRealApiEnabled()) return;
+        const me = await api.getMe();
+        if (!me || cancelled) return;
+
+        setAuthState((prev) => {
+          if (!prev) return prev;
+
+          const nextTenant = me.tenant
+            ? (() => {
+                const t = { ...me.tenant } as any;
+                if (t.createdAt) t.createdAt = new Date(t.createdAt);
+                if (t.trialStartAt) t.trialStartAt = new Date(t.trialStartAt);
+                if (t.trialEndAt) t.trialEndAt = new Date(t.trialEndAt);
+                if (t.subscriptionCurrentPeriodEndAt)
+                  t.subscriptionCurrentPeriodEndAt = new Date(t.subscriptionCurrentPeriodEndAt);
+                if (t.subscriptionLastPaymentAt)
+                  t.subscriptionLastPaymentAt = new Date(t.subscriptionLastPaymentAt);
+                if (t.billingPastDueAt) t.billingPastDueAt = new Date(t.billingPastDueAt);
+                if (t.billingGraceEndsAt) t.billingGraceEndsAt = new Date(t.billingGraceEndsAt);
+                if (t.billingRestrictedAt) t.billingRestrictedAt = new Date(t.billingRestrictedAt);
+                return t;
+              })()
+            : null;
+
+          const next: AuthState = {
+            ...prev,
+            user: {
+              ...prev.user,
+              ...(me.user ?? {}),
+              passwordHash: '',
+            },
+            tenant: nextTenant,
+          };
+
+          const sanitized = sanitizeAuthStateForStorage(next);
+          localStorage.setItem(getAuthStorageKey(), JSON.stringify(sanitized));
+          return sanitized;
+        });
       } catch {
         // ignore transient errors
       }
