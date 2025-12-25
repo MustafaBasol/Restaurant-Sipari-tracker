@@ -204,11 +204,21 @@ const Gauge: React.FC<{ label: string; value: number; suffix?: string }> = ({
   );
 };
 
-const toDateString = (date: Date): string => date.toISOString().split('T')[0];
+type DateRangePreset =
+  | 'today'
+  | 'yesterday'
+  | 'thisWeek'
+  | 'lastWeek'
+  | 'last7days'
+  | 'last30days'
+  | 'thisMonth'
+  | 'thisYear'
+  | 'lastYear'
+  | 'custom';
 
-const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => void }> = ({
-  onSelect,
-}) => {
+const DateRangePresets: React.FC<{
+  onSelect: (preset: DateRangePreset) => void;
+}> = ({ onSelect }) => {
   const { t } = useLanguage();
 
   const presets = [
@@ -223,57 +233,8 @@ const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => voi
     { labelKey: 'reports.presets.lastYear', value: 'lastYear' },
   ];
 
-  const startOfWeekMonday = (date: Date): Date => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = (day + 6) % 7; // Mon=0 ... Sun=6
-    d.setDate(d.getDate() - diff);
-    return d;
-  };
-
-  const handlePresetClick = (preset: string) => {
-    const today = new Date();
-    let start = new Date();
-    let end = new Date();
-
-    switch (preset) {
-      case 'today':
-        break;
-      case 'yesterday':
-        start.setDate(today.getDate() - 1);
-        end.setDate(today.getDate() - 1);
-        break;
-      case 'thisWeek':
-        start = startOfWeekMonday(today);
-        break;
-      case 'lastWeek': {
-        const thisWeekStart = startOfWeekMonday(today);
-        start = new Date(thisWeekStart);
-        start.setDate(thisWeekStart.getDate() - 7);
-        end = new Date(thisWeekStart);
-        end.setDate(thisWeekStart.getDate() - 1);
-        break;
-      }
-      case 'last7days':
-        start.setDate(today.getDate() - 6);
-        break;
-      case 'last30days':
-        start.setDate(today.getDate() - 29);
-        break;
-      case 'thisMonth':
-        start = new Date(today.getFullYear(), today.getMonth(), 1);
-        break;
-      case 'thisYear':
-        start = new Date(today.getFullYear(), 0, 1);
-        break;
-      case 'lastYear': {
-        const lastYear = today.getFullYear() - 1;
-        start = new Date(lastYear, 0, 1);
-        end = new Date(lastYear, 11, 31);
-        break;
-      }
-    }
-    onSelect(toDateString(start), toDateString(end));
+  const handlePresetClick = (preset: DateRangePreset) => {
+    onSelect(preset);
   };
 
   return (
@@ -281,7 +242,7 @@ const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => voi
       {presets.map((p) => (
         <button
           key={p.value}
-          onClick={() => handlePresetClick(p.value)}
+          onClick={() => handlePresetClick(p.value as DateRangePreset)}
           className="px-3 py-1 text-sm font-medium bg-card-bg text-text-secondary rounded-full border border-border-color hover:bg-light-bg transition-colors"
         >
           {t(p.labelKey)}
@@ -292,7 +253,7 @@ const DateRangePresets: React.FC<{ onSelect: (start: string, end: string) => voi
 };
 
 const DailySummary: React.FC = () => {
-  const { startDate, endDate, setDateRange, data, isLoading, error } = useSummaryReport();
+  const { startDate, endDate, setDateRange, setPreset, data, isLoading, error } = useSummaryReport();
   const { t } = useLanguage();
   const { authState } = useAuth();
   const currency = authState?.tenant?.currency || 'USD';
@@ -444,14 +405,14 @@ const DailySummary: React.FC = () => {
 
       <Card>
         <div className="space-y-4">
-          <DateRangePresets onSelect={setDateRange} />
+          <DateRangePresets onSelect={setPreset as any} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">{t('reports.startDate')}</label>
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setDateRange(e.target.value, endDate)}
+                onChange={(e) => setDateRange(e.target.value, endDate, 'custom')}
                 className="mt-1"
               />
             </div>
@@ -460,7 +421,7 @@ const DailySummary: React.FC = () => {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setDateRange(startDate, e.target.value)}
+                onChange={(e) => setDateRange(startDate, e.target.value, 'custom')}
                 className="mt-1"
               />
             </div>
