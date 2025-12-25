@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useLanguage } from '../../../shared/hooks/useLanguage';
-import { updateTenantSettings } from '../api';
+import { updateTenantSettings, uploadOrderNotificationSound } from '../api';
 import { getTables } from '../../tables/api';
 import { getMenuItems } from '../../menu/api';
 import { getOrders, createOrder, addOrderPayment, confirmOrderPayment } from '../../orders/api';
@@ -9,13 +9,25 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Select } from '../../../shared/components/ui/Select';
 import { Card } from '../../../shared/components/ui/Card';
 import { Input } from '../../../shared/components/ui/Input';
-import { OrderStatus, PaymentMethod, PermissionKey, Tenant, UserRole } from '../../../shared/types';
+import {
+  OrderNotificationSoundPreset,
+  OrderStatus,
+  PaymentMethod,
+  PermissionKey,
+  Tenant,
+  UserRole,
+} from '../../../shared/types';
 import { getOrderPaymentTotals } from '../../../shared/lib/mockApi';
 import {
   getServiceOriginAllowlist,
   isTrustedServiceBaseUrl,
   shouldAllowInsecureServices,
 } from '../../../shared/lib/urlSecurity';
+import {
+  fetchOrderNotificationSoundBlobUrl,
+  playOrderNotificationSoundPreset,
+  revokeObjectUrl,
+} from '../../../shared/lib/orderNotificationSound';
 
 const timezones = ['America/New_York', 'Europe/Paris', 'Europe/Istanbul', 'Asia/Tokyo'];
 const currencies = ['USD', 'EUR', 'TRY'];
@@ -35,11 +47,23 @@ const SettingsManagement: React.FC = () => {
   const [integrationMessage, setIntegrationMessage] = useState<string>('');
   const [posTargetTableId, setPosTargetTableId] = useState<string>('');
 
+  const [soundFile, setSoundFile] = useState<File | null>(null);
+  const [soundMessage, setSoundMessage] = useState<string>('');
+  const [isUploadingSound, setIsUploadingSound] = useState(false);
+  const [customSoundUrl, setCustomSoundUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (authState?.tenant) {
       setSettings(authState.tenant);
     }
   }, [authState?.tenant]);
+
+  useEffect(() => {
+    // Clean up custom preview url on unmount.
+    return () => {
+      revokeObjectUrl(customSoundUrl);
+    };
+  }, [customSoundUrl]);
 
   useEffect(() => {
     const tenantId = authState?.tenant?.id;
@@ -64,6 +88,12 @@ const SettingsManagement: React.FC = () => {
 
   const handleSave = async () => {
     if (!settings) return;
+
+    if (settings.orderNotificationSoundPreset === 'CUSTOM' && !settings.orderNotificationSoundMime) {
+      setSoundMessage(t('admin.settings.orderSound.errors.noCustomSound'));
+      return;
+    }
+
     setIsSaving(true);
     setSuccessMessage('');
     try {
@@ -77,6 +107,7 @@ const SettingsManagement: React.FC = () => {
         printConfig: settings.printConfig ?? undefined,
         permissions: settings.permissions ?? undefined,
         integrations: settings.integrations ?? undefined,
+        orderNotificationSoundPreset: settings.orderNotificationSoundPreset ?? 'BELL',
       };
 
       const updatedTenant = await updateTenantSettings(payload as any);
@@ -226,12 +257,92 @@ const SettingsManagement: React.FC = () => {
     );
   };
 
+  const handleSoundPresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const preset = e.target.value as OrderNotificationSoundPreset;
+
+    if (preset === 'CUSTOM' && !settings.orderNotificationSoundMime) {
+      setSoundMessage(t('admin.settings.orderSound.errors.noCustomSound'));
+      return;
+    }
+
+    setSoundMessage('');
+    setSettings((prev) => (prev ? { ...prev, orderNotificationSoundPreset: preset } : prev));
+  };
+
+  const handleSoundFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSoundMessage('');
+    const f = e.target.files?.[0] ?? null;
+    if (!f) {
+      setSoundFile(null);
+      return;
+    }
+    if (f.size > 1_048_576) {
+      setSoundFile(null);
+      setSoundMessage(t('admin.settings.orderSound.errors.tooLarge'));
+      return;
+    }
+    setSoundFile(f);
+  };
+
+  const handleUploadSound = async () => {
+    if (!soundFile) {
+      setSoundMessage(t('admin.settings.orderSound.errors.noFile'));
+      return;
+    }
+    setSoundMessage('');
+    setIsUploadingSound(true);
+    try {
+      const updatedTenant = await uploadOrderNotificationSound(soundFile);
+      updateTenantInState(updatedTenant);
+      setSettings((prev) => (prev ? { ...prev, ...updatedTenant } : prev));
+
+      // Refresh preview URL (best-effort)
+      revokeObjectUrl(customSoundUrl);
+      const url = await fetchOrderNotificationSoundBlobUrl();
+      setCustomSoundUrl(url);
+
+      setSoundMessage(t('admin.settings.orderSound.uploadSuccess'));
+      setTimeout(() => setSoundMessage(''), 3000);
+    } catch (e) {
+      console.error('Failed to upload order notification sound', e);
+      setSoundMessage(t('admin.settings.orderSound.errors.uploadFailed'));
+    } finally {
+      setIsUploadingSound(false);
+    }
+  };
+
+  const handleTestSound = async () => {
+    setSoundMessage('');
+    const preset = (settings.orderNotificationSoundPreset ?? 'BELL') as OrderNotificationSoundPreset;
+    if (preset !== 'CUSTOM') {
+      await playOrderNotificationSoundPreset(preset);
+      return;
+    }
+
+    // CUSTOM
+    try {
+      const url = customSoundUrl ?? (await fetchOrderNotificationSoundBlobUrl());
+      if (!url) {
+        setSoundMessage(t('admin.settings.orderSound.errors.noCustomSound'));
+        return;
+      }
+      if (!customSoundUrl) setCustomSoundUrl(url);
+      const a = new Audio(url);
+      await a.play();
+    } catch (e) {
+      console.error('Custom sound playback failed', e);
+      setSoundMessage(t('admin.settings.orderSound.errors.playFailed'));
+    }
+  };
+
   if (!settings) {
     return <div>Loading settings...</div>;
   }
 
   const printMode = settings.printConfig?.mode ?? 'browser';
   const printServerUrl = settings.printConfig?.serverUrl ?? '';
+
+  const soundPreset = (settings.orderNotificationSoundPreset ?? 'BELL') as OrderNotificationSoundPreset;
 
   const printServerUrlIsValid = (() => {
     if (!printServerUrl) return false;
@@ -366,6 +477,56 @@ const SettingsManagement: React.FC = () => {
                 </p>
               </div>
             )}
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary mb-3">
+              {t('admin.settings.orderSound.title')}
+            </h3>
+
+            {soundMessage && <p className="text-sm text-text-secondary mb-3">{soundMessage}</p>}
+
+            <label className="block text-sm font-medium text-text-secondary mb-2">
+              {t('admin.settings.orderSound.presetLabel')}
+            </label>
+            <Select value={soundPreset} onChange={handleSoundPresetChange}>
+              <option value="BELL">{t('admin.settings.orderSound.presets.bell')}</option>
+              <option value="CHIME">{t('admin.settings.orderSound.presets.chime')}</option>
+              <option value="BEEP">{t('admin.settings.orderSound.presets.beep')}</option>
+              <option value="DOUBLE_BEEP">{t('admin.settings.orderSound.presets.doubleBeep')}</option>
+              <option value="ALARM">{t('admin.settings.orderSound.presets.alarm')}</option>
+              <option value="CUSTOM" disabled={!settings.orderNotificationSoundMime}>
+                {t('admin.settings.orderSound.presets.custom')}
+              </option>
+            </Select>
+
+            <div className="mt-3 flex items-center gap-3">
+              <Button variant="secondary" onClick={handleTestSound}>
+                {t('admin.settings.orderSound.testButton')}
+              </Button>
+              {settings.orderNotificationSoundMime && (
+                <span className="text-xs text-text-secondary">
+                  {t('admin.settings.orderSound.customAvailable')}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                {t('admin.settings.orderSound.uploadLabel')}
+              </label>
+              <Input type="file" accept="audio/*" onChange={handleSoundFileChange} />
+              <div className="mt-2 flex items-center gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={handleUploadSound}
+                  disabled={isUploadingSound || !soundFile}
+                >
+                  {isUploadingSound ? '...' : t('admin.settings.orderSound.uploadButton')}
+                </Button>
+                <p className="text-xs text-text-secondary">{t('admin.settings.orderSound.maxSizeHelp')}</p>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -122,6 +122,14 @@ export interface TenantIntegrationsConfig {
   };
 }
 
+export type OrderNotificationSoundPreset =
+  | 'BELL'
+  | 'CHIME'
+  | 'BEEP'
+  | 'DOUBLE_BEEP'
+  | 'ALARM'
+  | 'CUSTOM';
+
 export interface Tenant {
   id: string;
   name: string;
@@ -151,6 +159,11 @@ export interface Tenant {
   roundingIncrement?: number;
   permissions?: TenantPermissions;
   integrations?: TenantIntegrationsConfig;
+
+  /** Tenant-level order notification sound preset. */
+  orderNotificationSoundPreset?: OrderNotificationSoundPreset;
+  /** Present when a custom sound has been uploaded (binary is served via API). */
+  orderNotificationSoundMime?: string | null;
 }
 
 export interface User {

@@ -489,6 +489,31 @@
       "serviceChargePercent": "Frais de service (%)",
       "roundingIncrement": "Incrément d'arrondi",
       "roundingIncrementHelp": "0 = pas d'arrondi. Exemples : 0,05 (au 5 centimes), 0,1, 1",
+      "orderSound": {
+        "title": "Son de notification de commande",
+        "presetLabel": "Option sonore",
+        "testButton": "Tester",
+        "customAvailable": "(Son personnalisé téléversé)",
+        "uploadLabel": "Téléverser un son personnalisé",
+        "uploadButton": "Téléverser",
+        "uploadSuccess": "Son téléversé.",
+        "maxSizeHelp": "Jusqu’à 1 Mo",
+        "presets": {
+          "bell": "Cloche",
+          "chime": "Carillon",
+          "beep": "Bip",
+          "doubleBeep": "Double bip",
+          "alarm": "Alarme",
+          "custom": "Personnalisé (téléversé)"
+        },
+        "errors": {
+          "tooLarge": "Fichier trop volumineux. Max 1 Mo.",
+          "noFile": "Veuillez sélectionner un fichier audio.",
+          "uploadFailed": "Échec du téléversement du son.",
+          "noCustomSound": "Aucun son personnalisé n’est téléversé.",
+          "playFailed": "Impossible de lire le son. Vérifiez les autorisations du navigateur."
+        }
+      },
       "integrations": {
         "title": "Intégrations (Démo)",
         "onlineOrdersEnabled": "Activer les commandes en ligne",

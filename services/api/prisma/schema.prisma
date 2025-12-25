@@ -55,6 +55,15 @@ enum PaymentStatus {
   PAID
 }
 
+enum OrderNotificationSoundPreset {
+  BELL
+  CHIME
+  BEEP
+  DOUBLE_BEEP
+  ALARM
+  CUSTOM
+}
+
 enum BillingStatus {
   OPEN
   BILL_REQUESTED
@@ -118,6 +127,11 @@ model Tenant {
   roundingIncrement Float?
   permissions Json?
   integrations Json?
+
+  // Order notification sound (tenant-level)
+  orderNotificationSoundPreset OrderNotificationSoundPreset @default(BELL)
+  orderNotificationSoundMime String?
+  orderNotificationSoundData Bytes?
 
   users User[]
   sessions UserSession[]

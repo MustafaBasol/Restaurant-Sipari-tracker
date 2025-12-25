@@ -58,8 +58,16 @@ export const TableProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updateTable = async (table: Table) => {
-    const updated = await api.updateTable(table);
-    setTables((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    // Optimistic update helps avoid "close + reopen" races.
+    setTables((prev) => prev.map((t) => (t.id === table.id ? { ...t, ...table } : t)));
+    try {
+      const updated = await api.updateTable(table);
+      setTables((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    } catch (error) {
+      console.error('Failed to update table', error);
+      // Source-of-truth fallback.
+      await fetchTables();
+    }
   };
 
   const updateTableStatus = async (tableId: string, status: TableStatus) => {

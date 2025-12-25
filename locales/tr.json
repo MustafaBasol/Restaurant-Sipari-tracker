@@ -490,6 +490,31 @@
       "serviceChargePercent": "Servis bedeli (%)",
       "roundingIncrement": "Yuvarlama adımı",
       "roundingIncrementHelp": "0 = yuvarlama yok. Örnekler: 0.05 (en yakın 5 kuruş), 0.1, 1",
+      "orderSound": {
+        "title": "Sipariş Bildirim Sesi",
+        "presetLabel": "Ses seçeneği",
+        "testButton": "Test et",
+        "customAvailable": "(Özel ses yüklü)",
+        "uploadLabel": "Özel ses yükle",
+        "uploadButton": "Yükle",
+        "uploadSuccess": "Ses yüklendi.",
+        "maxSizeHelp": "En fazla 1MB",
+        "presets": {
+          "bell": "Zil",
+          "chime": "Çan",
+          "beep": "Bip",
+          "doubleBeep": "Çift bip",
+          "alarm": "Alarm",
+          "custom": "Özel (yüklediğim)"
+        },
+        "errors": {
+          "tooLarge": "Dosya çok büyük. En fazla 1MB olmalı.",
+          "noFile": "Lütfen bir ses dosyası seçin.",
+          "uploadFailed": "Ses yüklenemedi.",
+          "noCustomSound": "Özel ses yüklü değil.",
+          "playFailed": "Ses çalınamadı. Tarayıcı izinlerini kontrol edin."
+        }
+      },
       "integrations": {
         "title": "Entegrasyonlar (Demo)",
         "onlineOrdersEnabled": "Online siparişleri etkinleştir",

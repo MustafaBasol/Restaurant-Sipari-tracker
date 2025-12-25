@@ -888,7 +888,13 @@ const OrderModal: React.FC<OrderModalProps> = ({ table: initialTable, onClose })
                           }}
                           onBlur={() => {
                             setTimeout(() => setIsCustomerDropdownOpen(false), 120);
-                            handleTableInfoSave();
+
+                            // If the user typed a search query but did not select a customer,
+                            // restore the persisted selection instead of accidentally clearing it.
+                            if (!customerId && table.customerId && customerName.trim()) {
+                              setCustomerId(table.customerId);
+                              setCustomerName(table.customerName || '');
+                            }
                           }}
                           placeholder={t('customers.searchPlaceholder')}
                           className="py-2 pr-12"

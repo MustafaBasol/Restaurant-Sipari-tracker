@@ -483,6 +483,31 @@
       "serviceChargePercent": "Service charge (%)",
       "roundingIncrement": "Rounding increment",
       "roundingIncrementHelp": "0 = no rounding. Examples: 0.05 (to nearest 5 cents), 0.1, 1",
+      "orderSound": {
+        "title": "Order Notification Sound",
+        "presetLabel": "Sound option",
+        "testButton": "Test",
+        "customAvailable": "(Custom sound uploaded)",
+        "uploadLabel": "Upload custom sound",
+        "uploadButton": "Upload",
+        "uploadSuccess": "Sound uploaded.",
+        "maxSizeHelp": "Up to 1MB",
+        "presets": {
+          "bell": "Bell",
+          "chime": "Chime",
+          "beep": "Beep",
+          "doubleBeep": "Double beep",
+          "alarm": "Alarm",
+          "custom": "Custom (uploaded)"
+        },
+        "errors": {
+          "tooLarge": "File is too large. Max 1MB.",
+          "noFile": "Please select a sound file.",
+          "uploadFailed": "Failed to upload sound.",
+          "noCustomSound": "No custom sound uploaded.",
+          "playFailed": "Could not play sound. Check browser permissions."
+        }
+      },
       "integrations": {
         "title": "Integrations (Demo)",
         "onlineOrdersEnabled": "Enable online orders",

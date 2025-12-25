@@ -401,6 +401,34 @@ const DEFAULT_PERMISSIONS: Record<string, Record<PermissionKey, boolean>> = {
   },
 };
 
+// NOTE: Tenant includes binary fields (order notification sound). Never return bytes in JSON.
+const TENANT_SELECT_FOR_RESPONSE = {
+  id: true,
+  slug: true,
+  name: true,
+  defaultLanguage: true,
+  subscriptionStatus: true,
+  subscriptionCancelAtPeriodEnd: true,
+  subscriptionCurrentPeriodEndAt: true,
+  subscriptionLastPaymentAt: true,
+  billingPastDueAt: true,
+  billingGraceEndsAt: true,
+  billingRestrictedAt: true,
+  createdAt: true,
+  currency: true,
+  timezone: true,
+  trialStartAt: true,
+  trialEndAt: true,
+  printConfig: true,
+  taxRatePercent: true,
+  serviceChargePercent: true,
+  roundingIncrement: true,
+  permissions: true,
+  integrations: true,
+  orderNotificationSoundPreset: true,
+  orderNotificationSoundMime: true,
+} as const;
+
 const hasPermission = async (
   tenantId: string | null,
   role: string,
@@ -473,7 +501,7 @@ app.post('/api/internal/stripe/subscription-updated', requireStripeApiKey, async
 
   const { tenantId, stripeStatus, currentPeriodEnd, cancelAtPeriodEnd, lastPaymentAt } = parsed.data;
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { billingPastDueAt: true } });
   if (!tenant) return res.status(404).json({ error: 'TENANT_NOT_FOUND' });
 
   const subscriptionStatus = mapStripeStatusToSubscriptionStatus(stripeStatus);
@@ -511,6 +539,7 @@ app.post('/api/internal/stripe/subscription-updated', requireStripeApiKey, async
       subscriptionCurrentPeriodEndAt,
       ...(billingPatch as any),
     } as any,
+    select: TENANT_SELECT_FOR_RESPONSE as any,
   });
 
   return res.json({ ok: true, tenant: updated });
@@ -594,16 +623,16 @@ app.post('/api/auth/login', async (req, res) => {
   });
 
   const tenant = user.tenantId
-    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId }, select: TENANT_SELECT_FOR_RESPONSE as any })
     : null;
 
   if (tenant?.id) {
     // Best-effort: if grace ended, mark tenant restricted.
-    await enforceGraceRestrictionIfNeeded(tenant.id);
+    await enforceGraceRestrictionIfNeeded(String((tenant as any).id));
   }
 
   const tenantFresh = user.tenantId
-    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId }, select: TENANT_SELECT_FOR_RESPONSE as any })
     : null;
 
   return res.json({
@@ -620,15 +649,15 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   if (!user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
 
   const tenant = user.tenantId
-    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId }, select: TENANT_SELECT_FOR_RESPONSE as any })
     : null;
 
   if (tenant?.id) {
-    await enforceGraceRestrictionIfNeeded(tenant.id);
+    await enforceGraceRestrictionIfNeeded(String((tenant as any).id));
   }
 
   const tenantFresh = user.tenantId
-    ? await prisma.tenant.findUnique({ where: { id: user.tenantId } })
+    ? await prisma.tenant.findUnique({ where: { id: user.tenantId }, select: TENANT_SELECT_FOR_RESPONSE as any })
     : null;
 
   return res.json({
@@ -1105,7 +1134,13 @@ const tableUpdateSchema = z.object({
   customerId: z.string().optional().nullable(),
 });
 app.put('/api/tables/:id', requireAuth, requireTenant, async (req, res) => {
-  if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN')) {
+  if (
+    !(
+      req.auth!.role === 'SUPER_ADMIN' ||
+      req.auth!.role === 'ADMIN' ||
+      req.auth!.role === 'WAITER'
+    )
+  ) {
     return res.status(403).json({ error: 'FORBIDDEN' });
   }
   const parsed = tableUpdateSchema.safeParse(req.body);
@@ -1113,6 +1148,12 @@ app.put('/api/tables/:id', requireAuth, requireTenant, async (req, res) => {
   const tenantId = req.auth!.tenantId!;
   const table = await prisma.table.findFirst({ where: { id: req.params.id, tenantId } });
   if (!table) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  // WAITERs may update customer/note, but must not rename tables.
+  if (req.auth!.role === 'WAITER' && parsed.data.name.trim() !== table.name) {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
+
   const updated = await prisma.table.update({
     where: { id: table.id },
     data: {
@@ -1362,7 +1403,7 @@ app.delete('/api/menu/items/:id', requireAuth, requireTenant, async (req, res) =
 
 // Super admin: tenant + user overview
 app.get('/api/super-admin/tenants', requireAuth, requireSuperAdmin, async (_req, res) => {
-  const tenants = await prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } });
+  const tenants = await prisma.tenant.findMany({ orderBy: { createdAt: 'desc' }, select: TENANT_SELECT_FOR_RESPONSE as any });
   return res.json(tenants);
 });
 
@@ -1741,6 +1782,9 @@ app.put('/api/tenant', requireAuth, requireTenant, async (req, res) => {
       printConfig: z.any().optional(),
       permissions: z.any().optional(),
       integrations: z.any().optional(),
+      orderNotificationSoundPreset: z
+        .enum(['BELL', 'CHIME', 'BEEP', 'DOUBLE_BEEP', 'ALARM', 'CUSTOM'])
+        .optional(),
     })
     .safeParse(req.body);
   if (!allowed.success) return res.status(400).json({ error: 'INVALID_INPUT' });
@@ -1748,9 +1792,71 @@ app.put('/api/tenant', requireAuth, requireTenant, async (req, res) => {
   const updated = await prisma.tenant.update({
     where: { id: tenantId },
     data: allowed.data as any,
+    select: TENANT_SELECT_FOR_RESPONSE as any,
   });
   return res.json(updated);
 });
+
+// Tenant order notification sound (custom upload)
+app.get('/api/tenant/order-notification-sound', requireAuth, requireTenant, async (req, res) => {
+  const tenantId = req.auth!.tenantId!;
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    // Cast to any to avoid editor/client mismatch until Prisma Client types are refreshed everywhere.
+    select: { orderNotificationSoundMime: true, orderNotificationSoundData: true } as any,
+  });
+  if (!(tenant as any)?.orderNotificationSoundData || !(tenant as any)?.orderNotificationSoundMime)
+    return res.status(404).json({ error: 'NOT_FOUND' });
+
+  res.setHeader('content-type', (tenant as any).orderNotificationSoundMime);
+  res.setHeader('cache-control', 'private, max-age=3600');
+  return res.status(200).send(Buffer.from((tenant as any).orderNotificationSoundData as any));
+});
+
+app.put(
+  '/api/tenant/order-notification-sound',
+  requireAuth,
+  requireTenant,
+  express.raw({
+    limit: '1mb',
+    type: (req) => {
+      const raw = String(req.headers['content-type'] ?? '').toLowerCase();
+      const ct = raw.split(';')[0].trim();
+      return ct.startsWith('audio/') || ct === 'application/octet-stream';
+    },
+  }),
+  async (req, res) => {
+    if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN'))
+      return res.status(403).json({ error: 'FORBIDDEN' });
+    const tenantId = req.auth!.tenantId!;
+
+    const rawCt = String(req.headers['content-type'] ?? '').toLowerCase();
+    const mime = rawCt.split(';')[0].trim();
+    if (!mime || (!mime.startsWith('audio/') && mime !== 'application/octet-stream')) {
+      return res.status(400).json({ error: 'INVALID_INPUT' });
+    }
+
+    const buf = req.body as any;
+    if (!buf || !Buffer.isBuffer(buf) || buf.length <= 0) {
+      return res.status(400).json({ error: 'INVALID_INPUT' });
+    }
+    if (buf.length > 1_048_576) {
+      return res.status(413).json({ error: 'PAYLOAD_TOO_LARGE' });
+    }
+
+    const updated = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        orderNotificationSoundPreset: 'CUSTOM' as any,
+        orderNotificationSoundMime: mime,
+        orderNotificationSoundData: buf,
+      } as any,
+      select: TENANT_SELECT_FOR_RESPONSE as any,
+    });
+
+    return res.json(updated);
+  },
+);
 
 app.get('/api/audit-logs', requireAuth, requireTenant, async (req, res) => {
   if (!(req.auth!.role === 'SUPER_ADMIN' || req.auth!.role === 'ADMIN'))
